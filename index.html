@@ -19,21 +19,101 @@
           <p class="eyebrow">TRPG Table Companion</p>
           <h1>蹦滋噶滋蹦小隊</h1>
           <p class="hero__copy">DM 管理玩家、怪物、骰子與音樂；玩家管理自己的角色並查看公開資訊。</p>
-          <div class="mode-switch" aria-label="介面模式"><button class="mode-switch__button is-active" data-mode="dm" type="button">DM 介面</button><button class="mode-switch__button" data-mode="player" type="button">玩家介面</button></div>
-          <div class="session-strip"><div><span>目前場景</span><input class="scene-title-input" id="sceneNameInput" value="裂牙門入口" /></div><button class="ghost-button" id="installButton" hidden type="button">安裝</button></div>
+          <div class="mode-switch" aria-label="介面模式">
+            <button class="mode-switch__button is-active" data-mode="dm" type="button">DM 介面</button>
+            <button class="mode-switch__button" data-mode="player" type="button">玩家介面</button>
+          </div>
+          <div class="session-strip">
+            <div>
+              <span>目前場景</span>
+              <input class="scene-title-input" id="sceneNameInput" value="裂牙門入口" />
+            </div>
+            <button class="ghost-button" id="installButton" hidden type="button">安裝</button>
+          </div>
         </div>
       </header>
+
       <main>
-        <nav class="tabbar dm-only" aria-label="DM 工具"><button class="tabbar__button is-active" data-tab="dashboard" type="button">玩家</button><button class="tabbar__button" data-tab="combat" type="button">怪物</button><button class="tabbar__button" data-tab="dice" type="button">骰子</button><button class="tabbar__button" data-tab="audio" type="button">音樂</button></nav>
-        <section class="tab-panel is-active dm-panel" id="dashboard"><div class="section-heading"><p class="eyebrow">Players</p><h2>玩家狀態</h2></div><section class="tool-card roster-card"><div class="card-header compact-header"><div><p class="eyebrow">Party</p><h3>玩家列表</h3></div></div><div class="roster" id="characterList"></div><form class="compact-form bottom-add-form" id="characterForm"><input id="characterName" placeholder="新玩家名稱" /><input id="characterEvasion" inputmode="numeric" placeholder="閃避" /><button class="primary-button" type="submit">新增玩家</button></form></section><div class="quick-grid"><article class="tool-card metric-card"><span>恐懼點</span><div class="counter"><button aria-label="減少恐懼點" data-counter="fear" data-step="-1" type="button">−</button><strong id="fearValue">3</strong><button aria-label="增加恐懼點" data-counter="fear" data-step="1" type="button">＋</button></div></article><article class="tool-card metric-card"><span>希望池</span><div class="counter"><button aria-label="減少希望池" data-counter="hope" data-step="-1" type="button">−</button><strong id="hopeValue">2</strong><button aria-label="增加希望池" data-counter="hope" data-step="1" type="button">＋</button></div></article></div></section>
-        <section class="tab-panel dm-panel" id="combat"><div class="section-heading"><p class="eyebrow">Enemies</p><h2>怪物狀態</h2></div><section class="tool-card round-card"><div><p class="eyebrow">Round</p><h3>回合 <span id="roundCounter">0</span></h3></div><button class="primary-button" id="nextRoundButton" type="button">下一回合</button></section><section class="monster-list" id="monsterList"></section><section class="tool-card bottom-add-card"><form class="inline-form" id="monsterForm"><label class="field"><span>怪物名稱</span><input id="monsterName" placeholder="裂牙守衛" /></label><label class="field field--small"><span>血量</span><input id="monsterHp" inputmode="numeric" placeholder="6" /></label><label class="field field--small"><span>壓力</span><input id="monsterStress" inputmode="numeric" placeholder="3" /></label><label class="field field--small"><span>難度</span><input id="monsterDifficulty" inputmode="numeric" placeholder="12" /></label><label class="field field--small"><span>攻擊</span><input id="monsterAttack" placeholder="+2" /></label><label class="field field--small"><span>閾值</span><input id="monsterThreshold" placeholder="8/16" /></label><label class="field field--small"><span>傷害</span><input id="monsterDamage" placeholder="1d8+2" /></label><button class="primary-button" type="submit">加入</button></form></section></section>
-        <section class="tab-panel dm-panel" id="dice"><div class="section-heading"><p class="eyebrow">Roller</p><h2>骰子工具</h2></div><section class="tool-card dice-card"><div class="card-header"><div><p class="eyebrow">Duality</p><h3>二元骰子投擲</h3></div></div><div class="duality-actions"><button class="primary-button" id="dualityRollButton" type="button">投擲二元骰子</button></div><div class="roll-result duality-result" id="dualityResult"><span>希望骰與恐懼骰會分開列出</span></div></section><section class="tool-card dice-card compact-dice-card"><label class="field compact-field"><span>擲骰公式</span><div class="formula-input-row"><input id="diceFormula" value="2d12+3" autocomplete="off" /><button class="text-button formula-plus-button" id="addFormulaOneButton" type="button">+1</button></div></label><div class="dice-command-row"><button class="primary-button" id="rollButton" type="button">擲骰</button><button class="text-button clear-formula-button" id="clearFormulaButton" type="button">清除</button></div><div class="dice-actions"><div class="dice-palette" aria-label="增加骰子"><button class="text-button" data-formula="1d2" type="button">d2</button><button class="text-button" data-formula="1d4" type="button">d4</button><button class="text-button" data-formula="1d6" type="button">d6</button><button class="text-button" data-formula="1d8" type="button">d8</button><button class="text-button" data-formula="1d10" type="button">d10</button><button class="text-button" data-formula="1d12" type="button">d12</button><button class="text-button" data-formula="1d20" type="button">d20</button><button class="text-button" data-formula="1d100" type="button">d100</button></div></div><div class="roll-result" id="rollResult"><span>等待擲骰</span></div></section><section class="tool-card roll-history-card"><div class="card-header"><div><p class="eyebrow">History</p><h3>擲骰紀錄</h3></div><button class="text-button" id="clearRollsButton" type="button">清空</button></div><ol class="roll-log" id="rollLog"></ol></section></section>
-        <section class="tab-panel dm-panel" id="audio"><div class="section-heading"><p class="eyebrow">Audio</p><h2>音樂控制</h2></div><section class="tool-card audio-card"><div class="card-header"><div><p class="eyebrow">Music</p><h3>背景音樂與音效</h3></div><span class="status-pill" id="audioStatus">未播放</span></div><div class="audio-grid"><button class="primary-button" data-bgm="calm" type="button">背景：探索</button><button class="primary-button" data-bgm="tension" type="button">背景：緊張</button><button class="text-button" id="stopBgmButton" type="button">停止背景</button><button class="text-button" data-sfx="reveal" type="button">音效：線索</button><button class="text-button" data-sfx="hit" type="button">音效：受擊</button><button class="text-button" data-sfx="danger" type="button">音效：危險</button></div></section></section>
-        <section class="tab-panel dm-panel" id="notes" hidden><label class="field"><span>場景名稱</span><input id="sceneInput" value="裂牙門入口" /></label><label class="field"><span>公開線索</span><textarea id="publicNotes" rows="5"></textarea></label><label class="field"><span>DM 私密筆記</span><textarea id="gmNotes" rows="7"></textarea></label></section>
-        <section class="player-panel" id="playerPanel" hidden><div class="section-heading"><p class="eyebrow">Player View</p><h2>玩家面板</h2></div><section class="tool-card"><div class="card-header"><div><p class="eyebrow">Character</p><h3>我的角色</h3></div></div><label class="field"><span>選擇角色</span><select id="playerCharacterSelect"></select></label><div id="playerCharacterCard"></div></section><section class="tool-card"><div class="card-header"><div><p class="eyebrow">Public Info</p><h3>公開資訊</h3></div></div><div class="public-board"><span>目前場景</span><strong id="playerSceneName">裂牙門入口</strong><p id="playerPublicNotes"></p></div></section><section class="tool-card"><div class="card-header"><div><p class="eyebrow">Roll</p><h3>玩家擲骰</h3></div></div><label class="field"><span>擲骰公式</span><input id="playerDiceFormula" value="2d12" autocomplete="off" /></label><div class="dice-actions"><button class="primary-button" id="playerRollButton" type="button">擲骰</button><button class="text-button" data-player-formula="1d20" type="button">d20</button><button class="text-button" data-player-formula="2d12" type="button">雙 d12</button><button class="text-button" data-player-formula="1d6" type="button">d6</button></div><div class="roll-result" id="playerRollResult"><span>等待擲骰</span></div></section></section>
+        <nav class="tabbar dm-only" aria-label="DM 工具">
+          <button class="tabbar__button is-active" data-tab="dashboard" type="button">玩家</button>
+          <button class="tabbar__button" data-tab="combat" type="button">怪物</button>
+          <button class="tabbar__button" data-tab="dice" type="button">骰子</button>
+          <button class="tabbar__button" data-tab="audio" type="button">音樂</button>
+        </nav>
+
+        <section class="tab-panel is-active dm-panel" id="dashboard">
+          <div class="section-heading"><p class="eyebrow">Players</p><h2>玩家狀態</h2></div>
+          <section class="tool-card roster-card">
+            <div class="card-header compact-header"><div><p class="eyebrow">Party</p><h3>玩家列表</h3></div></div>
+            <div class="roster" id="characterList"></div>
+            <form class="compact-form bottom-add-form" id="characterForm">
+              <input id="characterName" placeholder="新玩家名稱" />
+              <input id="characterEvasion" inputmode="numeric" placeholder="閃避" />
+              <button class="primary-button" type="submit">新增玩家</button>
+            </form>
+          </section>
+          <div class="quick-grid">
+            <article class="tool-card metric-card"><span>恐懼點</span><div class="counter"><button aria-label="減少恐懼點" data-counter="fear" data-step="-1" type="button">−</button><strong id="fearValue">3</strong><button aria-label="增加恐懼點" data-counter="fear" data-step="1" type="button">＋</button></div></article>
+            <article class="tool-card metric-card"><span>希望池</span><div class="counter"><button aria-label="減少希望池" data-counter="hope" data-step="-1" type="button">−</button><strong id="hopeValue">2</strong><button aria-label="增加希望池" data-counter="hope" data-step="1" type="button">＋</button></div></article>
+          </div>
+        </section>
+
+        <section class="tab-panel dm-panel" id="combat">
+          <div class="section-heading"><p class="eyebrow">Enemies</p><h2>怪物狀態</h2></div>
+          <section class="tool-card round-card"><div><p class="eyebrow">Round</p><h3>回合 <span id="roundCounter">0</span></h3></div><button class="primary-button" id="nextRoundButton" type="button">下一回合</button></section>
+          <section class="monster-list" id="monsterList"></section>
+          <section class="tool-card bottom-add-card">
+            <form class="inline-form" id="monsterForm">
+              <label class="field"><span>怪物名稱</span><input id="monsterName" placeholder="裂牙守衛" /></label>
+              <label class="field field--small"><span>血量</span><input id="monsterHp" inputmode="numeric" placeholder="6" /></label>
+              <label class="field field--small"><span>壓力</span><input id="monsterStress" inputmode="numeric" placeholder="3" /></label>
+              <label class="field field--small"><span>難度</span><input id="monsterDifficulty" inputmode="numeric" placeholder="12" /></label>
+              <label class="field field--small"><span>攻擊</span><input id="monsterAttack" placeholder="+2" /></label>
+              <label class="field field--small"><span>閾值</span><input id="monsterThreshold" placeholder="8/16" /></label>
+              <label class="field field--small"><span>傷害</span><input id="monsterDamage" placeholder="1d8+2" /></label>
+              <button class="primary-button" type="submit">加入</button>
+            </form>
+          </section>
+        </section>
+
+        <section class="tab-panel dm-panel" id="dice">
+          <div class="section-heading"><p class="eyebrow">Roller</p><h2>骰子工具</h2></div>
+          <section class="tool-card dice-card">
+            <div class="card-header"><div><p class="eyebrow">Duality</p><h3>二元骰子投擲</h3></div></div>
+            <div class="duality-actions"><button class="primary-button" id="dualityRollButton" type="button">投擲二元骰子</button></div>
+            <div class="roll-result duality-result" id="dualityResult"><span>希望骰與恐懼骰會分開列出</span></div>
+          </section>
+          <section class="tool-card dice-card compact-dice-card">
+            <label class="field compact-field"><span>擲骰公式</span><div class="formula-input-row"><input id="diceFormula" value="2d12+3" autocomplete="off" /><button class="text-button formula-plus-button" id="addFormulaOneButton" type="button">+1</button></div></label>
+            <div class="dice-command-row"><button class="primary-button" id="rollButton" type="button">擲骰</button><button class="text-button clear-formula-button" id="clearFormulaButton" type="button">清除</button></div>
+            <div class="dice-actions"><div class="dice-palette" aria-label="增加骰子"><button class="text-button" data-formula="1d2" type="button">d2</button><button class="text-button" data-formula="1d4" type="button">d4</button><button class="text-button" data-formula="1d6" type="button">d6</button><button class="text-button" data-formula="1d8" type="button">d8</button><button class="text-button" data-formula="1d10" type="button">d10</button><button class="text-button" data-formula="1d12" type="button">d12</button><button class="text-button" data-formula="1d20" type="button">d20</button><button class="text-button" data-formula="1d100" type="button">d100</button></div></div>
+            <div class="roll-result" id="rollResult"><span>等待擲骰</span></div>
+          </section>
+          <section class="tool-card roll-history-card"><div class="card-header"><div><p class="eyebrow">History</p><h3>擲骰紀錄</h3></div><button class="text-button" id="clearRollsButton" type="button">清空</button></div><ol class="roll-log" id="rollLog"></ol></section>
+        </section>
+
+        <section class="tab-panel dm-panel" id="audio">
+          <div class="section-heading"><p class="eyebrow">Audio</p><h2>音樂控制</h2></div>
+          <section class="tool-card audio-card">
+            <div class="card-header"><div><p class="eyebrow">Music</p><h3>背景音樂與音效</h3></div><span class="status-pill" id="audioStatus">未播放</span></div>
+            <div class="audio-grid"><button class="primary-button" data-bgm="calm" type="button">背景：探索</button><button class="primary-button" data-bgm="tension" type="button">背景：緊張</button><button class="text-button" id="stopBgmButton" type="button">停止背景</button><button class="text-button" data-sfx="reveal" type="button">音效：線索</button><button class="text-button" data-sfx="hit" type="button">音效：受擊</button><button class="text-button" data-sfx="danger" type="button">音效：危險</button></div>
+          </section>
+        </section>
+
+        <section class="tab-panel dm-panel" id="notes" hidden>
+          <label class="field"><span>場景名稱</span><input id="sceneInput" value="裂牙門入口" /></label>
+          <label class="field"><span>公開線索</span><textarea id="publicNotes" rows="5"></textarea></label>
+          <label class="field"><span>DM 私密筆記</span><textarea id="gmNotes" rows="7"></textarea></label>
+        </section>
+
+        <section class="player-panel" id="playerPanel" hidden>
+          <div class="section-heading"><p class="eyebrow">Player View</p><h2>玩家面板</h2></div>
+          <section class="tool-card"><div class="card-header"><div><p class="eyebrow">Character</p><h3>我的角色</h3></div></div><label class="field"><span>選擇角色</span><select id="playerCharacterSelect"></select></label><div id="playerCharacterCard"></div></section>
+          <section class="tool-card"><div class="card-header"><div><p class="eyebrow">Public Info</p><h3>公開資訊</h3></div></div><div class="public-board"><span>目前場景</span><strong id="playerSceneName">裂牙門入口</strong><p id="playerPublicNotes"></p></div></section>
+          <section class="tool-card"><div class="card-header"><div><p class="eyebrow">Roll</p><h3>玩家擲骰</h3></div></div><label class="field"><span>擲骰公式</span><input id="playerDiceFormula" value="2d12" autocomplete="off" /></label><div class="dice-actions"><button class="primary-button" id="playerRollButton" type="button">擲骰</button><button class="text-button" data-player-formula="1d20" type="button">d20</button><button class="text-button" data-player-formula="2d12" type="button">雙 d12</button><button class="text-button" data-player-formula="1d6" type="button">d6</button></div><div class="roll-result" id="playerRollResult"><span>等待擲骰</span></div></section>
+        </section>
       </main>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=26" defer></script>
+    <script src="app.js?v=27" defer></script>
   </body>
 </html>
