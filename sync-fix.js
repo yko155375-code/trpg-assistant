@@ -1,20 +1,27 @@
-let localDirtyUntil = 0;
+var localDirtyUntil = 0;
 
-const originalSave = save;
+var originalSave = save;
 save = function saveWithSyncGuard() {
-  localDirtyUntil = Date.now() + 2500;
+  localDirtyUntil = Date.now() + 1800;
   originalSave();
 };
 
-const originalSaveCloud = saveCloud;
+var originalSaveCloud = saveCloud;
 saveCloud = async function saveCloudWithSyncGuard() {
-  localDirtyUntil = Date.now() + 2500;
-  await originalSaveCloud();
-  localDirtyUntil = Date.now() + 800;
+  localDirtyUntil = Date.now() + 1800;
+  try {
+    await originalSaveCloud();
+  } finally {
+    localDirtyUntil = Date.now() + 350;
+  }
 };
 
-const originalPullCloud = pullCloud;
+var originalPullCloud = pullCloud;
 pullCloud = async function pullCloudWithSyncGuard() {
-  if (Date.now() < localDirtyUntil || cloudTimer) return;
+  if (Date.now() < localDirtyUntil) return;
   await originalPullCloud();
 };
+
+setInterval(() => {
+  pullCloud();
+}, 1200);
