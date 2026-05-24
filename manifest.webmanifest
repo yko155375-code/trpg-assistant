@@ -1,0 +1,18 @@
+{
+  "name": "蹦滋噶滋蹦小隊",
+  "short_name": "蹦滋小隊",
+  "description": "蹦滋噶滋蹦小隊的手機跑團助手。",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#121417",
+  "theme_color": "#121417",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
