@@ -1,5 +1,5 @@
-const cacheName = "trpg-assistant-cache-v28";
-const filesToCache = ["./", "index.html", "styles.css", "app.js", "manifest.webmanifest", "assets/icon.svg", "assets/scene-gate.svg"];
+const cacheName = "trpg-assistant-cache-v29";
+const filesToCache = ["./", "index.html", "styles.css", "app.js", "sync-fix.js", "manifest.webmanifest", "assets/icon.svg", "assets/scene-gate.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(cacheName).then((cache) => cache.addAll(filesToCache)));
