@@ -23,6 +23,8 @@ const SFX_TRACKS_V46 = {
 
 let htmlAudioV46 = null;
 let synthBgmNodesV46 = null;
+let dmEntryTapCountV46 = 0;
+let dmEntryTapTimerV46 = null;
 
 function applyPublicPlayerAudioV46() {
   forcePlayerDefaultV46();
@@ -59,21 +61,24 @@ function ensurePublicPlayerStylesV46() {
       top: 8px;
       right: 12px;
       z-index: 80;
-      width: 28px;
-      height: 28px;
-      min-height: 28px;
+      width: 24px;
+      height: 24px;
+      min-height: 24px;
       padding: 0;
-      border: 1px solid rgba(185, 135, 59, 0.14);
+      border: 1px solid rgba(185, 135, 59, 0.08);
       border-radius: 50%;
-      background: rgba(8, 13, 23, 0.28);
-      color: rgba(245, 223, 170, 0.74);
-      opacity: 0.22;
+      background: transparent;
+      color: rgba(245, 223, 170, 0.62);
+      opacity: 0.16;
       font-size: 0;
+      box-shadow: none;
+      backdrop-filter: none;
     }
 
     .dm-entry-v46::before {
-      content: "\\25d0";
-      font-size: 15px;
+      content: "\\16DC";
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 16px;
       line-height: 1;
     }
 
@@ -215,17 +220,36 @@ function ensureDmEntryV46() {
   button.id = "dmEntryV46";
   button.className = "dm-entry-v46";
   button.type = "button";
-  button.setAttribute("aria-label", "\u9032\u5165 DM \u4ecb\u9762");
-  button.addEventListener("click", handleEnterDmMode);
+  button.setAttribute("aria-label", "\u96b1\u85cf\u5165\u53e3");
+  button.addEventListener("click", handleDmEntryTapV46);
   document.body.appendChild(button);
 }
 
-function handleEnterDmMode() {
+function handleDmEntryTapV46() {
+  dmEntryTapCountV46 += 1;
+  window.clearTimeout(dmEntryTapTimerV46);
+
+  if (dmEntryTapCountV46 >= 3) {
+    dmEntryTapCountV46 = 0;
+    enterDmMode();
+    return;
+  }
+
+  dmEntryTapTimerV46 = window.setTimeout(() => {
+    dmEntryTapCountV46 = 0;
+  }, 1200);
+}
+
+function enterDmMode() {
   sessionStorage.setItem("dmModeActiveV46", "true");
   state.mode = "dm";
   state.activeTab = state.activeTab && state.activeTab !== "notes" ? state.activeTab : "dashboard";
   persistLocalModeV46();
   if (typeof render === "function") render();
+}
+
+function handleEnterDmMode() {
+  enterDmMode();
 }
 
 function handleReturnPlayerModeV46() {
@@ -570,6 +594,7 @@ if (typeof render === "function" && !window.publicPlayerRenderPatchedV46) {
 }
 
 window.extractYouTubeVideoId = extractYouTubeVideoId;
+window.enterDmMode = enterDmMode;
 window.handleEnterDmMode = handleEnterDmMode;
 window.addEventListener("load", applyPublicPlayerAudioV46);
 applyPublicPlayerAudioV46();
