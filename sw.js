@@ -1,6 +1,7 @@
-const cacheName = "trpg-assistant-cache-v40";
-const filesToCache = ["./", "index.html", "styles.css", "app.js", "sync-fix.js", "ui-layout-fix.js", "interaction-fix.js", "view-mode-fix.js", "ui-polish-v40.js", "manifest.webmanifest", "assets/icon.svg", "assets/scene-gate.svg"];
+const cacheName = "trpg-assistant-cache-v41";
+const filesToCache = ["./", "index.html", "styles.css", "app.js", "sync-fix.js", "ui-layout-fix.js", "interaction-fix.js", "view-mode-fix.js", "ui-polish-v40.js", "player-assets-v41.js", "manifest.webmanifest", "assets/icon.svg", "assets/scene-gate.svg"];
 const polishScript = '<script src="ui-polish-v40.js?v=40" defer></script>';
+const playerAssetsScript = '<script src="player-assets-v41.js?v=41" defer></script>';
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -14,9 +15,15 @@ self.addEventListener("activate", (event) => {
   ]));
 });
 
-function withPolishScript(html) {
-  if (html.includes("ui-polish-v40.js")) return html;
-  return html.replace("</body>", `${polishScript}\n  </body>`);
+function withInjectedScripts(html) {
+  let nextHtml = html;
+  if (!nextHtml.includes("ui-polish-v40.js")) {
+    nextHtml = nextHtml.replace("</body>", `${polishScript}\n  </body>`);
+  }
+  if (!nextHtml.includes("player-assets-v41.js")) {
+    nextHtml = nextHtml.replace("</body>", `${playerAssetsScript}\n  </body>`);
+  }
+  return nextHtml;
 }
 
 self.addEventListener("fetch", (event) => {
@@ -30,7 +37,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(event.request)
         .catch(() => caches.match("index.html"))
-        .then((response) => response.text().then((html) => new Response(withPolishScript(html), {
+        .then((response) => response.text().then((html) => new Response(withInjectedScripts(html), {
           headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" },
         }))),
     );
