@@ -203,7 +203,7 @@ function renderSelectedDiceCharacter() {
   const name = select.value;
   const character = state.characters.find((item) => item.name === name);
   if (!character) {
-    target.innerHTML = '<div class="dice-source-empty">目前沒有選到玩家；DM 不顯示角色卡。</div>';
+    target.innerHTML = '<div class="dice-source-empty">目前指定名稱是 DM。</div>';
     return;
   }
 
@@ -256,3 +256,11 @@ document.addEventListener("click", (event) => {
 
 window.addEventListener("load", applyViewModeFixes);
 applyViewModeFixes();
+
+(function loadUiPolishV40() {
+  if (document.querySelector('script[src*="ui-polish-v40.js"]')) return;
+  const script = document.createElement("script");
+  script.src = "ui-polish-v40.js?v=40";
+  script.defer = true;
+  document.body.appendChild(script);
+})();
