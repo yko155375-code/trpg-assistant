@@ -305,7 +305,7 @@ function showCriticalFormulaRoll(targetSelector, formulaInput, source) {
     });
     window.layoutPendingCritSource = "";
     persistLayoutState();
-    renderRollsSafely();
+    render();
   } catch (error) {
     const target = document.querySelector(targetSelector);
     if (target) target.innerHTML = `<span>${layoutEscapeHtml(error.message)}</span>`;
