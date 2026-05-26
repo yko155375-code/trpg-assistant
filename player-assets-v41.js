@@ -108,6 +108,7 @@ function updateCharacterAssetV41(characterId, unit, step) {
     const total = Math.max(0, assets.total + unitValue * step);
     return { ...character, assets: { total } };
   });
+  window.playerAssetsLastEditV41 = Date.now();
   persistPlayerAssetsStateV41();
   render();
 }
@@ -151,6 +152,19 @@ function patchDiceSourceForPlayerV41() {
   };
 }
 
+function patchRemoteAssetMergeV41() {
+  if (window.playerAssetsRemotePatchV41Bound || typeof applyRemoteState !== "function") return;
+  window.playerAssetsRemotePatchV41Bound = true;
+  const originalApplyRemoteState = applyRemoteState;
+  applyRemoteState = function applyRemoteStateWithAssets(remoteState) {
+    const localAssetsById = new Map((state.characters || []).filter((character) => character.assets).map((character) => [character.id, character.assets]));
+    if (remoteState?.characters && localAssetsById.size) {
+      remoteState = { ...remoteState, characters: remoteState.characters.map((character) => (character.assets ? character : { ...character, assets: localAssetsById.get(character.id) })) };
+    }
+    originalApplyRemoteState(remoteState);
+  };
+}
+
 function setTextV41(selector, text) {
   const element = document.querySelector(selector);
   if (element) element.textContent = text;
@@ -171,6 +185,7 @@ function escapePlayerAssetsHtmlV41(value) {
 
 bindPlayerAssetsEventsV41();
 patchDiceSourceForPlayerV41();
+patchRemoteAssetMergeV41();
 
 if (typeof render === "function") {
   const originalPlayerAssetsRenderV41 = render;
