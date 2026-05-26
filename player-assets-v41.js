@@ -415,3 +415,11 @@ applyPlayerAssetsV41();
   script.defer = true;
   document.body.appendChild(script);
 })();
+
+(function loadPublicPlayerAudioV46() {
+  if (document.querySelector('script[src*="public-player-audio-v46.js"]')) return;
+  const script = document.createElement("script");
+  script.src = "public-player-audio-v46.js?v=46";
+  script.defer = true;
+  document.body.appendChild(script);
+})();
