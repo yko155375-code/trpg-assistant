@@ -1,4 +1,6 @@
 function applyFearHopeLayout() {
+  ensureCombatLayoutStyles();
+
   const modeSwitch = document.querySelector(".mode-switch");
   const cards = Array.from(document.querySelectorAll(".metric-card"));
   const fearCard = cards.find((card) => card.textContent.includes("恐懼點"));
@@ -36,6 +38,41 @@ function applyFearHopeLayout() {
   if (counter) {
     counter.style.gridTemplateColumns = "38px minmax(48px, 1fr) 38px";
   }
+}
+
+function ensureCombatLayoutStyles() {
+  if (document.getElementById("combat-layout-fix-style")) return;
+
+  const style = document.createElement("style");
+  style.id = "combat-layout-fix-style";
+  style.textContent = `
+    @media (min-width: 720px) {
+      #combat.tab-panel.is-active {
+        grid-template-columns: 1fr;
+      }
+
+      #combat .section-heading,
+      #combat .round-card,
+      #combat .monster-list,
+      #combat .bottom-add-card {
+        grid-column: 1 / -1;
+      }
+
+      #combat .monster-list,
+      #combat .monster-card {
+        width: 100%;
+      }
+
+      #combat .inline-form {
+        grid-template-columns: minmax(150px, 1.4fr) repeat(3, minmax(90px, 1fr));
+      }
+
+      #combat .inline-form .field {
+        max-width: none;
+      }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 if (typeof render === "function") {
