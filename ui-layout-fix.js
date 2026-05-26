@@ -2,6 +2,7 @@ function applyFearHopeLayout() {
   ensureCombatLayoutStyles();
   ensureRoundResetButton();
   ensureDiceSourceSelect();
+  ensureDualityResourceRules();
 
   const modeSwitch = document.querySelector(".mode-switch");
   const cards = Array.from(document.querySelectorAll(".metric-card"));
@@ -114,6 +115,26 @@ function ensureCombatLayoutStyles() {
       padding: 7px 9px;
       font-size: 0.86rem;
     }
+
+    .duality-grid .is-critical-tie,
+    .roll-result.is-critical-roll {
+      border-color: rgba(226, 183, 94, 0.95);
+      background: rgba(226, 183, 94, 0.2);
+      box-shadow: 0 0 0 2px rgba(226, 183, 94, 0.18);
+    }
+
+    .duality-grid .is-critical-tie strong,
+    .roll-result.is-critical-roll strong {
+      color: var(--gold);
+    }
+
+    .crit-note {
+      display: block;
+      margin-top: 4px;
+      color: var(--gold);
+      font-size: 0.72rem;
+      font-weight: 900;
+    }
   `;
   document.head.appendChild(style);
 }
@@ -168,6 +189,75 @@ function ensureDiceSourceSelect() {
   select.value = options.includes(previousValue) ? previousValue : "DM";
 }
 
+function ensureDualityResourceRules() {
+  const button = document.getElementById("dualityRollButton");
+  if (!button || button.dataset.resourceRulesBound === "true") return;
+
+  button.dataset.resourceRulesBound = "true";
+  button.onclick = runDualityWithResourceRules;
+}
+
+function runDualityWithResourceRules() {
+  const source = selectedDiceSource();
+  const hopeDie = Math.floor(Math.random() * 12) + 1;
+  const fearDie = Math.floor(Math.random() * 12) + 1;
+  const total = hopeDie + fearDie;
+  const isPlayerSource = source !== "DM";
+  const character = isPlayerSource
+    ? state.characters.find((item) => item.name === source)
+    : null;
+  let note = "";
+
+  if (character) {
+    if (fearDie > hopeDie) {
+      state.fear = layoutClamp((state.fear || 0) + 1, 0, 12);
+      note = "恐懼較高：恐懼點 +1";
+    } else if (hopeDie > fearDie) {
+      character.hopeDice = layoutClamp((character.hopeDice || 0) + 1, 0, 6);
+      note = `${source} 希望骰 +1`;
+    } else {
+      character.hopeDice = layoutClamp((character.hopeDice || 0) + 1, 0, 6);
+      character.stress = layoutClamp((character.stress || 0) - 1, 0, 12);
+      window.layoutPendingCritSource = source;
+      note = `${source} 爆擊：希望骰 +1，壓力 -1，下次擲骰套用爆擊`;
+    }
+  }
+
+  const tieClass = hopeDie === fearDie ? "is-critical-tie" : "";
+  const result = document.getElementById("dualityResult");
+  if (result) {
+    result.innerHTML = `
+      <div class="duality-grid">
+        <div class="${hopeDie > fearDie ? "is-hope-high" : tieClass}">
+          <span>希望骰</span>
+          <strong>${hopeDie}</strong>
+        </div>
+        <div class="${fearDie > hopeDie ? "is-fear-high" : tieClass}">
+          <span>恐懼骰</span>
+          <strong>${fearDie}</strong>
+        </div>
+        <div class="${tieClass}">
+          <span>總和</span>
+          <strong>${total}</strong>
+          ${note ? `<em class="crit-note">${layoutEscapeHtml(note)}</em>` : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  state.rolls.unshift({
+    source,
+    formula: "二元骰子",
+    total,
+    parts: [hopeDie, fearDie],
+    detail: `(希望 ${hopeDie}, 恐懼 ${fearDie}${note ? `；${note}` : ""})`,
+    time: Date.now(),
+  });
+  persistLayoutState();
+  renderRollsSafely();
+  render();
+}
+
 function selectedDiceSource() {
   return document.getElementById("diceSourceSelect")?.value || "DM";
 }
@@ -176,8 +266,74 @@ if (typeof showRoll === "function") {
   const originalLayoutShowRoll = showRoll;
   showRoll = function showRollWithSelectedSource(targetSelector, formulaInput, source) {
     const finalSource = targetSelector === "#rollResult" ? selectedDiceSource() : source;
+    const pendingSource = window.layoutPendingCritSource;
+
+    if (targetSelector === "#rollResult" && pendingSource && pendingSource === finalSource) {
+      showCriticalFormulaRoll(targetSelector, formulaInput, finalSource);
+      return;
+    }
+
+    clearCriticalRollStyle(targetSelector);
     originalLayoutShowRoll(targetSelector, formulaInput, finalSource);
   };
+}
+
+function showCriticalFormulaRoll(targetSelector, formulaInput, source) {
+  try {
+    const roll = rollFormula(formulaInput.value);
+    const critBonus = getFormulaMax(roll.formula || formulaInput.value);
+    const total = roll.total + critBonus;
+    const target = document.querySelector(targetSelector);
+
+    if (target) {
+      target.classList.add("is-critical-roll");
+      target.innerHTML = `
+        <div>
+          <strong>${total}</strong>
+          <span>${layoutEscapeHtml(roll.formula)} · ${layoutEscapeHtml(roll.parts.join(" + "))} + 滿擲 ${critBonus}</span>
+          <em class="crit-note">爆擊</em>
+        </div>
+      `;
+    }
+
+    state.rolls.unshift({
+      ...roll,
+      source,
+      total,
+      detail: `(${roll.parts.join(" + ")} + 滿擲 ${critBonus})`,
+      time: Date.now(),
+    });
+    window.layoutPendingCritSource = "";
+    persistLayoutState();
+    renderRollsSafely();
+  } catch (error) {
+    const target = document.querySelector(targetSelector);
+    if (target) target.innerHTML = `<span>${layoutEscapeHtml(error.message)}</span>`;
+  }
+}
+
+function getFormulaMax(formula) {
+  if (typeof maxDice === "function") return maxDice(formula);
+  if (typeof maxFormula === "function") return maxFormula(formula);
+  return layoutMaxDice(formula);
+}
+
+function layoutMaxDice(formula) {
+  return (String(formula).toLowerCase().replace(/\s+/g, "").match(/[+-]?[^+-]+/g) || [])
+    .reduce((sum, term) => {
+      const sign = term[0] === "-" ? -1 : 1;
+      const match = term.replace(/^[+-]/, "").match(/^(\d*)d(\d+)$/);
+      if (!match) return sum;
+      return sum + layoutClamp(Number(match[1] || 1), 1, 20) * layoutClamp(Number(match[2]), 2, 100) * sign;
+    }, 0);
+}
+
+function clearCriticalRollStyle(targetSelector) {
+  document.querySelector(targetSelector)?.classList.remove("is-critical-roll");
+}
+
+function renderRollsSafely() {
+  if (typeof renderRolls === "function") renderRolls();
 }
 
 function persistLayoutState() {
@@ -189,6 +345,10 @@ function persistLayoutState() {
   if (typeof saveState === "function") {
     saveState();
   }
+}
+
+function layoutClamp(value, min, max) {
+  return Math.min(max, Math.max(min, Number(value) || 0));
 }
 
 function layoutEscapeHtml(value) {
