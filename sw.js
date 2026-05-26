@@ -1,4 +1,4 @@
-const cacheName = "trpg-assistant-cache-v38";
+const cacheName = "trpg-assistant-cache-v39";
 const filesToCache = ["./", "index.html", "styles.css", "app.js", "sync-fix.js", "ui-layout-fix.js", "interaction-fix.js", "view-mode-fix.js", "manifest.webmanifest", "assets/icon.svg", "assets/scene-gate.svg"];
 
 self.addEventListener("install", (event) => {
