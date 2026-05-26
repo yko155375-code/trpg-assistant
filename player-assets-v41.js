@@ -8,26 +8,9 @@ function applyPlayerAssetsV41() {
 
 function ensurePlayerAssetsStylesV41() {
   if (document.getElementById("player-assets-v41-style")) return;
-
   const style = document.createElement("style");
   style.id = "player-assets-v41-style";
-  style.textContent = `
-    body[data-mode="player"] .scene-title-input { display: none; }
-    .current-character-select { width: 100%; min-height: 36px; border: 1px solid var(--line); border-radius: 8px; background: rgba(18, 20, 23, 0.92); color: var(--text); padding: 7px 9px; font: inherit; font-size: 0.86rem; }
-    body[data-mode="dm"] .current-character-select { display: none; }
-    body[data-mode="player"] #diceSourceField, body[data-mode="player"] #diceSourceCharacter { display: none !important; }
-    .status-reference-toggle { min-height: 30px !important; padding: 0 8px !important; font-size: 0.68rem !important; right: 6px !important; border-radius: 7px 0 0 7px !important; }
-    .status-reference-panel { width: min(260px, calc(100vw - 24px)) !important; padding: 8px !important; }
-    .status-reference-panel h3 { font-size: 0.86rem !important; }
-    .status-reference-item { padding: 6px !important; font-size: 0.72rem !important; }
-    .asset-row { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
-    .asset-row__title { margin-bottom: 4px; color: var(--muted); font-size: 0.68rem; font-weight: 900; }
-    .asset-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
-    .asset-control { display: grid; grid-template-columns: 24px minmax(0, 1fr) 24px; align-items: center; gap: 3px; min-width: 0; padding: 4px; border: 1px solid var(--line); border-radius: 7px; background: rgba(18, 20, 23, 0.48); }
-    .asset-control button { min-height: 24px; width: 24px; padding: 0; border-radius: 6px; font-size: 0.72rem; }
-    .asset-control strong { display: block; color: var(--gold); font-size: 0.86rem; line-height: 1; text-align: center; }
-    .asset-control span { display: block; margin-top: 1px; color: var(--muted); font-size: 0.6rem; text-align: center; }
-  `;
+  style.textContent = `body[data-mode="player"] .scene-title-input{display:none}.current-character-select{width:100%;min-height:36px;border:1px solid var(--line);border-radius:8px;background:rgba(18,20,23,.92);color:var(--text);padding:7px 9px;font:inherit;font-size:.86rem}body[data-mode="dm"] .current-character-select{display:none}body[data-mode="player"] #diceSourceField,body[data-mode="player"] #diceSourceCharacter{display:none!important}.status-reference-toggle{min-height:30px!important;padding:0 8px!important;font-size:.68rem!important;right:6px!important;border-radius:7px 0 0 7px!important}.status-reference-panel{width:min(260px,calc(100vw - 24px))!important;padding:8px!important}.status-reference-panel h3{font-size:.86rem!important}.status-reference-item{padding:6px!important;font-size:.72rem!important}.asset-row{margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}.asset-row__title{margin-bottom:4px;color:var(--muted);font-size:.68rem;font-weight:900}.asset-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.asset-control{display:grid;grid-template-columns:24px minmax(0,1fr) 24px;align-items:center;gap:3px;min-width:0;padding:4px;border:1px solid var(--line);border-radius:7px;background:rgba(18,20,23,.48)}.asset-control button{min-height:24px;width:24px;padding:0;border-radius:6px;font-size:.72rem}.asset-control strong{display:block;color:var(--gold);font-size:.86rem;line-height:1;text-align:center}.asset-control span{display:block;margin-top:1px;color:var(--muted);font-size:.6rem;text-align:center}`;
   document.head.appendChild(style);
 }
 
@@ -100,7 +83,7 @@ function ensureCharacterAssetsV41() {
 
 function assetRowTemplateV41(character) {
   const assets = normalizeAssetsV41(character);
-  return `<div class="asset-row" data-asset-character="${escapePlayerAssetsHtmlV41(character.id)}"><div class="asset-row__title">玩家資產</div><div class="asset-grid">${assetControlV41(character.id, "hand", "把", assets.hand)}${assetControlV41(character.id, "bag", "袋", assets.bag)}${assetControlV41(character.id, "box", "箱", assets.box)}</div></div>`;
+  return `<div class="asset-row" data-asset-character="${escapePlayerAssetsHtmlV41(character.id)}"><div class="asset-row__title">玩家資產</div><div class="asset-grid">${assetControlV41(character.id,"hand","把",assets.hand)}${assetControlV41(character.id,"bag","袋",assets.bag)}${assetControlV41(character.id,"box","箱",assets.box)}</div></div>`;
 }
 
 function assetControlV41(characterId, unit, label, value) {
@@ -110,9 +93,7 @@ function assetControlV41(characterId, unit, label, value) {
 function normalizeAssetsV41(character) {
   const raw = character.assets && typeof character.assets === "object" ? character.assets : {};
   let total = Math.max(0, Number(raw.total ?? 0));
-  if (!Number.isFinite(total) || total === 0) {
-    total = Math.max(0, Number(raw.hand || 0)) + Math.max(0, Number(raw.bag || 0)) * 10 + Math.max(0, Number(raw.box || 0)) * 100;
-  }
+  if (!Number.isFinite(total) || total === 0) total = Math.max(0, Number(raw.hand || 0)) + Math.max(0, Number(raw.bag || 0)) * 10 + Math.max(0, Number(raw.box || 0)) * 100;
   const box = Math.floor(total / 100);
   const bag = Math.floor((total % 100) / 10);
   const hand = total % 10;
@@ -176,8 +157,12 @@ function setTextV41(selector, text) {
 }
 
 function persistPlayerAssetsStateV41() {
-  if (typeof save === "function") return save();
-  if (typeof saveState === "function") saveState();
+  if (typeof save === "function") save();
+  else if (typeof saveState === "function") saveState();
+  if (typeof saveCloudState === "function") {
+    window.clearTimeout(window.playerAssetsCloudSaveV41);
+    window.playerAssetsCloudSaveV41 = window.setTimeout(() => saveCloudState(), 20);
+  }
 }
 
 function escapePlayerAssetsHtmlV41(value) {
