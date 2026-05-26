@@ -1,4 +1,4 @@
-const cacheName = "trpg-assistant-cache-v41";
+const cacheName = "trpg-assistant-cache-v42";
 const filesToCache = ["./", "index.html", "styles.css", "app.js", "sync-fix.js", "ui-layout-fix.js", "interaction-fix.js", "view-mode-fix.js", "ui-polish-v40.js", "player-assets-v41.js", "manifest.webmanifest", "assets/icon.svg", "assets/scene-gate.svg"];
 const polishScript = '<script src="ui-polish-v40.js?v=40" defer></script>';
 const playerAssetsScript = '<script src="player-assets-v41.js?v=41" defer></script>';
