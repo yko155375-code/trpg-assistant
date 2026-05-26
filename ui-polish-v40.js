@@ -312,3 +312,11 @@ if (typeof render === "function") {
 
 window.addEventListener("load", applyUiPolishV40);
 applyUiPolishV40();
+
+(function loadPlayerAssetsV41() {
+  if (document.querySelector('script[src*="player-assets-v41.js"]')) return;
+  const script = document.createElement("script");
+  script.src = "player-assets-v41.js?v=41";
+  script.defer = true;
+  document.body.appendChild(script);
+})();
