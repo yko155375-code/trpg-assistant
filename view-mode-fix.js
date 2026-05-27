@@ -214,7 +214,7 @@ function renderSelectedDiceCharacter() {
 
   target.innerHTML = `
     <article class="monitor-card">
-      <div class="monitor-card__top"><strong>${escapeViewModeHtml(character.name)}</strong><span>閃避 ${escapeViewModeHtml(character.evasion)}</span></div>
+      <div class="monitor-card__top"><strong>${escapeViewModeHtml(character.name)}</strong><span>閃避值 ${escapeViewModeHtml(character.evasion)}</span></div>
       <div class="stat-grid">
         <div class="stat-control"><span>希望骰</span><strong>${character.hopeDice}</strong></div>
         <div class="stat-control"><span>壓力</span><strong>${character.stress}</strong></div>
@@ -261,6 +261,14 @@ applyViewModeFixes();
   if (document.querySelector('script[src*="ui-polish-v40.js"]')) return;
   const script = document.createElement("script");
   script.src = "ui-polish-v40.js?v=40";
+  script.defer = true;
+  document.body.appendChild(script);
+})();
+
+(function loadShopPlayerPurchaseV52() {
+  if (document.querySelector('script[src*="shop-player-purchase-v52.js"]')) return;
+  const script = document.createElement("script");
+  script.src = "shop-player-purchase-v52.js?v=52";
   script.defer = true;
   document.body.appendChild(script);
 })();
