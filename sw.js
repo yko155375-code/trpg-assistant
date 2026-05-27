@@ -1,5 +1,5 @@
-const cacheName = "trpg-assistant-cache-v58";
-const filesToCache = ["./", "index.html", "styles.css", "app.js", "sync-fix.js", "ui-layout-fix.js", "interaction-fix.js", "view-mode-fix.js", "ui-polish-v40.js", "player-assets-v41.js", "shop-v43.js", "shop-permissions-v49.js", "player-noise-shop-v50.js", "player-interface-fix-v51.js", "shop-player-purchase-v52.js", "character-attributes-v44.js", "theme-v45.js", "public-player-audio-v46.js", "player-interface-polish-v53.js", "music-scenes-v54.js", "character-create-attrs-v55.js", "player-shop-public-fix-v56.js", "fantasy-transition-v57.js", "player-layout-v58.js", "manifest.webmanifest", "assets/icon.svg", "assets/scene-gate.svg"];
+const cacheName = "trpg-assistant-cache-v59";
+const filesToCache = ["./", "index.html", "styles.css", "app.js", "sync-fix.js", "ui-layout-fix.js", "interaction-fix.js", "view-mode-fix.js", "ui-polish-v40.js", "player-assets-v41.js", "shop-v43.js", "shop-permissions-v49.js", "player-noise-shop-v50.js", "player-interface-fix-v51.js", "shop-player-purchase-v52.js", "character-attributes-v44.js", "theme-v45.js", "public-player-audio-v46.js", "player-interface-polish-v53.js", "music-scenes-v54.js", "character-create-attrs-v55.js", "player-shop-public-fix-v56.js", "fantasy-transition-v57.js", "player-layout-v58.js", "player-current-shop-v59.js", "manifest.webmanifest", "assets/icon.svg", "assets/scene-gate.svg"];
 const polishScript = '<script src="ui-polish-v40.js?v=40" defer></script>';
 const playerAssetsScript = '<script src="player-assets-v41.js?v=41" defer></script>';
 const shopScript = '<script src="shop-v43.js?v=48" defer></script>';
@@ -16,6 +16,7 @@ const characterCreateAttrsScript = '<script src="character-create-attrs-v55.js?v
 const shopPublicFixScript = '<script src="player-shop-public-fix-v56.js?v=56" defer></script>';
 const fantasyTransitionScript = '<script src="fantasy-transition-v57.js?v=57" defer></script>';
 const playerLayoutScript = '<script src="player-layout-v58.js?v=58" defer></script>';
+const playerCurrentShopScript = '<script src="player-current-shop-v59.js?v=59" defer></script>';
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -79,6 +80,9 @@ function withInjectedScripts(html) {
   }
   if (!nextHtml.includes("player-layout-v58.js")) {
     nextHtml = nextHtml.replace("</body>", `${playerLayoutScript}\n  </body>`);
+  }
+  if (!nextHtml.includes("player-current-shop-v59.js")) {
+    nextHtml = nextHtml.replace("</body>", `${playerCurrentShopScript}\n  </body>`);
   }
   return nextHtml;
 }
