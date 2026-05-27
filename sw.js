@@ -1,11 +1,12 @@
-const cacheName = "trpg-assistant-cache-v51";
-const filesToCache = ["./", "index.html", "styles.css", "app.js", "sync-fix.js", "ui-layout-fix.js", "interaction-fix.js", "view-mode-fix.js", "ui-polish-v40.js", "player-assets-v41.js", "shop-v43.js", "shop-permissions-v49.js", "player-noise-shop-v50.js", "player-interface-fix-v51.js", "character-attributes-v44.js", "theme-v45.js", "public-player-audio-v46.js", "manifest.webmanifest", "assets/icon.svg", "assets/scene-gate.svg"];
+const cacheName = "trpg-assistant-cache-v52";
+const filesToCache = ["./", "index.html", "styles.css", "app.js", "sync-fix.js", "ui-layout-fix.js", "interaction-fix.js", "view-mode-fix.js", "ui-polish-v40.js", "player-assets-v41.js", "shop-v43.js", "shop-permissions-v49.js", "player-noise-shop-v50.js", "player-interface-fix-v51.js", "shop-player-purchase-v52.js", "character-attributes-v44.js", "theme-v45.js", "public-player-audio-v46.js", "manifest.webmanifest", "assets/icon.svg", "assets/scene-gate.svg"];
 const polishScript = '<script src="ui-polish-v40.js?v=40" defer></script>';
 const playerAssetsScript = '<script src="player-assets-v41.js?v=41" defer></script>';
 const shopScript = '<script src="shop-v43.js?v=48" defer></script>';
 const shopPermissionsScript = '<script src="shop-permissions-v49.js?v=49" defer></script>';
 const playerNoiseShopScript = '<script src="player-noise-shop-v50.js?v=50" defer></script>';
 const playerInterfaceFixScript = '<script src="player-interface-fix-v51.js?v=51" defer></script>';
+const shopPlayerPurchaseScript = '<script src="shop-player-purchase-v52.js?v=52" defer></script>';
 const attributesScript = '<script src="character-attributes-v44.js?v=44" defer></script>';
 const themeScript = '<script src="theme-v45.js?v=45" defer></script>';
 const publicPlayerAudioScript = '<script src="public-player-audio-v46.js?v=47" defer></script>';
@@ -42,6 +43,9 @@ function withInjectedScripts(html) {
   }
   if (!nextHtml.includes("player-interface-fix-v51.js")) {
     nextHtml = nextHtml.replace("</body>", `${playerInterfaceFixScript}\n  </body>`);
+  }
+  if (!nextHtml.includes("shop-player-purchase-v52.js")) {
+    nextHtml = nextHtml.replace("</body>", `${shopPlayerPurchaseScript}\n  </body>`);
   }
   if (!nextHtml.includes("character-attributes-v44.js")) {
     nextHtml = nextHtml.replace("</body>", `${attributesScript}\n  </body>`);
