@@ -203,7 +203,7 @@ function renderSelectedDiceCharacter() {
   const name = select.value;
   const character = state.characters.find((item) => item.name === name);
   if (!character) {
-    target.innerHTML = '<div class="dice-source-empty">目前指定名稱是 DM。</div>';
+    target.innerHTML = '<div class="dice-source-empty">請先選擇玩家角色</div>';
     return;
   }
 
@@ -214,11 +214,11 @@ function renderSelectedDiceCharacter() {
 
   target.innerHTML = `
     <article class="monitor-card">
-      <div class="monitor-card__top"><strong>${escapeViewModeHtml(character.name)}</strong><span>閃避值 ${escapeViewModeHtml(character.evasion)}</span></div>
+      <div class="monitor-card__top"><strong>${escapeViewModeHtml(character.name)}</strong><span>閃避 ${escapeViewModeHtml(character.evasion)}</span></div>
       <div class="stat-grid">
-        <div class="stat-control"><span>希望骰</span><strong>${character.hopeDice}</strong></div>
+        <div class="stat-control"><span>希望</span><strong>${character.hopeDice}</strong></div>
         <div class="stat-control"><span>壓力</span><strong>${character.stress}</strong></div>
-        <div class="stat-control"><span>護盾槽</span><strong>${character.armor}</strong></div>
+        <div class="stat-control"><span>護盾</span><strong>${character.armor}</strong></div>
         <div class="stat-control"><span>血量</span><strong>${character.hp}</strong></div>
       </div>
     </article>
@@ -309,6 +309,14 @@ applyViewModeFixes();
   if (document.querySelector('script[src*="fantasy-transition-v57.js"]')) return;
   const script = document.createElement("script");
   script.src = "fantasy-transition-v57.js?v=57";
+  script.defer = true;
+  document.body.appendChild(script);
+})();
+
+(function loadPlayerLayoutV58() {
+  if (document.querySelector('script[src*="player-layout-v58.js"]')) return;
+  const script = document.createElement("script");
+  script.src = "player-layout-v58.js?v=58";
   script.defer = true;
   document.body.appendChild(script);
 })();
