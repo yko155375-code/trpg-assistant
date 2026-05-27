@@ -288,3 +288,11 @@ applyViewModeFixes();
   script.defer = true;
   document.body.appendChild(script);
 })();
+
+(function loadCharacterCreateAttrsV55() {
+  if (document.querySelector('script[src*="character-create-attrs-v55.js"]')) return;
+  const script = document.createElement("script");
+  script.src = "character-create-attrs-v55.js?v=55";
+  script.defer = true;
+  document.body.appendChild(script);
+})();
