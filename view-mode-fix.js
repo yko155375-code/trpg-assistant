@@ -272,3 +272,11 @@ applyViewModeFixes();
   script.defer = true;
   document.body.appendChild(script);
 })();
+
+(function loadPlayerInterfacePolishV53() {
+  if (document.querySelector('script[src*="player-interface-polish-v53.js"]')) return;
+  const script = document.createElement("script");
+  script.src = "player-interface-polish-v53.js?v=53";
+  script.defer = true;
+  document.body.appendChild(script);
+})();
