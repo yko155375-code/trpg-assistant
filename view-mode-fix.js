@@ -280,3 +280,11 @@ applyViewModeFixes();
   script.defer = true;
   document.body.appendChild(script);
 })();
+
+(function loadMusicScenesV54() {
+  if (document.querySelector('script[src*="music-scenes-v54.js"]')) return;
+  const script = document.createElement("script");
+  script.src = "music-scenes-v54.js?v=54";
+  script.defer = true;
+  document.body.appendChild(script);
+})();
