@@ -296,3 +296,19 @@ applyViewModeFixes();
   script.defer = true;
   document.body.appendChild(script);
 })();
+
+(function loadShopPublicFixV56() {
+  if (document.querySelector('script[src*="player-shop-public-fix-v56.js"]')) return;
+  const script = document.createElement("script");
+  script.src = "player-shop-public-fix-v56.js?v=56";
+  script.defer = true;
+  document.body.appendChild(script);
+})();
+
+(function loadFantasyTransitionV57() {
+  if (document.querySelector('script[src*="fantasy-transition-v57.js"]')) return;
+  const script = document.createElement("script");
+  script.src = "fantasy-transition-v57.js?v=57";
+  script.defer = true;
+  document.body.appendChild(script);
+})();
