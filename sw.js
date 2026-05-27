@@ -1,5 +1,5 @@
-const cacheName = "trpg-assistant-cache-v54";
-const filesToCache = ["./", "index.html", "styles.css", "app.js", "sync-fix.js", "ui-layout-fix.js", "interaction-fix.js", "view-mode-fix.js", "ui-polish-v40.js", "player-assets-v41.js", "shop-v43.js", "shop-permissions-v49.js", "player-noise-shop-v50.js", "player-interface-fix-v51.js", "shop-player-purchase-v52.js", "character-attributes-v44.js", "theme-v45.js", "public-player-audio-v46.js", "player-interface-polish-v53.js", "music-scenes-v54.js", "manifest.webmanifest", "assets/icon.svg", "assets/scene-gate.svg"];
+const cacheName = "trpg-assistant-cache-v55";
+const filesToCache = ["./", "index.html", "styles.css", "app.js", "sync-fix.js", "ui-layout-fix.js", "interaction-fix.js", "view-mode-fix.js", "ui-polish-v40.js", "player-assets-v41.js", "shop-v43.js", "shop-permissions-v49.js", "player-noise-shop-v50.js", "player-interface-fix-v51.js", "shop-player-purchase-v52.js", "character-attributes-v44.js", "theme-v45.js", "public-player-audio-v46.js", "player-interface-polish-v53.js", "music-scenes-v54.js", "character-create-attrs-v55.js", "manifest.webmanifest", "assets/icon.svg", "assets/scene-gate.svg"];
 const polishScript = '<script src="ui-polish-v40.js?v=40" defer></script>';
 const playerAssetsScript = '<script src="player-assets-v41.js?v=41" defer></script>';
 const shopScript = '<script src="shop-v43.js?v=48" defer></script>';
@@ -12,6 +12,7 @@ const themeScript = '<script src="theme-v45.js?v=45" defer></script>';
 const publicPlayerAudioScript = '<script src="public-player-audio-v46.js?v=47" defer></script>';
 const playerInterfacePolishScript = '<script src="player-interface-polish-v53.js?v=53" defer></script>';
 const musicScenesScript = '<script src="music-scenes-v54.js?v=54" defer></script>';
+const characterCreateAttrsScript = '<script src="character-create-attrs-v55.js?v=55" defer></script>';
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -63,6 +64,9 @@ function withInjectedScripts(html) {
   }
   if (!nextHtml.includes("music-scenes-v54.js")) {
     nextHtml = nextHtml.replace("</body>", `${musicScenesScript}\n  </body>`);
+  }
+  if (!nextHtml.includes("character-create-attrs-v55.js")) {
+    nextHtml = nextHtml.replace("</body>", `${characterCreateAttrsScript}\n  </body>`);
   }
   return nextHtml;
 }
