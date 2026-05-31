@@ -1,6 +1,7 @@
 import { renderCharacterEditor } from "./characters.js";
 import { renderDicePanel } from "./dice.js";
 import { renderPublicInfoEditor } from "./public-info.js";
+import { renderDmShopManager } from "./shop.js";
 
 const dmPageContent = {
   overview: {
@@ -80,6 +81,19 @@ export function renderDmPage(pageId, state) {
           <p class="placeholder">編輯玩家端可查看的場景、線索、任務目標與公告。</p>
         </div>
         ${renderPublicInfoEditor(state)}
+      </section>
+    `;
+  }
+
+  if (pageId === "shop") {
+    return `
+      <section class="dm-page-card" aria-labelledby="active-page-title">
+        <div class="dm-page-heading">
+          <p class="eyebrow">DM 端 · 商店</p>
+          <h2 id="active-page-title">商店</h2>
+          <p class="placeholder">管理商品資料、庫存與購買紀錄。</p>
+        </div>
+        ${renderDmShopManager(state)}
       </section>
     `;
   }
