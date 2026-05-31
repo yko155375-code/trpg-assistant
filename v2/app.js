@@ -12,6 +12,7 @@ import {
 } from "./modules/characters.js";
 import { addRoll, clearRolls, rollDuality, rollFormula } from "./modules/dice.js";
 import { updatePublicInfoField } from "./modules/public-info.js";
+import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js";
 import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js";
 import { renderDmPage } from "./modules/dm-view.js";
 import { renderPlayerPage } from "./modules/player-view.js";
@@ -102,7 +103,7 @@ function render() {
       ${renderPanel()}
     </main>
 
-    <p class="footer-note">TRPG Assistant v2 stage 4B</p>
+    <p class="footer-note">TRPG Assistant v2 stage 4C</p>
   `;
 }
 
@@ -155,6 +156,18 @@ app.addEventListener("click", (event) => {
 
   if (actionButton.dataset.action === "roll-duality") {
     updateState(addRoll(state, rollDuality(), actionButton.dataset.rollActor || "玩家"));
+    return;
+  }
+
+  if (actionButton.dataset.action === "delete-shop-item") {
+    if (window.confirm("確定要刪除這個商品嗎？")) {
+      updateState(deleteShopItem(state, actionButton.dataset.shopItemId));
+    }
+    return;
+  }
+
+  if (actionButton.dataset.action === "purchase-shop-item") {
+    updateState(purchaseShopItem(state, actionButton.dataset.shopItemId));
   }
 });
 
@@ -163,6 +176,19 @@ app.addEventListener("change", (event) => {
 
   if (characterSelect) {
     updateState(selectCharacter(state, characterSelect.value));
+  }
+
+  const shopItemField = event.target.closest("[data-shop-item-field]");
+
+  if (shopItemField) {
+    updateState(
+      updateShopItem(
+        state,
+        shopItemField.dataset.shopItemId,
+        shopItemField.dataset.shopItemField,
+        shopItemField.value,
+      ),
+    );
   }
 });
 
@@ -197,9 +223,24 @@ app.addEventListener("input", (event) => {
   saveStateOnly(updatePublicInfoField(state, publicInfoField, event.target.value));
 });
 
+app.addEventListener("input", (event) => {
+  const shopItemField = event.target.closest("[data-shop-item-field]");
+  if (!shopItemField) return;
+
+  saveStateOnly(
+    updateShopItem(
+      state,
+      shopItemField.dataset.shopItemId,
+      shopItemField.dataset.shopItemField,
+      shopItemField.value,
+    ),
+  );
+});
+
 app.addEventListener("submit", (event) => {
   const addCharacterForm = event.target.closest("[data-add-character-form]");
   const addAssetForm = event.target.closest("[data-add-asset-form]");
+  const addShopItemForm = event.target.closest("[data-add-shop-item-form]");
 
   if (addCharacterForm) {
     event.preventDefault();
@@ -212,6 +253,20 @@ app.addEventListener("submit", (event) => {
     event.preventDefault();
     const input = addAssetForm.querySelector("[data-asset-entry-input]");
     updateState(addAssetEntry(state, addAssetForm.dataset.characterId, addAssetForm.dataset.listKey, input.value));
+    return;
+  }
+
+  if (addShopItemForm) {
+    event.preventDefault();
+    updateState(
+      addShopItem(state, {
+        name: addShopItemForm.querySelector("[data-new-shop-name]").value.trim(),
+        type: addShopItemForm.querySelector("[data-new-shop-type]").value,
+        price: addShopItemForm.querySelector("[data-new-shop-price]").value,
+        stock: addShopItemForm.querySelector("[data-new-shop-stock]").value,
+        description: addShopItemForm.querySelector("[data-new-shop-description]").value,
+      }),
+    );
     return;
   }
 
