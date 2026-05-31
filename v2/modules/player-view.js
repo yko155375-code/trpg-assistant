@@ -1,3 +1,5 @@
+import { getCurrentCharacter, renderAssetsEditor, renderCharacterEditor } from "./characters.js";
+
 const pageContent = {
   characters: {
     title: "角色",
@@ -29,6 +31,27 @@ const pageContent = {
 export function renderPlayerPage(pageId, state) {
   const page = pageContent[pageId] || pageContent.characters;
   const characterCount = Array.isArray(state.characters) ? state.characters.length : 0;
+  const currentCharacter = getCurrentCharacter(state);
+
+  if (pageId === "characters") {
+    return `
+      <section class="mobile-page-card" aria-labelledby="active-page-title">
+        <p class="eyebrow">玩家端 · 角色</p>
+        <h2 id="active-page-title">角色</h2>
+        ${renderCharacterEditor(state, { includeAssets: false, title: "目前角色" })}
+      </section>
+    `;
+  }
+
+  if (pageId === "assets") {
+    return `
+      <section class="mobile-page-card" aria-labelledby="active-page-title">
+        <p class="eyebrow">玩家端 · 資產</p>
+        <h2 id="active-page-title">資產</h2>
+        ${renderAssetsEditor(state)}
+      </section>
+    `;
+  }
 
   return `
     <section class="mobile-page-card" aria-labelledby="active-page-title">
@@ -49,6 +72,7 @@ export function renderPlayerPage(pageId, state) {
       </div>
       <div class="state-card" aria-label="玩家端狀態">
         <span><strong>目前頁面：</strong>${page.title}</span>
+        <span><strong>目前角色：</strong>${currentCharacter ? currentCharacter.name : "未選擇"}</span>
         <span><strong>角色數量：</strong>${characterCount}</span>
         <span><strong>最後更新：</strong>${state.meta.updatedAt}</span>
       </div>
