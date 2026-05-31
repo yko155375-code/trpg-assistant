@@ -1,5 +1,6 @@
 import { renderCharacterEditor } from "./characters.js";
 import { renderDicePanel } from "./dice.js";
+import { renderMonsterManager, renderMonsterOverview } from "./monsters.js";
 import { renderPublicInfoEditor } from "./public-info.js";
 import { renderDmShopManager } from "./shop.js";
 
@@ -45,6 +46,37 @@ export function renderDmPage(pageId, state) {
   const page = dmPageContent[pageId] || dmPageContent.overview;
   const characterCount = Array.isArray(state.characters) ? state.characters.length : 0;
   const monsterCount = Array.isArray(state.monsters) ? state.monsters.length : 0;
+
+  if (pageId === "overview") {
+    return `
+      <section class="dm-page-card" aria-labelledby="active-page-title">
+        <div class="dm-page-heading">
+          <p class="eyebrow">DM 端 · 總覽</p>
+          <h2 id="active-page-title">總覽</h2>
+          <p class="placeholder">集中查看本場遊戲的主持狀態。</p>
+        </div>
+        <div class="dm-section-grid" aria-label="總覽管理區塊">
+          <article class="dm-section-card">
+            <span>目前場景</span>
+            <small>${state.session.scene || "尚未設定"}</small>
+          </article>
+          <article class="dm-section-card">
+            <span>玩家摘要</span>
+            <small>玩家數：${characterCount}</small>
+          </article>
+          ${renderMonsterOverview(state)}
+          <article class="dm-section-card">
+            <span>恐懼點</span>
+            <small>${state.session.fear}</small>
+          </article>
+          <article class="dm-section-card">
+            <span>希望池</span>
+            <small>${state.session.hopePool}</small>
+          </article>
+        </div>
+      </section>
+    `;
+  }
 
   if (pageId === "players") {
     return `
@@ -94,6 +126,19 @@ export function renderDmPage(pageId, state) {
           <p class="placeholder">管理商品資料、庫存與購買紀錄。</p>
         </div>
         ${renderDmShopManager(state)}
+      </section>
+    `;
+  }
+
+  if (pageId === "monsters") {
+    return `
+      <section class="dm-page-card" aria-labelledby="active-page-title">
+        <div class="dm-page-heading">
+          <p class="eyebrow">DM 端 · 怪物</p>
+          <h2 id="active-page-title">怪物</h2>
+          <p class="placeholder">新增、編輯、刪除怪物，並快速調整 HP 與壓力。</p>
+        </div>
+        ${renderMonsterManager(state)}
       </section>
     `;
   }
