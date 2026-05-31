@@ -1,5 +1,6 @@
 import { loadState, saveState, STORAGE_KEY } from "./modules/storage.js";
 import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js";
+import { renderPlayerPage } from "./modules/player-view.js";
 
 const app = document.querySelector("#app");
 let state = saveState(loadState());
@@ -26,6 +27,10 @@ function renderPanel() {
   const page = pages.find((item) => item.id === activePageId) || pages[0];
   const modeLabel = state.ui.mode === "dm" ? "DM 端" : "玩家端";
 
+  if (state.ui.mode === "player") {
+    return renderPlayerPage(page.id, state);
+  }
+
   return `
     <section class="page-panel" aria-labelledby="active-page-title">
       <p class="eyebrow">${modeLabel} · v2 第一階段骨架</p>
@@ -44,6 +49,7 @@ function renderPanel() {
 function render() {
   const pages = getActivePages(state.ui.mode);
   const layoutClass = state.ui.mode === "dm" ? "layout is-dm" : "layout is-player";
+  const isPlayerMode = state.ui.mode === "player";
 
   app.innerHTML = `
     <header class="app-header">
@@ -59,7 +65,7 @@ function render() {
     </header>
 
     <main class="${layoutClass}">
-      <nav class="tab-list" aria-label="${state.ui.mode === "dm" ? "DM 分頁" : "玩家分頁"}">
+      <nav class="tab-list ${isPlayerMode ? "player-bottom-tabs" : ""}" aria-label="${state.ui.mode === "dm" ? "DM 分頁" : "玩家分頁"}">
         ${pages.map((page) => renderPageButton(page, "tab-button")).join("")}
       </nav>
       <nav class="sidebar-list" aria-label="DM 側邊欄">
