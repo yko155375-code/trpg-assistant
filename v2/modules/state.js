@@ -1,6 +1,7 @@
 import { normalizeCharacters } from "./characters.js";
+import { normalizeSession } from "./public-info.js";
 
-export const APP_VERSION = "v2-stage-4a";
+export const APP_VERSION = "v2-stage-4b";
 
 export function createDefaultState() {
   const now = new Date().toISOString();
@@ -42,7 +43,6 @@ export function createDefaultState() {
 export function normalizeState(input) {
   const fallback = createDefaultState();
   const source = input && typeof input === "object" ? input : {};
-  const characters = normalizeCharacters(source.characters);
 
   return {
     ...fallback,
@@ -52,11 +52,8 @@ export function normalizeState(input) {
       ...(source.meta || {}),
       version: APP_VERSION,
     },
-    session: {
-      ...fallback.session,
-      ...(source.session || {}),
-    },
-    characters,
+    session: normalizeSession({ ...fallback.session, ...(source.session || {}) }),
+    characters: normalizeCharacters(source.characters),
     monsters: Array.isArray(source.monsters) ? source.monsters : fallback.monsters,
     shop: {
       ...fallback.shop,
@@ -74,9 +71,11 @@ export function normalizeState(input) {
     ui: {
       ...fallback.ui,
       ...(source.ui || {}),
-      currentCharacterId: characters.some((character) => character.id === source.ui?.currentCharacterId)
+      currentCharacterId: normalizeCharacters(source.characters).some(
+        (character) => character.id === source.ui?.currentCharacterId,
+      )
         ? source.ui.currentCharacterId
-        : characters[0]?.id || null,
+        : normalizeCharacters(source.characters)[0]?.id || null,
     },
   };
 }
