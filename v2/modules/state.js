@@ -1,8 +1,9 @@
 import { normalizeCharacters } from "./characters.js";
+import { normalizeMonsters } from "./monsters.js";
 import { normalizeSession } from "./public-info.js";
 import { normalizeShop } from "./shop.js";
 
-export const APP_VERSION = "v2-stage-4c";
+export const APP_VERSION = "v2-stage-4d";
 
 export function createDefaultState() {
   const now = new Date().toISOString();
@@ -55,7 +56,7 @@ export function normalizeState(input) {
     },
     session: normalizeSession({ ...fallback.session, ...(source.session || {}) }),
     characters: normalizeCharacters(source.characters),
-    monsters: Array.isArray(source.monsters) ? source.monsters : fallback.monsters,
+    monsters: normalizeMonsters(source.monsters),
     shop: normalizeShop({ ...fallback.shop, ...(source.shop || {}) }),
     rolls: Array.isArray(source.rolls) ? source.rolls : fallback.rolls,
     audio: {
