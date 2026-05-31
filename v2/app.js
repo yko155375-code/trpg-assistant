@@ -10,6 +10,8 @@ import {
   updateCharacterMoney,
   updateCharacterStat,
 } from "./modules/characters.js";
+import { addRoll, clearRolls, rollDuality, rollFormula } from "./modules/dice.js";
+import { updatePublicInfoField } from "./modules/public-info.js";
 import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js";
 import { renderDmPage } from "./modules/dm-view.js";
 import { renderPlayerPage } from "./modules/player-view.js";
@@ -42,6 +44,7 @@ function renderPanel() {
   const pages = getActivePages(state.ui.mode);
   const activePageId = getActivePageId(state);
   const page = pages.find((item) => item.id === activePageId) || pages[0];
+  const modeLabel = state.ui.mode === "dm" ? "DM 端" : "玩家端";
 
   if (state.ui.mode === "player") {
     return renderPlayerPage(page.id, state);
@@ -99,7 +102,7 @@ function render() {
       ${renderPanel()}
     </main>
 
-    <p class="footer-note">TRPG Assistant v2 stage 4A</p>
+    <p class="footer-note">TRPG Assistant v2 stage 4B</p>
   `;
 }
 
@@ -142,6 +145,16 @@ app.addEventListener("click", (event) => {
         Number(actionButton.dataset.entryIndex),
       ),
     );
+    return;
+  }
+
+  if (actionButton.dataset.action === "clear-rolls") {
+    updateState(clearRolls(state));
+    return;
+  }
+
+  if (actionButton.dataset.action === "roll-duality") {
+    updateState(addRoll(state, rollDuality(), actionButton.dataset.rollActor || "玩家"));
   }
 });
 
@@ -177,6 +190,13 @@ app.addEventListener("input", (event) => {
   }
 });
 
+app.addEventListener("input", (event) => {
+  const publicInfoField = event.target.dataset.publicInfoField;
+  if (!publicInfoField) return;
+
+  saveStateOnly(updatePublicInfoField(state, publicInfoField, event.target.value));
+});
+
 app.addEventListener("submit", (event) => {
   const addCharacterForm = event.target.closest("[data-add-character-form]");
   const addAssetForm = event.target.closest("[data-add-asset-form]");
@@ -192,6 +212,22 @@ app.addEventListener("submit", (event) => {
     event.preventDefault();
     const input = addAssetForm.querySelector("[data-asset-entry-input]");
     updateState(addAssetEntry(state, addAssetForm.dataset.characterId, addAssetForm.dataset.listKey, input.value));
+    return;
+  }
+
+  const rollForm = event.target.closest("[data-roll-form]");
+  if (rollForm) {
+    event.preventDefault();
+    const input = rollForm.querySelector("[data-roll-formula]");
+    const message = rollForm.parentElement.querySelector("[data-roll-message]");
+    const result = rollFormula(input.value);
+
+    if (!result.ok) {
+      if (message) message.textContent = result.error;
+      return;
+    }
+
+    updateState(addRoll(state, result, rollForm.dataset.rollActor || "玩家"));
   }
 });
 
