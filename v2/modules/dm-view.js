@@ -1,4 +1,6 @@
 import { renderCharacterEditor } from "./characters.js";
+import { renderDicePanel } from "./dice.js";
+import { renderPublicInfoEditor } from "./public-info.js";
 
 const dmPageContent = {
   overview: {
@@ -52,6 +54,32 @@ export function renderDmPage(pageId, state) {
           <p class="placeholder">新增、選擇、編輯、刪除角色，並管理同一份角色狀態與資產。</p>
         </div>
         ${renderCharacterEditor(state, { includeAssets: true, title: "玩家角色管理" })}
+      </section>
+    `;
+  }
+
+  if (pageId === "dice") {
+    return `
+      <section class="dm-page-card" aria-labelledby="active-page-title">
+        <div class="dm-page-heading">
+          <p class="eyebrow">DM 端 · 骰子</p>
+          <h2 id="active-page-title">骰子</h2>
+          <p class="placeholder">DM 擲骰與二元骰會寫入同一份擲骰紀錄。</p>
+        </div>
+        ${renderDicePanel(state, { actor: "DM", title: "DM 擲骰" })}
+      </section>
+    `;
+  }
+
+  if (pageId === "public-info") {
+    return `
+      <section class="dm-page-card" aria-labelledby="active-page-title">
+        <div class="dm-page-heading">
+          <p class="eyebrow">DM 端 · 公開資訊</p>
+          <h2 id="active-page-title">公開資訊</h2>
+          <p class="placeholder">編輯玩家端可查看的場景、線索、任務目標與公告。</p>
+        </div>
+        ${renderPublicInfoEditor(state)}
       </section>
     `;
   }
