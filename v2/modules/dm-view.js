@@ -73,6 +73,11 @@ export function renderDmPage(pageId, state) {
             <span>希望池</span>
             <small>${state.session.hopePool}</small>
           </article>
+          <article class="dm-section-card">
+            <span>測試資料</span>
+            <small>重設後會清空 v2 localStorage 狀態。</small>
+            <button class="danger-button" type="button" data-action="reset-v2-state">重設 v2 測試資料</button>
+          </article>
         </div>
       </section>
     `;
