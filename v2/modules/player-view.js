@@ -1,6 +1,7 @@
 import { getCurrentCharacter, renderAssetsEditor, renderCharacterEditor } from "./characters.js";
 import { renderDicePanel } from "./dice.js";
 import { renderPublicInfoView } from "./public-info.js";
+import { renderPlayerShop } from "./shop.js";
 
 const pageContent = {
   characters: {
@@ -71,6 +72,16 @@ export function renderPlayerPage(pageId, state) {
         <p class="eyebrow">玩家端 · 公開資訊</p>
         <h2 id="active-page-title">公開資訊</h2>
         ${renderPublicInfoView(state)}
+      </section>
+    `;
+  }
+
+  if (pageId === "shop") {
+    return `
+      <section class="mobile-page-card" aria-labelledby="active-page-title">
+        <p class="eyebrow">玩家端 · 商店</p>
+        <h2 id="active-page-title">商店</h2>
+        ${renderPlayerShop(state)}
       </section>
     `;
   }
