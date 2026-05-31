@@ -1,9 +1,11 @@
 import { loadState, saveState, STORAGE_KEY } from "./modules/storage.js";
 import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js";
+import { renderDmPage } from "./modules/dm-view.js";
 import { renderPlayerPage } from "./modules/player-view.js";
 
 const app = document.querySelector("#app");
 let state = saveState(loadState());
+let isDmMenuOpen = false;
 
 function updateState(nextState) {
   state = saveState(nextState);
@@ -31,18 +33,23 @@ function renderPanel() {
     return renderPlayerPage(page.id, state);
   }
 
+  return renderDmPage(page.id, state);
+}
+
+function renderDmMobileNav(pages) {
+  const activePage = pages.find((page) => page.id === getActivePageId(state)) || pages[0];
+
   return `
-    <section class="page-panel" aria-labelledby="active-page-title">
-      <p class="eyebrow">${modeLabel} · v2 第一階段骨架</p>
-      <h2 id="active-page-title">${page.label}</h2>
-      <p class="placeholder">此頁目前是空白骨架。後續階段會依規格補上 ${page.label} 功能。</p>
-      <div class="state-card" aria-label="目前狀態">
-        <span><strong>目前模式：</strong>${state.ui.mode === "dm" ? "DM" : "玩家"}</span>
-        <span><strong>目前頁面：</strong>${page.label}</span>
-        <span><strong>localStorage key：</strong>${STORAGE_KEY}</span>
-        <span><strong>最後更新：</strong>${state.meta.updatedAt}</span>
-      </div>
-    </section>
+    <div class="dm-mobile-nav">
+      <button class="dm-menu-button" type="button" data-dm-menu-toggle aria-expanded="${isDmMenuOpen}" aria-controls="dm-mobile-menu">
+        <span aria-hidden="true">☰</span>
+        <span>DM 選單</span>
+      </button>
+      <strong>${activePage.label}</strong>
+    </div>
+    <nav id="dm-mobile-menu" class="dm-mobile-menu ${isDmMenuOpen ? "is-open" : ""}" aria-label="DM 手機選單">
+      ${pages.map((page) => renderPageButton(page, "dm-mobile-menu-button")).join("")}
+    </nav>
   `;
 }
 
@@ -65,9 +72,13 @@ function render() {
     </header>
 
     <main class="${layoutClass}">
-      <nav class="tab-list ${isPlayerMode ? "player-bottom-tabs" : ""}" aria-label="${state.ui.mode === "dm" ? "DM 分頁" : "玩家分頁"}">
-        ${pages.map((page) => renderPageButton(page, "tab-button")).join("")}
-      </nav>
+      ${
+        isPlayerMode
+          ? `<nav class="tab-list player-bottom-tabs" aria-label="玩家分頁">
+              ${pages.map((page) => renderPageButton(page, "tab-button")).join("")}
+            </nav>`
+          : renderDmMobileNav(pages)
+      }
       <nav class="sidebar-list" aria-label="DM 側邊欄">
         ${pages.map((page) => renderPageButton(page, "sidebar-button")).join("")}
       </nav>
@@ -81,13 +92,22 @@ function render() {
 app.addEventListener("click", (event) => {
   const modeButton = event.target.closest("[data-mode]");
   const pageButton = event.target.closest("[data-page]");
+  const dmMenuButton = event.target.closest("[data-dm-menu-toggle]");
+
+  if (dmMenuButton) {
+    isDmMenuOpen = !isDmMenuOpen;
+    render();
+    return;
+  }
 
   if (modeButton) {
+    isDmMenuOpen = false;
     updateState(setMode(state, modeButton.dataset.mode));
     return;
   }
 
   if (pageButton) {
+    isDmMenuOpen = false;
     updateState(setActivePage(state, pageButton.dataset.page));
   }
 });
