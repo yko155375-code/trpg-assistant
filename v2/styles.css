@@ -390,6 +390,18 @@ button {
   overflow-wrap: anywhere;
 }
 
+.asset-entry-list input {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: 8px 9px;
+  border: 1px solid rgba(243, 234, 216, 0.16);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--text);
+  font: inherit;
+}
+
 .full-width-button {
   width: 100%;
 }
