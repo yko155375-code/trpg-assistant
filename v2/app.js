@@ -5,6 +5,7 @@ import {
   deleteAssetEntry,
   deleteCharacter,
   selectCharacter,
+  updateAssetEntry,
   updateCharacterAttribute,
   updateCharacterField,
   updateCharacterMoney,
@@ -14,6 +15,7 @@ import { addRoll, clearRolls, rollDuality, rollFormula } from "./modules/dice.js
 import { addMonster, adjustMonsterValue, deleteMonster, updateMonster } from "./modules/monsters.js";
 import { updatePublicInfoField } from "./modules/public-info.js";
 import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js";
+import { createDefaultState } from "./modules/state.js";
 import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js";
 import { renderDmPage } from "./modules/dm-view.js";
 import { renderPlayerPage } from "./modules/player-view.js";
@@ -104,7 +106,7 @@ function render() {
       ${renderPanel()}
     </main>
 
-    <p class="footer-note">TRPG Assistant v2 stage 4D</p>
+    <p class="footer-note">TRPG Assistant v2 stage 4E</p>
   `;
 }
 
@@ -188,6 +190,13 @@ app.addEventListener("click", (event) => {
         Number(actionButton.dataset.delta),
       ),
     );
+    return;
+  }
+
+  if (actionButton.dataset.action === "reset-v2-state") {
+    if (window.confirm("確定要重設 v2 測試資料嗎？") && window.confirm("再次確認：這會清空目前 v2 localStorage。")) {
+      updateState(createDefaultState());
+    }
   }
 });
 
@@ -234,6 +243,21 @@ app.addEventListener("input", (event) => {
   if (event.target.matches("[data-money-field]")) {
     saveStateOnly(updateCharacterMoney(state, characterId, event.target.value));
   }
+});
+
+app.addEventListener("input", (event) => {
+  const assetEntryField = event.target.closest("[data-asset-entry-field]");
+  if (!assetEntryField) return;
+
+  saveStateOnly(
+    updateAssetEntry(
+      state,
+      assetEntryField.dataset.characterId,
+      assetEntryField.dataset.listKey,
+      Number(assetEntryField.dataset.entryIndex),
+      assetEntryField.value,
+    ),
+  );
 });
 
 app.addEventListener("input", (event) => {
@@ -329,6 +353,7 @@ app.addEventListener("submit", (event) => {
       return;
     }
 
+    if (message) message.textContent = "";
     updateState(addRoll(state, result, rollForm.dataset.rollActor || "玩家"));
   }
 });
