@@ -1,4 +1,15 @@
 import { loadState, saveState, STORAGE_KEY } from "./modules/storage.js";
+import {
+  addAssetEntry,
+  addCharacter,
+  deleteAssetEntry,
+  deleteCharacter,
+  selectCharacter,
+  updateCharacterAttribute,
+  updateCharacterField,
+  updateCharacterMoney,
+  updateCharacterStat,
+} from "./modules/characters.js";
 import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js";
 import { renderDmPage } from "./modules/dm-view.js";
 import { renderPlayerPage } from "./modules/player-view.js";
@@ -10,6 +21,10 @@ let isDmMenuOpen = false;
 function updateState(nextState) {
   state = saveState(nextState);
   render();
+}
+
+function saveStateOnly(nextState) {
+  state = saveState(nextState);
 }
 
 function renderModeButton(mode, label) {
@@ -27,7 +42,6 @@ function renderPanel() {
   const pages = getActivePages(state.ui.mode);
   const activePageId = getActivePageId(state);
   const page = pages.find((item) => item.id === activePageId) || pages[0];
-  const modeLabel = state.ui.mode === "dm" ? "DM 端" : "玩家端";
 
   if (state.ui.mode === "player") {
     return renderPlayerPage(page.id, state);
@@ -85,7 +99,7 @@ function render() {
       ${renderPanel()}
     </main>
 
-    <p class="footer-note">TRPG Assistant v2 stage 1</p>
+    <p class="footer-note">TRPG Assistant v2 stage 4A</p>
   `;
 }
 
@@ -93,6 +107,7 @@ app.addEventListener("click", (event) => {
   const modeButton = event.target.closest("[data-mode]");
   const pageButton = event.target.closest("[data-page]");
   const dmMenuButton = event.target.closest("[data-dm-menu-toggle]");
+  const actionButton = event.target.closest("[data-action]");
 
   if (dmMenuButton) {
     isDmMenuOpen = !isDmMenuOpen;
@@ -109,6 +124,74 @@ app.addEventListener("click", (event) => {
   if (pageButton) {
     isDmMenuOpen = false;
     updateState(setActivePage(state, pageButton.dataset.page));
+  }
+
+  if (!actionButton) return;
+
+  if (actionButton.dataset.action === "delete-character") {
+    updateState(deleteCharacter(state, actionButton.dataset.characterId));
+    return;
+  }
+
+  if (actionButton.dataset.action === "delete-asset-entry") {
+    updateState(
+      deleteAssetEntry(
+        state,
+        actionButton.dataset.characterId,
+        actionButton.dataset.listKey,
+        Number(actionButton.dataset.entryIndex),
+      ),
+    );
+  }
+});
+
+app.addEventListener("change", (event) => {
+  const characterSelect = event.target.closest("[data-character-select]");
+
+  if (characterSelect) {
+    updateState(selectCharacter(state, characterSelect.value));
+  }
+});
+
+app.addEventListener("input", (event) => {
+  const characterId = event.target.dataset.characterId;
+  if (!characterId) return;
+
+  if (event.target.dataset.characterField) {
+    saveStateOnly(updateCharacterField(state, characterId, event.target.dataset.characterField, event.target.value));
+    return;
+  }
+
+  if (event.target.dataset.statField) {
+    saveStateOnly(updateCharacterStat(state, characterId, event.target.dataset.statField, event.target.value));
+    return;
+  }
+
+  if (event.target.dataset.attributeField) {
+    saveStateOnly(updateCharacterAttribute(state, characterId, event.target.dataset.attributeField, event.target.value));
+    return;
+  }
+
+  if (event.target.matches("[data-money-field]")) {
+    saveStateOnly(updateCharacterMoney(state, characterId, event.target.value));
+  }
+});
+
+app.addEventListener("submit", (event) => {
+  const addCharacterForm = event.target.closest("[data-add-character-form]");
+  const addAssetForm = event.target.closest("[data-add-asset-form]");
+
+  if (addCharacterForm) {
+    event.preventDefault();
+    const input = addCharacterForm.querySelector("[data-new-character-name]");
+    updateState(addCharacter(state, input.value.trim()));
+    return;
+  }
+
+  if (addAssetForm) {
+    event.preventDefault();
+    const input = addAssetForm.querySelector("[data-asset-entry-input]");
+    updateState(addAssetEntry(state, addAssetForm.dataset.characterId, addAssetForm.dataset.listKey, input.value));
   }
 });
 
