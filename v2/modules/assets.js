@@ -6,7 +6,7 @@ export const assetLists = [
 
 export function normalizeAssets(assets = {}) {
   return {
-    money: Number.isFinite(Number(assets.money)) ? Number(assets.money) : 0,
+    money: Number.isFinite(Number(assets.money)) ? Math.max(0, Number(assets.money)) : 0,
     items: Array.isArray(assets.items) ? assets.items : [],
     equipment: Array.isArray(assets.equipment) ? assets.equipment : [],
     consumables: Array.isArray(assets.consumables) ? assets.consumables : [],
