@@ -1,4 +1,6 @@
 import { getCurrentCharacter, renderAssetsEditor, renderCharacterEditor } from "./characters.js";
+import { renderDicePanel } from "./dice.js";
+import { renderPublicInfoView } from "./public-info.js";
 
 const pageContent = {
   characters: {
@@ -49,6 +51,26 @@ export function renderPlayerPage(pageId, state) {
         <p class="eyebrow">玩家端 · 資產</p>
         <h2 id="active-page-title">資產</h2>
         ${renderAssetsEditor(state)}
+      </section>
+    `;
+  }
+
+  if (pageId === "dice") {
+    return `
+      <section class="mobile-page-card" aria-labelledby="active-page-title">
+        <p class="eyebrow">玩家端 · 擲骰</p>
+        <h2 id="active-page-title">擲骰</h2>
+        ${renderDicePanel(state, { actor: currentCharacter ? currentCharacter.name : "玩家", title: "玩家擲骰" })}
+      </section>
+    `;
+  }
+
+  if (pageId === "public-info") {
+    return `
+      <section class="mobile-page-card" aria-labelledby="active-page-title">
+        <p class="eyebrow">玩家端 · 公開資訊</p>
+        <h2 id="active-page-title">公開資訊</h2>
+        ${renderPublicInfoView(state)}
       </section>
     `;
   }
