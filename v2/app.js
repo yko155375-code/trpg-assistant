@@ -11,6 +11,7 @@ import {
   updateCharacterStat,
 } from "./modules/characters.js";
 import { addRoll, clearRolls, rollDuality, rollFormula } from "./modules/dice.js";
+import { addMonster, adjustMonsterValue, deleteMonster, updateMonster } from "./modules/monsters.js";
 import { updatePublicInfoField } from "./modules/public-info.js";
 import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js";
 import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js";
@@ -103,7 +104,7 @@ function render() {
       ${renderPanel()}
     </main>
 
-    <p class="footer-note">TRPG Assistant v2 stage 4C</p>
+    <p class="footer-note">TRPG Assistant v2 stage 4D</p>
   `;
 }
 
@@ -168,6 +169,25 @@ app.addEventListener("click", (event) => {
 
   if (actionButton.dataset.action === "purchase-shop-item") {
     updateState(purchaseShopItem(state, actionButton.dataset.shopItemId));
+    return;
+  }
+
+  if (actionButton.dataset.action === "delete-monster") {
+    if (window.confirm("確定要刪除這隻怪物嗎？")) {
+      updateState(deleteMonster(state, actionButton.dataset.monsterId));
+    }
+    return;
+  }
+
+  if (actionButton.dataset.action === "adjust-monster") {
+    updateState(
+      adjustMonsterValue(
+        state,
+        actionButton.dataset.monsterId,
+        actionButton.dataset.monsterField,
+        Number(actionButton.dataset.delta),
+      ),
+    );
   }
 });
 
@@ -237,10 +257,25 @@ app.addEventListener("input", (event) => {
   );
 });
 
+app.addEventListener("input", (event) => {
+  const monsterField = event.target.closest("[data-monster-field]");
+  if (!monsterField) return;
+
+  saveStateOnly(
+    updateMonster(
+      state,
+      monsterField.dataset.monsterId,
+      monsterField.dataset.monsterField,
+      monsterField.value,
+    ),
+  );
+});
+
 app.addEventListener("submit", (event) => {
   const addCharacterForm = event.target.closest("[data-add-character-form]");
   const addAssetForm = event.target.closest("[data-add-asset-form]");
   const addShopItemForm = event.target.closest("[data-add-shop-item-form]");
+  const addMonsterForm = event.target.closest("[data-add-monster-form]");
 
   if (addCharacterForm) {
     event.preventDefault();
@@ -267,6 +302,18 @@ app.addEventListener("submit", (event) => {
         description: addShopItemForm.querySelector("[data-new-shop-description]").value,
       }),
     );
+    return;
+  }
+
+  if (addMonsterForm) {
+    event.preventDefault();
+    const values = Object.fromEntries(
+      Array.from(addMonsterForm.querySelectorAll("[data-new-monster-field]")).map((input) => [
+        input.dataset.newMonsterField,
+        input.value,
+      ]),
+    );
+    updateState(addMonster(state, values));
     return;
   }
 
