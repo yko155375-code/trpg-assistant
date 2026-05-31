@@ -1,3 +1,5 @@
+import { renderCharacterEditor } from "./characters.js";
+
 const dmPageContent = {
   overview: {
     title: "總覽",
@@ -40,6 +42,19 @@ export function renderDmPage(pageId, state) {
   const page = dmPageContent[pageId] || dmPageContent.overview;
   const characterCount = Array.isArray(state.characters) ? state.characters.length : 0;
   const monsterCount = Array.isArray(state.monsters) ? state.monsters.length : 0;
+
+  if (pageId === "players") {
+    return `
+      <section class="dm-page-card" aria-labelledby="active-page-title">
+        <div class="dm-page-heading">
+          <p class="eyebrow">DM 端 · 玩家管理</p>
+          <h2 id="active-page-title">玩家</h2>
+          <p class="placeholder">新增、選擇、編輯、刪除角色，並管理同一份角色狀態與資產。</p>
+        </div>
+        ${renderCharacterEditor(state, { includeAssets: true, title: "玩家角色管理" })}
+      </section>
+    `;
+  }
 
   return `
     <section class="dm-page-card" aria-labelledby="active-page-title">
