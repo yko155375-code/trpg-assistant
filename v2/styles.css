@@ -40,7 +40,7 @@ button {
   width: min(1180px, 100%);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 18px 14px 76px;
+  padding: 18px 14px calc(96px + env(safe-area-inset-bottom));
 }
 
 .app-header {
@@ -142,6 +142,53 @@ button {
   box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28);
 }
 
+.mobile-page-card {
+  display: grid;
+  gap: 14px;
+  min-height: min(540px, calc(100vh - 210px));
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(22, 34, 50, 0.96), rgba(12, 19, 29, 0.96));
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28);
+}
+
+.mobile-page-card h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.mobile-section-list {
+  display: grid;
+  gap: 10px;
+}
+
+.mobile-section-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 54px;
+  padding: 12px 14px;
+  border: 1px solid rgba(243, 234, 216, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mobile-section-item span {
+  min-width: 0;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.mobile-section-item small {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .page-panel h2 {
   margin: 0 0 10px;
   font-family: Georgia, "Times New Roman", serif;
@@ -175,6 +222,38 @@ button {
   color: rgba(243, 234, 216, 0.42);
   font-size: 12px;
   text-align: center;
+}
+
+.player-bottom-tabs {
+  position: fixed;
+  right: 10px;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  left: 10px;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  overflow: visible;
+  padding: 8px;
+  border: 1px solid rgba(199, 164, 93, 0.3);
+  border-radius: 18px;
+  background: rgba(7, 17, 31, 0.94);
+  box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(12px);
+}
+
+.player-bottom-tabs .tab-button {
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 4px;
+  border-radius: 12px;
+  font-size: 13px;
+  white-space: normal;
+  line-height: 1.15;
+}
+
+body:has(.player-bottom-tabs) {
+  overflow-x: hidden;
 }
 
 @media (min-width: 760px) {
@@ -211,5 +290,71 @@ button {
     width: 100%;
     padding: 0 12px;
     text-align: left;
+  }
+
+  .layout.is-player {
+    grid-template-columns: 1fr;
+  }
+
+  .layout.is-player .tab-list {
+    position: static;
+    display: flex;
+    overflow-x: auto;
+    padding: 0 0 4px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .layout.is-player .tab-button {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .mobile-page-card {
+    min-height: 360px;
+  }
+}
+
+@media (max-width: 430px) {
+  .app-shell {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .app-title {
+    font-size: 28px;
+  }
+
+  .app-subtitle {
+    font-size: 13px;
+  }
+
+  .mobile-page-card {
+    padding: 15px;
+  }
+
+  .mobile-section-item {
+    min-height: 50px;
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 390px) {
+  .player-bottom-tabs {
+    right: 8px;
+    left: 8px;
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .player-bottom-tabs .tab-button {
+    min-height: 46px;
+    font-size: 12px;
   }
 }
