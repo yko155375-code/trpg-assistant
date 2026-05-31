@@ -3,7 +3,7 @@ import { normalizeMonsters } from "./monsters.js";
 import { normalizeSession } from "./public-info.js";
 import { normalizeShop } from "./shop.js";
 
-export const APP_VERSION = "v2-stage-4d";
+export const APP_VERSION = "v2-stage-4e";
 
 export function createDefaultState() {
   const now = new Date().toISOString();
