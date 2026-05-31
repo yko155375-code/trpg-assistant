@@ -106,7 +106,7 @@ function render() {
       ${renderPanel()}
     </main>
 
-    <p class="footer-note">TRPG Assistant v2 stage 4E</p>
+    <p class="footer-note">TRPG Assistant v2 stage 5</p>
   `;
 }
 
