@@ -557,6 +557,85 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
+.monster-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.monster-add-form {
+  gap: 12px;
+}
+
+.monster-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.monster-card {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(243, 234, 216, 0.12);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.monster-card h3 {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.monster-step-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.monster-stepper {
+  display: grid;
+  grid-template-columns: minmax(56px, 1fr) 36px minmax(56px, auto) 36px;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid rgba(243, 234, 216, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.monster-stepper span {
+  min-width: 0;
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.monster-stepper strong {
+  min-width: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.monster-stepper button {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  border: 1px solid rgba(243, 234, 216, 0.16);
+  border-radius: 10px;
+  background: rgba(199, 164, 93, 0.16);
+  touch-action: manipulation;
+}
+
+.monster-overview-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .mobile-section-list {
   display: grid;
   gap: 10px;
@@ -737,6 +816,14 @@ body:has(.player-bottom-tabs) {
   }
 
   .shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .monster-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .monster-step-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
