@@ -27,6 +27,39 @@ function toNumber(value, fallback = 0) {
   return Number.isFinite(number) ? number : fallback;
 }
 
+function clamp(number, min, max = Infinity) {
+  return Math.min(max, Math.max(min, number));
+}
+
+function normalizeTextList(value) {
+  return Array.isArray(value) ? value.map((entry) => String(entry || "").trim()).filter(Boolean) : [];
+}
+
+function normalizeStats(stats = {}) {
+  const maxHp = clamp(toNumber(stats.maxHp, 6), 1);
+  const maxStress = clamp(toNumber(stats.maxStress, 6), 1);
+
+  return {
+    hp: clamp(toNumber(stats.hp), 0, maxHp),
+    maxHp,
+    stress: clamp(toNumber(stats.stress), 0, maxStress),
+    maxStress,
+    hope: clamp(toNumber(stats.hope), 0),
+    evasion: clamp(toNumber(stats.evasion, 10), 0),
+  };
+}
+
+function normalizeAttributes(attributes = {}) {
+  return {
+    agility: clamp(toNumber(attributes.agility), -5, 10),
+    strength: clamp(toNumber(attributes.strength), -5, 10),
+    finesse: clamp(toNumber(attributes.finesse), -5, 10),
+    instinct: clamp(toNumber(attributes.instinct), -5, 10),
+    presence: clamp(toNumber(attributes.presence), -5, 10),
+    knowledge: clamp(toNumber(attributes.knowledge), -5, 10),
+  };
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -50,24 +83,12 @@ export function normalizeCharacter(character = {}) {
     id,
     name: character.name || "未命名角色",
     notes: character.notes || "",
-    stats: {
-      hp: toNumber(character.stats?.hp),
-      maxHp: toNumber(character.stats?.maxHp, 6),
-      stress: toNumber(character.stats?.stress),
-      maxStress: toNumber(character.stats?.maxStress, 6),
-      hope: toNumber(character.stats?.hope),
-      evasion: toNumber(character.stats?.evasion, 10),
-    },
-    attributes: {
-      agility: toNumber(character.attributes?.agility),
-      strength: toNumber(character.attributes?.strength),
-      finesse: toNumber(character.attributes?.finesse),
-      instinct: toNumber(character.attributes?.instinct),
-      presence: toNumber(character.attributes?.presence),
-      knowledge: toNumber(character.attributes?.knowledge),
-    },
+    stats: normalizeStats(character.stats),
+    attributes: normalizeAttributes(character.attributes),
     assets: normalizeAssets(character.assets),
     conditions: Array.isArray(character.conditions) ? character.conditions : [],
+    buffs: normalizeTextList(character.buffs),
+    debuffs: normalizeTextList(character.debuffs),
   };
 }
 
@@ -107,6 +128,10 @@ export function addCharacter(state, name) {
 export function deleteCharacter(state, characterId) {
   const characters = normalizeCharacters(state.characters).filter((character) => character.id !== characterId);
   const nextCurrent = characters.find((character) => character.id === state.ui.currentCharacterId) || characters[0] || null;
+  const nextExpanded =
+    state.ui.expandedCharacterId && characters.some((character) => character.id === state.ui.expandedCharacterId)
+      ? state.ui.expandedCharacterId
+      : null;
 
   return {
     ...state,
@@ -114,6 +139,7 @@ export function deleteCharacter(state, characterId) {
     ui: {
       ...state.ui,
       currentCharacterId: nextCurrent ? nextCurrent.id : null,
+      expandedCharacterId: nextExpanded,
     },
   };
 }
@@ -124,6 +150,20 @@ export function selectCharacter(state, characterId) {
     ui: {
       ...state.ui,
       currentCharacterId: characterId || null,
+    },
+  };
+}
+
+export function expandCharacter(state, characterId) {
+  const characters = normalizeCharacters(state.characters);
+  const exists = characters.some((character) => character.id === characterId);
+
+  return {
+    ...state,
+    ui: {
+      ...state.ui,
+      currentCharacterId: exists ? characterId : state.ui.currentCharacterId,
+      expandedCharacterId: exists && state.ui.expandedCharacterId !== characterId ? characterId : null,
     },
   };
 }
@@ -147,20 +187,20 @@ export function updateCharacterField(state, characterId, field, value) {
 export function updateCharacterStat(state, characterId, field, value) {
   return updateCharacter(state, characterId, (character) => ({
     ...character,
-    stats: {
+    stats: normalizeStats({
       ...character.stats,
       [field]: toNumber(value),
-    },
+    }),
   }));
 }
 
 export function updateCharacterAttribute(state, characterId, field, value) {
   return updateCharacter(state, characterId, (character) => ({
     ...character,
-    attributes: {
+    attributes: normalizeAttributes({
       ...character.attributes,
       [field]: toNumber(value),
-    },
+    }),
   }));
 }
 
@@ -171,6 +211,46 @@ export function updateCharacterMoney(state, characterId, value) {
       ...character.assets,
       money: Math.max(0, toNumber(value)),
     },
+  }));
+}
+
+export function adjustCharacterStat(state, characterId, field, delta) {
+  const character = normalizeCharacters(state.characters).find((entry) => entry.id === characterId);
+  return updateCharacterStat(state, characterId, field, toNumber(character?.stats?.[field]) + toNumber(delta));
+}
+
+export function adjustCharacterAttribute(state, characterId, field, delta) {
+  const character = normalizeCharacters(state.characters).find((entry) => entry.id === characterId);
+  return updateCharacterAttribute(
+    state,
+    characterId,
+    field,
+    toNumber(character?.attributes?.[field]) + toNumber(delta),
+  );
+}
+
+export function adjustCharacterMoney(state, characterId, delta) {
+  const character = normalizeCharacters(state.characters).find((entry) => entry.id === characterId);
+  return updateCharacterMoney(state, characterId, toNumber(character?.assets?.money) + toNumber(delta));
+}
+
+export function addCharacterEffect(state, characterId, effectType, value) {
+  const key = effectType === "debuffs" ? "debuffs" : "buffs";
+  const text = String(value || "").trim();
+  if (!text) return state;
+
+  return updateCharacter(state, characterId, (character) => ({
+    ...character,
+    [key]: [...normalizeTextList(character[key]), text],
+  }));
+}
+
+export function deleteCharacterEffect(state, characterId, effectType, index) {
+  const key = effectType === "debuffs" ? "debuffs" : "buffs";
+
+  return updateCharacter(state, characterId, (character) => ({
+    ...character,
+    [key]: normalizeTextList(character[key]).filter((_, itemIndex) => itemIndex !== index),
   }));
 }
 
@@ -247,6 +327,163 @@ export function renderAddCharacterForm() {
   `;
 }
 
+function getExpandedCharacterId(state, characters) {
+  const expandedId = state.ui.expandedCharacterId;
+  return characters.some((character) => character.id === expandedId) ? expandedId : null;
+}
+
+function renderEffectText(entries) {
+  return entries.length ? entries.map(escapeHtml).join("、") : "無";
+}
+
+function renderStepper({ characterId, type, field, label, value }) {
+  return `
+    <label class="number-stepper" data-number-stepper data-character-id="${escapeHtml(characterId)}" data-stepper-type="${type}" data-stepper-field="${field}">
+      <span>${label}</span>
+      <button type="button" data-action="adjust-character-${type}" data-character-id="${escapeHtml(characterId)}" data-${type}-field="${field}" data-delta="-1" aria-label="${label}減一">−</button>
+      <input data-character-id="${escapeHtml(characterId)}" data-${type}-field="${field}" type="number" inputmode="numeric" value="${value}" />
+      <button type="button" data-action="adjust-character-${type}" data-character-id="${escapeHtml(characterId)}" data-${type}-field="${field}" data-delta="1" aria-label="${label}加一">+</button>
+    </label>
+  `;
+}
+
+function renderMoneyStepper(character) {
+  return `
+    <label class="number-stepper" data-number-stepper data-character-id="${escapeHtml(character.id)}" data-stepper-type="money" data-stepper-field="money">
+      <span>金錢</span>
+      <button type="button" data-action="adjust-character-money" data-character-id="${escapeHtml(character.id)}" data-delta="-1" aria-label="金錢減一">−</button>
+      <input data-character-id="${escapeHtml(character.id)}" data-money-field type="number" inputmode="numeric" value="${character.assets.money}" />
+      <button type="button" data-action="adjust-character-money" data-character-id="${escapeHtml(character.id)}" data-delta="1" aria-label="金錢加一">+</button>
+    </label>
+  `;
+}
+
+function renderEffectEditor(character, effectType, label) {
+  const entries = normalizeTextList(character[effectType]);
+
+  return `
+    <section class="effect-editor">
+      <h4>${label}</h4>
+      <form class="inline-form compact" data-add-character-effect-form data-character-id="${escapeHtml(character.id)}" data-effect-type="${effectType}">
+        <input data-character-effect-input type="text" placeholder="新增${label}" autocomplete="off" />
+        <button type="submit">新增</button>
+      </form>
+      ${
+        entries.length
+          ? `<ul class="effect-list">
+              ${entries
+                .map(
+                  (entry, index) => `
+                    <li>
+                      <span>${escapeHtml(entry)}</span>
+                      <button type="button" data-action="delete-character-effect" data-character-id="${escapeHtml(character.id)}" data-effect-type="${effectType}" data-effect-index="${index}">刪除</button>
+                    </li>
+                  `,
+                )
+                .join("")}
+            </ul>`
+          : `<p class="empty-hint">尚無${label}</p>`
+      }
+    </section>
+  `;
+}
+
+function renderTeamCharacterDetails(character, title = "角色詳細") {
+  return `
+    <section class="editor-panel team-detail-panel" data-character-id="${escapeHtml(character.id)}">
+      <div class="editor-heading">
+        <h3>${title}</h3>
+        <button class="danger-button" type="button" data-action="delete-character" data-character-id="${escapeHtml(character.id)}">刪除角色</button>
+      </div>
+      <label class="form-field form-field-full">
+        <span>角色名稱</span>
+        <input data-character-id="${escapeHtml(character.id)}" data-character-field="name" type="text" value="${escapeHtml(character.name)}" />
+      </label>
+      <div class="stepper-grid">
+        ${statFields
+          .map((field) =>
+            renderStepper({
+              characterId: character.id,
+              type: "stat",
+              field: field.key,
+              label: field.label,
+              value: character.stats[field.key],
+            }),
+          )
+          .join("")}
+        ${renderMoneyStepper(character)}
+      </div>
+      <h4>六屬性</h4>
+      <div class="stepper-grid attribute-stepper-grid">
+        ${attributeFields
+          .map((field) =>
+            renderStepper({
+              characterId: character.id,
+              type: "attribute",
+              field: field.key,
+              label: field.label,
+              value: character.attributes[field.key],
+            }),
+          )
+          .join("")}
+      </div>
+      <div class="effect-grid">
+        ${renderEffectEditor(character, "buffs", "增益")}
+        ${renderEffectEditor(character, "debuffs", "負面")}
+      </div>
+      <label class="form-field form-field-full">
+        <span>角色備註</span>
+        <textarea data-character-id="${escapeHtml(character.id)}" data-character-field="notes" rows="4">${escapeHtml(character.notes)}</textarea>
+      </label>
+    </section>
+  `;
+}
+
+export function renderTeamStatusPage(state) {
+  const characters = normalizeCharacters(state.characters);
+  const current = getCurrentCharacter({ ...state, characters });
+  const expandedId = getExpandedCharacterId(state, characters);
+  const expandedCharacter = characters.find((character) => character.id === expandedId);
+
+  if (!characters.length) {
+    return `
+      ${renderAddCharacterForm()}
+      <section class="empty-panel">
+        <strong>尚未建立角色</strong>
+        <p>新增角色後，隊伍頁會以緊湊卡片顯示每位角色的 HP、壓力、希望、閃避、金錢與狀態。</p>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="team-roster" aria-label="隊伍角色摘要">
+      ${characters
+        .map(
+          (character) => `
+            <article class="team-summary-card ${character.id === current?.id ? "is-current" : ""} ${character.id === expandedId ? "is-expanded" : ""}">
+              <button class="team-summary-button" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}">
+                <span class="team-summary-name">${escapeHtml(character.name)}</span>
+                <span class="team-summary-pill">HP ${character.stats.hp}/${character.stats.maxHp}</span>
+                <span>壓力 ${character.stats.stress}/${character.stats.maxStress}</span>
+                <span>希望 ${character.stats.hope}</span>
+                <span>閃避 ${character.stats.evasion}</span>
+                <span>金錢 ${character.assets.money}</span>
+                <span class="team-summary-wide">增益：${renderEffectText(character.buffs)}</span>
+                <span class="team-summary-wide">負面：${renderEffectText(character.debuffs)}</span>
+              </button>
+              <button class="team-edit-button" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}">編輯</button>
+            </article>
+          `,
+        )
+        .join("")}
+    </section>
+    ${expandedCharacter ? renderTeamCharacterDetails(expandedCharacter, "角色詳細編輯") : ""}
+    <section class="team-add-panel">
+      ${renderAddCharacterForm()}
+    </section>
+  `;
+}
+
 export function renderCharacterEditor(state, options = {}) {
   const { includeAssets = false, allowDelete = true, title = "角色狀態" } = options;
   const character = getCurrentCharacter(state);
@@ -277,30 +514,38 @@ export function renderCharacterEditor(state, options = {}) {
         <span>角色名稱</span>
         <input data-character-id="${escapeHtml(character.id)}" data-character-field="name" type="text" value="${escapeHtml(character.name)}" />
       </label>
-      <div class="form-grid">
+      <div class="stepper-grid">
         ${statFields
           .map(
-            (field) => `
-              <label class="form-field">
-                <span>${field.label}</span>
-                <input data-character-id="${escapeHtml(character.id)}" data-stat-field="${field.key}" type="number" inputmode="numeric" value="${character.stats[field.key]}" />
-              </label>
-            `,
+            (field) =>
+              renderStepper({
+                characterId: character.id,
+                type: "stat",
+                field: field.key,
+                label: field.label,
+                value: character.stats[field.key],
+              }),
           )
           .join("")}
       </div>
       <h4>六屬性</h4>
-      <div class="form-grid">
+      <div class="stepper-grid attribute-stepper-grid">
         ${attributeFields
           .map(
-            (field) => `
-              <label class="form-field">
-                <span>${field.label}</span>
-                <input data-character-id="${escapeHtml(character.id)}" data-attribute-field="${field.key}" type="number" inputmode="numeric" value="${character.attributes[field.key]}" />
-              </label>
-            `,
+            (field) =>
+              renderStepper({
+                characterId: character.id,
+                type: "attribute",
+                field: field.key,
+                label: field.label,
+                value: character.attributes[field.key],
+              }),
           )
           .join("")}
+      </div>
+      <div class="effect-grid">
+        ${renderEffectEditor(character, "buffs", "增益")}
+        ${renderEffectEditor(character, "debuffs", "負面")}
       </div>
       <label class="form-field form-field-full">
         <span>角色備註</span>
@@ -331,10 +576,7 @@ export function renderAssetsEditor(state, options = {}) {
       <div class="editor-heading">
         <h3>${escapeHtml(character.name)}的資產</h3>
       </div>
-      <label class="form-field form-field-full">
-        <span>金錢</span>
-        <input data-character-id="${escapeHtml(character.id)}" data-money-field type="number" inputmode="numeric" value="${character.assets.money}" />
-      </label>
+      ${renderMoneyStepper(character)}
       <div class="asset-list-grid">
         ${assetLists.map((list) => renderAssetList(character, list)).join("")}
       </div>
