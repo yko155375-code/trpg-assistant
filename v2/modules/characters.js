@@ -1,4 +1,5 @@
 import { assetLists, normalizeAssets } from "./assets.js";
+import { statusEffectGroups } from "./status-effects.js";
 
 export const statFields = [
   { key: "hp", label: "HP" },
@@ -6,6 +7,7 @@ export const statFields = [
   { key: "stress", label: "壓力" },
   { key: "maxStress", label: "最大壓力" },
   { key: "hope", label: "希望" },
+  { key: "shield", label: "護盾" },
   { key: "evasion", label: "閃避" },
 ];
 
@@ -45,6 +47,7 @@ function normalizeStats(stats = {}) {
     stress: clamp(toNumber(stats.stress), 0, maxStress),
     maxStress,
     hope: clamp(toNumber(stats.hope), 0),
+    shield: clamp(toNumber(stats.shield), 0),
     evasion: clamp(toNumber(stats.evasion, 10), 0),
   };
 }
@@ -254,6 +257,22 @@ export function deleteCharacterEffect(state, characterId, effectType, index) {
   }));
 }
 
+export function toggleCharacterEffect(state, characterId, effectType, value) {
+  const key = effectType === "debuffs" ? "debuffs" : "buffs";
+  const text = String(value || "").trim();
+  if (!text) return state;
+
+  return updateCharacter(state, characterId, (character) => {
+    const entries = normalizeTextList(character[key]);
+    const isActive = entries.includes(text);
+
+    return {
+      ...character,
+      [key]: isActive ? entries.filter((entry) => entry !== text) : [...entries, text],
+    };
+  });
+}
+
 export function addAssetEntry(state, characterId, listKey, value) {
   const text = String(value || "").trim();
   if (!text) return state;
@@ -332,8 +351,13 @@ function getExpandedCharacterId(state, characters) {
   return characters.some((character) => character.id === expandedId) ? expandedId : null;
 }
 
-function renderEffectText(entries) {
-  return entries.length ? entries.map(escapeHtml).join("、") : "無";
+function renderEffectSummary(entries, maxVisible = 2) {
+  const normalized = normalizeTextList(entries);
+  if (!normalized.length) return "無";
+
+  const visible = normalized.slice(0, maxVisible).map(escapeHtml).join("、");
+  const hiddenCount = normalized.length - maxVisible;
+  return hiddenCount > 0 ? `${visible} +${hiddenCount}` : visible;
 }
 
 function renderStepper({ characterId, type, field, label, value }) {
@@ -358,12 +382,89 @@ function renderMoneyStepper(character) {
   `;
 }
 
+function renderCompactStatControl(character, field, label, valueText) {
+  return `
+    <div class="compact-stat-control" data-character-id="${escapeHtml(character.id)}">
+      <span>${label}</span>
+      <button type="button" data-action="adjust-character-stat" data-character-id="${escapeHtml(character.id)}" data-stat-field="${field}" data-delta="-1" aria-label="${label}減少">−</button>
+      <strong>${valueText}</strong>
+      <button type="button" data-action="adjust-character-stat" data-character-id="${escapeHtml(character.id)}" data-stat-field="${field}" data-delta="1" aria-label="${label}增加">+</button>
+    </div>
+  `;
+}
+
+function renderCompactAttributeBadges(character) {
+  return `
+    <div class="compact-attribute-grid" aria-label="六大屬性">
+      ${attributeFields
+        .map(
+          (field) => `
+            <span class="compact-attribute-badge">
+              <b>${field.label}</b>
+              <strong>${character.attributes[field.key]}</strong>
+            </span>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderCompactDebuffChips(character) {
+  const entries = normalizeTextList(character.debuffs);
+  const presets = statusEffectGroups.debuffs || [];
+
+  return `
+    <div class="compact-debuff-chips" aria-label="${escapeHtml(character.name)}負面狀態">
+      ${presets
+        .map((effect) => {
+          const isActive = entries.includes(effect.label);
+          return `
+            <button
+              class="compact-debuff-chip ${isActive ? "is-active" : ""}"
+              type="button"
+              data-action="toggle-character-effect"
+              data-character-id="${escapeHtml(character.id)}"
+              data-effect-type="debuffs"
+              data-effect-label="${escapeHtml(effect.label)}"
+              aria-pressed="${isActive}"
+            >
+              ${escapeHtml(effect.label)}
+            </button>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
 function renderEffectEditor(character, effectType, label) {
   const entries = normalizeTextList(character[effectType]);
+  const presets = statusEffectGroups[effectType] || [];
 
   return `
     <section class="effect-editor">
       <h4>${label}</h4>
+      <div class="effect-chip-row" aria-label="${label}快速選擇">
+        ${presets
+          .map((effect) => {
+            const isActive = entries.includes(effect.label);
+            return `
+              <button
+                class="effect-chip ${isActive ? "is-active" : ""}"
+                type="button"
+                data-action="toggle-character-effect"
+                data-character-id="${escapeHtml(character.id)}"
+                data-effect-type="${effectType}"
+                data-effect-label="${escapeHtml(effect.label)}"
+                aria-pressed="${isActive}"
+              >
+                ${escapeHtml(effect.label)}
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
       <form class="inline-form compact" data-add-character-effect-form data-character-id="${escapeHtml(character.id)}" data-effect-type="${effectType}">
         <input data-character-effect-input type="text" placeholder="新增${label}" autocomplete="off" />
         <button type="submit">新增</button>
@@ -385,6 +486,27 @@ function renderEffectEditor(character, effectType, label) {
           : `<p class="empty-hint">尚無${label}</p>`
       }
     </section>
+  `;
+}
+
+function renderTeamStatusWindow(characters) {
+  return `
+    <aside class="team-status-window" aria-label="全隊狀態">
+      <h3>全隊狀態</h3>
+      <div class="team-status-list">
+        ${characters
+          .map(
+            (character) => `
+              <article class="team-status-row">
+                <strong>${escapeHtml(character.name)}</strong>
+                <span>增益：${renderEffectSummary(character.buffs, 2)}</span>
+                <span>負面：${renderEffectSummary(character.debuffs, 2)}</span>
+              </article>
+            `,
+          )
+          .join("")}
+      </div>
+    </aside>
   `;
 }
 
@@ -456,31 +578,44 @@ export function renderTeamStatusPage(state) {
   }
 
   return `
-    <section class="team-roster" aria-label="隊伍角色摘要">
-      ${characters
-        .map(
-          (character) => `
-            <article class="team-summary-card ${character.id === current?.id ? "is-current" : ""} ${character.id === expandedId ? "is-expanded" : ""}">
-              <button class="team-summary-button" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}">
-                <span class="team-summary-name">${escapeHtml(character.name)}</span>
-                <span class="team-summary-pill">HP ${character.stats.hp}/${character.stats.maxHp}</span>
-                <span>壓力 ${character.stats.stress}/${character.stats.maxStress}</span>
-                <span>希望 ${character.stats.hope}</span>
-                <span>閃避 ${character.stats.evasion}</span>
-                <span>金錢 ${character.assets.money}</span>
-                <span class="team-summary-wide">增益：${renderEffectText(character.buffs)}</span>
-                <span class="team-summary-wide">負面：${renderEffectText(character.debuffs)}</span>
-              </button>
-              <button class="team-edit-button" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}">編輯</button>
-            </article>
-          `,
-        )
-        .join("")}
-    </section>
-    ${expandedCharacter ? renderTeamCharacterDetails(expandedCharacter, "角色詳細編輯") : ""}
-    <section class="team-add-panel">
-      ${renderAddCharacterForm()}
-    </section>
+    <div class="team-page-grid">
+      <div class="team-main-column">
+        <section class="team-roster" aria-label="隊伍角色摘要">
+          ${characters
+            .map(
+              (character) => `
+                <article class="team-summary-card ${character.id === current?.id ? "is-current" : ""} ${character.id === expandedId ? "is-expanded" : ""}">
+                  <div class="team-summary-head">
+                    <button class="team-summary-name-button" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}">
+                      <span class="team-summary-name">${escapeHtml(character.name)}</span>
+                      <small>閃避 ${character.stats.evasion} · 金錢 ${character.assets.money}</small>
+                    </button>
+                    <button class="team-edit-button" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}" aria-label="編輯 ${escapeHtml(character.name)}">⋯</button>
+                  </div>
+                  <div class="compact-stat-grid" aria-label="${escapeHtml(character.name)}主要數值">
+                    ${renderCompactStatControl(character, "hp", "HP", `${character.stats.hp}/${character.stats.maxHp}`)}
+                    ${renderCompactStatControl(character, "stress", "壓力", `${character.stats.stress}/${character.stats.maxStress}`)}
+                    ${renderCompactStatControl(character, "hope", "希望", character.stats.hope)}
+                    ${renderCompactStatControl(character, "shield", "護盾", character.stats.shield)}
+                  </div>
+                  ${renderCompactAttributeBadges(character)}
+                  <div class="compact-effect-summary">
+                    <span>增益：${renderEffectSummary(character.buffs, 2)}</span>
+                    <span>負面：${renderEffectSummary(character.debuffs, 2)}</span>
+                  </div>
+                  ${renderCompactDebuffChips(character)}
+                </article>
+              `,
+            )
+            .join("")}
+        </section>
+        ${expandedCharacter ? renderTeamCharacterDetails(expandedCharacter, "角色詳細編輯") : ""}
+        <section class="team-add-panel">
+          ${renderAddCharacterForm()}
+        </section>
+      </div>
+      ${renderTeamStatusWindow(characters)}
+    </div>
   `;
 }
 
