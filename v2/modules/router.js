@@ -1,5 +1,5 @@
 export const playerPages = [
-  { id: "characters", label: "角色" },
+  { id: "characters", label: "隊伍" },
   { id: "assets", label: "資產" },
   { id: "dice", label: "擲骰" },
   { id: "shop", label: "商店" },
