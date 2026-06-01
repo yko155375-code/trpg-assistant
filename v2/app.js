@@ -11,6 +11,7 @@ import {
   deleteCharacterEffect,
   expandCharacter,
   selectCharacter,
+  toggleCharacterEffect,
   updateAssetEntry,
   updateCharacterAttribute,
   updateCharacterField,
@@ -189,6 +190,18 @@ app.addEventListener("click", (event) => {
         actionButton.dataset.characterId,
         actionButton.dataset.effectType,
         Number(actionButton.dataset.effectIndex),
+      ),
+    );
+    return;
+  }
+
+  if (actionButton.dataset.action === "toggle-character-effect") {
+    updateState(
+      toggleCharacterEffect(
+        state,
+        actionButton.dataset.characterId,
+        actionButton.dataset.effectType,
+        actionButton.dataset.effectLabel,
       ),
     );
     return;
