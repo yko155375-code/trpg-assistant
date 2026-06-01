@@ -1,9 +1,15 @@
 import { loadState, saveState, STORAGE_KEY } from "./modules/storage.js";
 import {
   addAssetEntry,
+  addCharacterEffect,
   addCharacter,
+  adjustCharacterAttribute,
+  adjustCharacterMoney,
+  adjustCharacterStat,
   deleteAssetEntry,
   deleteCharacter,
+  deleteCharacterEffect,
+  expandCharacter,
   selectCharacter,
   updateAssetEntry,
   updateCharacterAttribute,
@@ -140,6 +146,54 @@ app.addEventListener("click", (event) => {
     return;
   }
 
+  if (actionButton.dataset.action === "expand-character") {
+    updateState(expandCharacter(state, actionButton.dataset.characterId));
+    return;
+  }
+
+  if (actionButton.dataset.action === "adjust-character-stat") {
+    updateState(
+      adjustCharacterStat(
+        state,
+        actionButton.dataset.characterId,
+        actionButton.dataset.statField,
+        Number(actionButton.dataset.delta),
+      ),
+    );
+    return;
+  }
+
+  if (actionButton.dataset.action === "adjust-character-attribute") {
+    updateState(
+      adjustCharacterAttribute(
+        state,
+        actionButton.dataset.characterId,
+        actionButton.dataset.attributeField,
+        Number(actionButton.dataset.delta),
+      ),
+    );
+    return;
+  }
+
+  if (actionButton.dataset.action === "adjust-character-money") {
+    updateState(
+      adjustCharacterMoney(state, actionButton.dataset.characterId, Number(actionButton.dataset.delta)),
+    );
+    return;
+  }
+
+  if (actionButton.dataset.action === "delete-character-effect") {
+    updateState(
+      deleteCharacterEffect(
+        state,
+        actionButton.dataset.characterId,
+        actionButton.dataset.effectType,
+        Number(actionButton.dataset.effectIndex),
+      ),
+    );
+    return;
+  }
+
   if (actionButton.dataset.action === "delete-asset-entry") {
     updateState(
       deleteAssetEntry(
@@ -219,6 +273,23 @@ app.addEventListener("change", (event) => {
       ),
     );
   }
+
+  const characterId = event.target.dataset.characterId;
+  if (!characterId) return;
+
+  if (event.target.dataset.statField) {
+    updateState(updateCharacterStat(state, characterId, event.target.dataset.statField, event.target.value));
+    return;
+  }
+
+  if (event.target.dataset.attributeField) {
+    updateState(updateCharacterAttribute(state, characterId, event.target.dataset.attributeField, event.target.value));
+    return;
+  }
+
+  if (event.target.matches("[data-money-field]")) {
+    updateState(updateCharacterMoney(state, characterId, event.target.value));
+  }
 });
 
 app.addEventListener("input", (event) => {
@@ -297,6 +368,7 @@ app.addEventListener("input", (event) => {
 
 app.addEventListener("submit", (event) => {
   const addCharacterForm = event.target.closest("[data-add-character-form]");
+  const addCharacterEffectForm = event.target.closest("[data-add-character-effect-form]");
   const addAssetForm = event.target.closest("[data-add-asset-form]");
   const addShopItemForm = event.target.closest("[data-add-shop-item-form]");
   const addMonsterForm = event.target.closest("[data-add-monster-form]");
@@ -305,6 +377,20 @@ app.addEventListener("submit", (event) => {
     event.preventDefault();
     const input = addCharacterForm.querySelector("[data-new-character-name]");
     updateState(addCharacter(state, input.value.trim()));
+    return;
+  }
+
+  if (addCharacterEffectForm) {
+    event.preventDefault();
+    const input = addCharacterEffectForm.querySelector("[data-character-effect-input]");
+    updateState(
+      addCharacterEffect(
+        state,
+        addCharacterEffectForm.dataset.characterId,
+        addCharacterEffectForm.dataset.effectType,
+        input.value,
+      ),
+    );
     return;
   }
 
@@ -357,5 +443,32 @@ app.addEventListener("submit", (event) => {
     updateState(addRoll(state, result, rollForm.dataset.rollActor || "玩家"));
   }
 });
+
+app.addEventListener(
+  "wheel",
+  (event) => {
+    const stepper = event.target.closest("[data-number-stepper]");
+    if (!stepper) return;
+
+    event.preventDefault();
+    const delta = event.deltaY < 0 ? 1 : -1;
+    const { characterId, stepperType, stepperField } = stepper.dataset;
+
+    if (stepperType === "stat") {
+      updateState(adjustCharacterStat(state, characterId, stepperField, delta));
+      return;
+    }
+
+    if (stepperType === "attribute") {
+      updateState(adjustCharacterAttribute(state, characterId, stepperField, delta));
+      return;
+    }
+
+    if (stepperType === "money") {
+      updateState(adjustCharacterMoney(state, characterId, delta));
+    }
+  },
+  { passive: false },
+);
 
 render();
