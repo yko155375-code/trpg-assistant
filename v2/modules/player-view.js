@@ -1,12 +1,12 @@
-import { getCurrentCharacter, renderAssetsEditor, renderCharacterEditor } from "./characters.js";
+import { getCurrentCharacter, renderAssetsEditor, renderTeamStatusPage } from "./characters.js";
 import { renderDicePanel } from "./dice.js";
 import { renderPublicInfoView } from "./public-info.js";
 import { renderPlayerShop } from "./shop.js";
 
 const pageContent = {
   characters: {
-    title: "角色",
-    summary: "玩家在這裡選擇與檢視目前角色。後續階段會加入角色狀態、條件與編輯控制。",
+    title: "隊伍",
+    summary: "玩家在這裡檢視隊伍狀態。",
     items: ["目前角色選擇", "角色基本狀態", "角色異常狀態"],
   },
   assets: {
@@ -39,9 +39,9 @@ export function renderPlayerPage(pageId, state) {
   if (pageId === "characters") {
     return `
       <section class="mobile-page-card" aria-labelledby="active-page-title">
-        <p class="eyebrow">玩家端 · 角色</p>
-        <h2 id="active-page-title">角色</h2>
-        ${renderCharacterEditor(state, { includeAssets: false, title: "目前角色" })}
+        <p class="eyebrow">玩家端 · 隊伍</p>
+        <h2 id="active-page-title">隊伍狀態</h2>
+        ${renderTeamStatusPage(state)}
       </section>
     `;
   }
