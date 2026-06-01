@@ -45,6 +45,7 @@ export function createDefaultState() {
 export function normalizeState(input) {
   const fallback = createDefaultState();
   const source = input && typeof input === "object" ? input : {};
+  const characters = normalizeCharacters(source.characters);
 
   return {
     ...fallback,
@@ -55,7 +56,7 @@ export function normalizeState(input) {
       version: APP_VERSION,
     },
     session: normalizeSession({ ...fallback.session, ...(source.session || {}) }),
-    characters: normalizeCharacters(source.characters),
+    characters,
     monsters: normalizeMonsters(source.monsters),
     shop: normalizeShop({ ...fallback.shop, ...(source.shop || {}) }),
     rolls: Array.isArray(source.rolls) ? source.rolls : fallback.rolls,
@@ -66,11 +67,14 @@ export function normalizeState(input) {
     ui: {
       ...fallback.ui,
       ...(source.ui || {}),
-      currentCharacterId: normalizeCharacters(source.characters).some(
+      currentCharacterId: characters.some(
         (character) => character.id === source.ui?.currentCharacterId,
       )
         ? source.ui.currentCharacterId
-        : normalizeCharacters(source.characters)[0]?.id || null,
+        : characters[0]?.id || null,
+      expandedCharacterId: characters.some((character) => character.id === source.ui?.expandedCharacterId)
+        ? source.ui.expandedCharacterId
+        : null,
     },
   };
 }
