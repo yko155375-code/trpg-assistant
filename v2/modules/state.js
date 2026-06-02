@@ -38,6 +38,7 @@ export function createDefaultState() {
       currentCharacterId: null,
       playerPage: "characters",
       dmPage: "overview",
+      isTeamStatusOpen: false,
     },
   };
 }
