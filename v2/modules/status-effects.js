@@ -11,7 +11,7 @@ export const statusEffectGroups = {
       description: "所有以你為目標的擲骰都具有劣勢。一旦你可以被看見或者你進行攻擊，將脫離隱藏狀態。",
     },
     { id: "vulnerable", label: "脆弱", description: "所有以你為目標的擲骰都具有優勢。" },
-    { id: "restrained", label: "束縛", description: "你無法移動，但仍然可以在目前位置執行動作。" },
+    { id: "restrained", label: "束縛", description: "你無法移動，但仍然可以在當前位置執行動作。" },
     { id: "dazed", label: "眩暈", description: "（催眠閃光）無法移動、進行動作或反應。" },
     {
       id: "frightened",
@@ -20,7 +20,7 @@ export const statusEffectGroups = {
     },
     { id: "charmed", label: "迷醉", description: "（心醉神迷）目標的注意力會固定在施法者身上。" },
     { id: "burning", label: "點燃", description: "（餘燼之握）行動結束時額外受到 2d6 魔法傷害。" },
-    { id: "poisoned", label: "中毒", description: "每次行動都會受到 1d10 點直接物理傷害。（無法使用護甲）" },
+    { id: "poisoned", label: "中毒", description: "每次行動都會受到 1d10 點直接物理傷害，無法使用護甲。" },
   ],
 };
 
