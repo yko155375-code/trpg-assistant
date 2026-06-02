@@ -1,5 +1,13 @@
-import { assetLists, normalizeAssets } from "./assets.js";
-import { statusEffectGroups } from "./status-effects.js";
+import {
+  assetLists,
+  formatGold,
+  goldToHandfuls,
+  goldUnitFields,
+  normalizeAssets,
+  normalizeGold,
+  normalizeGoldFromHandfuls,
+} from "./assets.js";
+import { getStatusDescription, sortStatusLabels, statusEffectGroups } from "./status-effects.js";
 
 export const statFields = [
   { key: "hp", label: "HP" },
@@ -90,8 +98,8 @@ export function normalizeCharacter(character = {}) {
     attributes: normalizeAttributes(character.attributes),
     assets: normalizeAssets(character.assets),
     conditions: Array.isArray(character.conditions) ? character.conditions : [],
-    buffs: normalizeTextList(character.buffs),
-    debuffs: normalizeTextList(character.debuffs),
+    buffs: sortStatusLabels("buffs", normalizeTextList(character.buffs)),
+    debuffs: sortStatusLabels("debuffs", normalizeTextList(character.debuffs)),
   };
 }
 
@@ -208,13 +216,36 @@ export function updateCharacterAttribute(state, characterId, field, value) {
 }
 
 export function updateCharacterMoney(state, characterId, value) {
+  const gold = normalizeGoldFromHandfuls(value);
+
   return updateCharacter(state, characterId, (character) => ({
     ...character,
     assets: {
       ...character.assets,
-      money: Math.max(0, toNumber(value)),
+      money: goldToHandfuls(gold),
+      gold,
     },
   }));
+}
+
+export function updateCharacterGold(state, characterId, field, value) {
+  const normalizedField = goldUnitFields.some((unit) => unit.key === field) ? field : "handfuls";
+
+  return updateCharacter(state, characterId, (character) => {
+    const gold = normalizeGold({
+      ...character.assets.gold,
+      [normalizedField]: Math.max(0, toNumber(value)),
+    });
+
+    return {
+      ...character,
+      assets: {
+        ...character.assets,
+        money: goldToHandfuls(gold),
+        gold,
+      },
+    };
+  });
 }
 
 export function adjustCharacterStat(state, characterId, field, delta) {
@@ -237,6 +268,12 @@ export function adjustCharacterMoney(state, characterId, delta) {
   return updateCharacterMoney(state, characterId, toNumber(character?.assets?.money) + toNumber(delta));
 }
 
+export function adjustCharacterGold(state, characterId, field, delta) {
+  const character = normalizeCharacters(state.characters).find((entry) => entry.id === characterId);
+  const currentGold = normalizeGold(character?.assets?.gold, character?.assets?.money);
+  return updateCharacterGold(state, characterId, field, toNumber(currentGold[field]) + toNumber(delta));
+}
+
 export function addCharacterEffect(state, characterId, effectType, value) {
   const key = effectType === "debuffs" ? "debuffs" : "buffs";
   const text = String(value || "").trim();
@@ -244,7 +281,7 @@ export function addCharacterEffect(state, characterId, effectType, value) {
 
   return updateCharacter(state, characterId, (character) => ({
     ...character,
-    [key]: [...normalizeTextList(character[key]), text],
+    [key]: sortStatusLabels(key, [...normalizeTextList(character[key]), text]),
   }));
 }
 
@@ -253,7 +290,7 @@ export function deleteCharacterEffect(state, characterId, effectType, index) {
 
   return updateCharacter(state, characterId, (character) => ({
     ...character,
-    [key]: normalizeTextList(character[key]).filter((_, itemIndex) => itemIndex !== index),
+    [key]: sortStatusLabels(key, sortStatusLabels(key, character[key]).filter((_, itemIndex) => itemIndex !== index)),
   }));
 }
 
@@ -268,7 +305,7 @@ export function toggleCharacterEffect(state, characterId, effectType, value) {
 
     return {
       ...character,
-      [key]: isActive ? entries.filter((entry) => entry !== text) : [...entries, text],
+      [key]: sortStatusLabels(key, isActive ? entries.filter((entry) => entry !== text) : [...entries, text]),
     };
   });
 }
@@ -351,8 +388,8 @@ function getExpandedCharacterId(state, characters) {
   return characters.some((character) => character.id === expandedId) ? expandedId : null;
 }
 
-function renderEffectSummary(entries, maxVisible = 2) {
-  const normalized = normalizeTextList(entries);
+function renderEffectSummary(entries, effectType, maxVisible = 2) {
+  const normalized = sortStatusLabels(effectType, entries);
   if (!normalized.length) return "無";
 
   const visible = normalized.slice(0, maxVisible).map(escapeHtml).join("、");
@@ -371,14 +408,27 @@ function renderStepper({ characterId, type, field, label, value }) {
   `;
 }
 
-function renderMoneyStepper(character) {
+function renderGoldStepper(character) {
+  const gold = normalizeGold(character.assets.gold, character.assets.money);
+
   return `
-    <label class="number-stepper" data-number-stepper data-character-id="${escapeHtml(character.id)}" data-stepper-type="money" data-stepper-field="money">
-      <span>金錢</span>
-      <button type="button" data-action="adjust-character-money" data-character-id="${escapeHtml(character.id)}" data-delta="-1" aria-label="金錢減一">−</button>
-      <input data-character-id="${escapeHtml(character.id)}" data-money-field type="number" inputmode="numeric" value="${character.assets.money}" />
-      <button type="button" data-action="adjust-character-money" data-character-id="${escapeHtml(character.id)}" data-delta="1" aria-label="金錢加一">+</button>
-    </label>
+    <div class="gold-stepper-group" aria-label="金錢">
+      <strong class="gold-stepper-title">金錢 ${formatGold(gold)}</strong>
+      <div class="gold-stepper-grid">
+        ${goldUnitFields
+          .map(
+            (unit) => `
+              <label class="number-stepper gold-stepper" data-number-stepper data-character-id="${escapeHtml(character.id)}" data-stepper-type="gold" data-stepper-field="${unit.key}">
+                <span>${unit.label}</span>
+                <button type="button" data-action="adjust-character-gold" data-character-id="${escapeHtml(character.id)}" data-gold-field="${unit.key}" data-delta="-1" aria-label="${unit.label}減一">−</button>
+                <input data-character-id="${escapeHtml(character.id)}" data-gold-field="${unit.key}" type="number" inputmode="numeric" min="0" value="${gold[unit.key]}" />
+                <button type="button" data-action="adjust-character-gold" data-character-id="${escapeHtml(character.id)}" data-gold-field="${unit.key}" data-delta="1" aria-label="${unit.label}加一">+</button>
+              </label>
+            `,
+          )
+          .join("")}
+      </div>
+    </div>
   `;
 }
 
@@ -411,7 +461,7 @@ function renderCompactAttributeBadges(character) {
 }
 
 function renderCompactDebuffChips(character) {
-  const entries = normalizeTextList(character.debuffs);
+  const entries = sortStatusLabels("debuffs", character.debuffs);
   const presets = statusEffectGroups.debuffs || [];
 
   return `
@@ -439,7 +489,7 @@ function renderCompactDebuffChips(character) {
 }
 
 function renderEffectEditor(character, effectType, label) {
-  const entries = normalizeTextList(character[effectType]);
+  const entries = sortStatusLabels(effectType, character[effectType]);
   const presets = statusEffectGroups[effectType] || [];
 
   return `
@@ -489,18 +539,50 @@ function renderEffectEditor(character, effectType, label) {
   `;
 }
 
-function renderTeamStatusWindow(characters) {
+function renderDebuffDetails(entries) {
+  const normalized = sortStatusLabels("debuffs", entries);
+
+  if (!normalized.length) return `<span class="team-status-empty">無</span>`;
+
+  return normalized
+    .map((label) => {
+      const description = getStatusDescription("debuffs", label);
+      return `
+        <span class="team-status-effect">
+          <b>${escapeHtml(label)}</b>
+          ${description ? `<small>${escapeHtml(description)}</small>` : ""}
+        </span>
+      `;
+    })
+    .join("");
+}
+
+function renderTeamStatusDrawer(characters, isOpen) {
   return `
-    <aside class="team-status-window" aria-label="全隊狀態">
-      <h3>全隊狀態</h3>
+    <button class="team-status-float-button" type="button" data-action="toggle-team-status" aria-expanded="${Boolean(isOpen)}" aria-controls="team-status-drawer">
+      狀態
+    </button>
+    <aside id="team-status-drawer" class="team-status-drawer ${isOpen ? "is-open" : ""}" aria-label="隊伍狀態明細" aria-hidden="${isOpen ? "false" : "true"}">
+      <div class="team-status-drawer-head">
+        <h3>隊伍狀態明細</h3>
+        <button type="button" data-action="toggle-team-status" aria-label="關閉隊伍狀態明細">關閉</button>
+      </div>
       <div class="team-status-list">
         ${characters
           .map(
             (character) => `
-              <article class="team-status-row">
-                <strong>${escapeHtml(character.name)}</strong>
-                <span>增益：${renderEffectSummary(character.buffs, 2)}</span>
-                <span>負面：${renderEffectSummary(character.debuffs, 2)}</span>
+              <article class="team-status-detail-row">
+                <div class="team-status-detail-head">
+                  <strong>${escapeHtml(character.name)}</strong>
+                  <span>HP ${character.stats.hp}/${character.stats.maxHp} · 壓力 ${character.stats.stress}/${character.stats.maxStress} · 希望 ${character.stats.hope} · 護盾 ${character.stats.shield}</span>
+                </div>
+                <div class="team-status-detail-effects">
+                  <span>增益：${renderEffectSummary(character.buffs, "buffs", 4)}</span>
+                  <div>
+                    <span>負面：</span>
+                    <div class="team-status-effect-list">${renderDebuffDetails(character.debuffs)}</div>
+                  </div>
+                </div>
               </article>
             `,
           )
@@ -533,7 +615,7 @@ function renderTeamCharacterDetails(character, title = "角色詳細") {
             }),
           )
           .join("")}
-        ${renderMoneyStepper(character)}
+        ${renderGoldStepper(character)}
       </div>
       <h4>六屬性</h4>
       <div class="stepper-grid attribute-stepper-grid">
@@ -588,7 +670,7 @@ export function renderTeamStatusPage(state) {
                   <div class="team-summary-head">
                     <button class="team-summary-name-button" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}">
                       <span class="team-summary-name">${escapeHtml(character.name)}</span>
-                      <small>閃避 ${character.stats.evasion} · 金錢 ${character.assets.money}</small>
+                      <small>閃避 ${character.stats.evasion} · 金錢 ${formatGold(character.assets.gold)}</small>
                     </button>
                     <button class="team-edit-button" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}" aria-label="編輯 ${escapeHtml(character.name)}">⋯</button>
                   </div>
@@ -600,8 +682,8 @@ export function renderTeamStatusPage(state) {
                   </div>
                   ${renderCompactAttributeBadges(character)}
                   <div class="compact-effect-summary">
-                    <span>增益：${renderEffectSummary(character.buffs, 2)}</span>
-                    <span>負面：${renderEffectSummary(character.debuffs, 2)}</span>
+                    <span>增益：${renderEffectSummary(character.buffs, "buffs", 2)}</span>
+                    <span>負面：${renderEffectSummary(character.debuffs, "debuffs", 2)}</span>
                   </div>
                   ${renderCompactDebuffChips(character)}
                 </article>
@@ -614,7 +696,7 @@ export function renderTeamStatusPage(state) {
           ${renderAddCharacterForm()}
         </section>
       </div>
-      ${renderTeamStatusWindow(characters)}
+      ${renderTeamStatusDrawer(characters, state.ui.isTeamStatusOpen)}
     </div>
   `;
 }
@@ -711,7 +793,7 @@ export function renderAssetsEditor(state, options = {}) {
       <div class="editor-heading">
         <h3>${escapeHtml(character.name)}的資產</h3>
       </div>
-      ${renderMoneyStepper(character)}
+      ${renderGoldStepper(character)}
       <div class="asset-list-grid">
         ${assetLists.map((list) => renderAssetList(character, list)).join("")}
       </div>
