@@ -17,6 +17,24 @@
   align-items: stretch;
   min-width: 0;
   padding: 7px;
+  border: 1px solid var(--character-color, var(--gold));
+  border-left-width: 8px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.16);
+}
+
+.team-summary-card.is-current,
+.team-summary-card.is-expanded {
+  border-color: var(--character-color, var(--gold));
+  border-left-color: var(--character-color, var(--gold));
+}
+
+.team-summary-card.is-current {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.035)),
+    rgba(95, 182, 183, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(243, 234, 216, 0.1),
+    0 0 0 1px rgba(95, 182, 183, 0.22);
 }
 
 .team-summary-head {
@@ -25,6 +43,8 @@
   gap: 6px;
   align-items: stretch;
   min-width: 0;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--character-color, var(--gold)) 0 6px, rgba(255, 255, 255, 0.055) 6px);
 }
 
 .team-summary-name-button {
@@ -50,14 +70,28 @@
 }
 
 .team-summary-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   min-width: 0;
   overflow: hidden;
-  color: var(--text);
+  color: var(--character-color, var(--text));
   font-size: 15px;
   font-weight: 800;
   line-height: 1.15;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.team-summary-color-dot {
+  width: 10px;
+  min-width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--character-color, var(--gold));
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.36),
+    0 0 8px var(--character-color, var(--gold));
 }
 
 .team-edit-button {
@@ -231,6 +265,15 @@
   color: #fff8e8;
 }
 
+.compact-color-field {
+  min-width: 88px;
+}
+
+.character-color-editor select,
+.compact-color-field select {
+  border-color: rgba(199, 164, 93, 0.42);
+}
+
 .gold-stepper-group {
   display: grid;
   gap: 7px;
@@ -294,16 +337,16 @@
 .team-status-drawer {
   position: fixed;
   top: 72px;
-  right: 12px;
+  right: 10px;
   bottom: 18px;
   z-index: 43;
   display: none;
-  width: min(360px, calc(100vw - 24px));
+  width: min(320px, calc(100vw - 20px));
   min-width: 0;
   overflow: auto;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid rgba(95, 182, 183, 0.28);
-  border-radius: 14px;
+  border-radius: 12px;
   background: rgba(8, 19, 34, 0.97);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.46);
 }
@@ -311,90 +354,107 @@
 .team-status-drawer.is-open {
   display: grid;
   align-content: start;
-  gap: 10px;
+  gap: 8px;
 }
 
 .team-status-drawer-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
 .team-status-drawer-head h3 {
   margin: 0;
   color: var(--gold);
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .team-status-drawer-head button {
-  min-height: 32px;
-  padding: 5px 10px;
+  min-height: 30px;
+  padding: 4px 9px;
   border: 1px solid rgba(243, 234, 216, 0.14);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
   color: var(--text);
 }
 
-.team-status-detail-row {
+.team-status-section {
   display: grid;
-  gap: 7px;
-  min-width: 0;
-  padding: 9px;
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.045);
-}
-
-.team-status-detail-head,
-.team-status-detail-effects {
-  display: grid;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
 }
 
-.team-status-detail-head strong {
-  min-width: 0;
-  overflow: hidden;
+.team-status-section h4 {
+  margin: 0;
   color: var(--text);
-  font-size: 13px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.team-status-detail-head span,
-.team-status-detail-effects span {
-  min-width: 0;
-  color: var(--muted);
   font-size: 12px;
-  line-height: 1.35;
 }
 
 .team-status-effect-list {
   display: grid;
   gap: 5px;
-  margin-top: 4px;
 }
 
-.team-status-effect {
+.team-status-effect-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+  min-width: 0;
+  padding: 7px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.team-status-effect-main {
   display: grid;
   gap: 2px;
   min-width: 0;
-  padding: 6px 7px;
-  border-radius: 9px;
-  background: rgba(159, 52, 63, 0.12);
 }
 
-.team-status-effect b {
+.team-status-effect-main strong {
   color: #ffe6e8;
   font-size: 12px;
 }
 
-.team-status-effect small,
+.team-status-effect-main small,
+.team-status-holders,
 .team-status-empty {
   color: var(--muted);
   font-size: 11px;
   line-height: 1.35;
+}
+
+.team-status-holders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 3px;
+  border-top: 1px solid rgba(243, 234, 216, 0.08);
+}
+
+.team-status-holder {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 3px 7px 3px 5px;
+  border: 1px solid var(--character-color, var(--gold));
+  border-left-width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--character-color, var(--gold)) 0 5px, rgba(255, 255, 255, 0.08) 5px);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.team-status-holder-dot {
+  width: 8px;
+  min-width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--character-color, var(--gold));
+  box-shadow: 0 0 6px var(--character-color, var(--gold));
 }
 
 @media (max-width: 430px) {
@@ -472,6 +532,6 @@
     right: 10px;
     bottom: max(88px, calc(88px + env(safe-area-inset-bottom)));
     width: calc(100vw - 20px);
-    padding: 10px;
+    padding: 9px;
   }
 }
