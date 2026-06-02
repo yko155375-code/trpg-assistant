@@ -28,7 +28,7 @@ function getCharacterEffects(character, effectType) {
 function getStatusHolders(characters, effectType, label) {
   return characters
     .filter((character) => getCharacterEffects(character, effectType).includes(label))
-    .map((character) => character.name);
+    .map((character) => ({ name: character.name, color: character.color }));
 }
 
 function getCustomStatusLabels(characters, effectType) {
@@ -58,7 +58,18 @@ function renderStatusItems(characters, effectType) {
   return items
     .map((effect) => {
       const holders = getStatusHolders(characters, effectType, effect.label);
-      const holderText = holders.length ? holders.map(escapeHtml).join("、") : "無角色";
+      const holderText = holders.length
+        ? holders
+            .map(
+              (holder) => `
+                <span class="team-status-holder" style="--character-color: ${escapeHtml(holder.color)}">
+                  <span class="team-status-holder-dot" aria-hidden="true"></span>
+                  ${escapeHtml(holder.name)}
+                </span>
+              `,
+            )
+            .join("")
+        : "無角色";
       const description = effect.description || getStatusDescription(effectType, effect.label) || "尚未設定說明。";
 
       return `
