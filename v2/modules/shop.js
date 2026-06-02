@@ -1,3 +1,4 @@
+import { formatGold, goldToHandfuls, normalizeGoldFromHandfuls } from "./assets.js";
 import { getCurrentCharacter, updateCharacter } from "./characters.js";
 
 const typeOptions = [
@@ -132,14 +133,19 @@ export function purchaseShopItem(state, itemId) {
     time: new Date().toISOString(),
   };
 
-  const stateWithCharacter = updateCharacter(state, character.id, (current) => ({
-    ...current,
-    assets: {
-      ...current.assets,
-      money: current.assets.money - item.price,
-      [assetKey]: [...(current.assets[assetKey] || []), item.name],
-    },
-  }));
+  const stateWithCharacter = updateCharacter(state, character.id, (current) => {
+    const gold = normalizeGoldFromHandfuls(current.assets.money - item.price);
+
+    return {
+      ...current,
+      assets: {
+        ...current.assets,
+        money: goldToHandfuls(gold),
+        gold,
+        [assetKey]: [...(current.assets[assetKey] || []), item.name],
+      },
+    };
+  });
 
   return setShopMessage({
     ...stateWithCharacter,
@@ -161,7 +167,7 @@ export function renderPlayerShop(state) {
     <section class="shop-panel">
       <div class="shop-summary">
         <h3>玩家商店</h3>
-        <p>${character ? `目前角色：${escapeHtml(character.name)}｜金錢：${character.assets.money}` : "尚未選擇角色"}</p>
+        <p>${character ? `目前角色：${escapeHtml(character.name)}｜金錢：${formatGold(character.assets.gold)}` : "尚未選擇角色"}</p>
       </div>
       ${state.ui.shopMessage ? `<p class="form-message">${escapeHtml(state.ui.shopMessage)}</p>` : ""}
       ${
@@ -185,7 +191,7 @@ function renderPlayerShopItem(item, hasCharacter) {
       </div>
       <p>${escapeHtml(item.description || "沒有描述")}</p>
       <div class="shop-item-meta">
-        <span>價格：${item.price}</span>
+        <span>價格：${formatGold(item.price)}</span>
         <span>${soldOut ? "售完" : `庫存：${item.stock}`}</span>
       </div>
       <button class="primary-button full-width-button" type="button" data-action="purchase-shop-item" data-shop-item-id="${escapeHtml(item.id)}" ${!hasCharacter || soldOut ? "disabled" : ""}>
@@ -231,7 +237,7 @@ function renderAddShopItemForm() {
           </select>
         </label>
         <label class="form-field">
-          <span>價格</span>
+          <span>價格（把）</span>
           <input data-new-shop-price type="number" inputmode="numeric" min="0" value="0" />
         </label>
         <label class="form-field">
@@ -267,7 +273,7 @@ function renderDmShopItem(item) {
       </label>
       <div class="form-grid">
         <label class="form-field">
-          <span>價格</span>
+          <span>價格（把）</span>
           <input data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="price" type="number" inputmode="numeric" min="0" value="${item.price}" />
         </label>
         <label class="form-field">
@@ -296,7 +302,7 @@ function renderPurchaseLog(purchaseLog) {
                   (log) => `
                     <li>
                       <span>${escapeHtml(log.characterName)} 購買 ${escapeHtml(log.itemName)}</span>
-                      <small>${log.price} 金錢｜${new Date(log.time).toLocaleString("zh-TW")}</small>
+                      <small>${formatGold(log.price)}｜${new Date(log.time).toLocaleString("zh-TW")}</small>
                     </li>
                   `,
                 )
