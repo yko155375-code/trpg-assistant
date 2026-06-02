@@ -1,8 +1,8 @@
 export const statusEffectGroups = {
   buffs: [
-    { id: "blessed", label: "祝福" },
-    { id: "guarded", label: "守護" },
-    { id: "inspired", label: "振奮" },
+    { id: "blessed", label: "祝福", description: "受到祝福，適合標記正面支援、幸運或神聖庇護。" },
+    { id: "guarded", label: "守護", description: "受到守護，適合標記防禦、護衛或短暫保護。" },
+    { id: "inspired", label: "振奮", description: "士氣提升，適合標記鼓舞、專注或短暫加成。" },
   ],
   debuffs: [
     {
