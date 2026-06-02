@@ -4,6 +4,7 @@ import {
   addCharacterEffect,
   addCharacter,
   adjustCharacterAttribute,
+  adjustCharacterGold,
   adjustCharacterMoney,
   adjustCharacterStat,
   deleteAssetEntry,
@@ -15,6 +16,7 @@ import {
   updateAssetEntry,
   updateCharacterAttribute,
   updateCharacterField,
+  updateCharacterGold,
   updateCharacterMoney,
   updateCharacterStat,
 } from "./modules/characters.js";
@@ -142,6 +144,17 @@ app.addEventListener("click", (event) => {
 
   if (!actionButton) return;
 
+  if (actionButton.dataset.action === "toggle-team-status") {
+    updateState({
+      ...state,
+      ui: {
+        ...state.ui,
+        isTeamStatusOpen: !state.ui.isTeamStatusOpen,
+      },
+    });
+    return;
+  }
+
   if (actionButton.dataset.action === "delete-character") {
     updateState(deleteCharacter(state, actionButton.dataset.characterId));
     return;
@@ -179,6 +192,18 @@ app.addEventListener("click", (event) => {
   if (actionButton.dataset.action === "adjust-character-money") {
     updateState(
       adjustCharacterMoney(state, actionButton.dataset.characterId, Number(actionButton.dataset.delta)),
+    );
+    return;
+  }
+
+  if (actionButton.dataset.action === "adjust-character-gold") {
+    updateState(
+      adjustCharacterGold(
+        state,
+        actionButton.dataset.characterId,
+        actionButton.dataset.goldField,
+        Number(actionButton.dataset.delta),
+      ),
     );
     return;
   }
@@ -300,6 +325,11 @@ app.addEventListener("change", (event) => {
     return;
   }
 
+  if (event.target.dataset.goldField) {
+    updateState(updateCharacterGold(state, characterId, event.target.dataset.goldField, event.target.value));
+    return;
+  }
+
   if (event.target.matches("[data-money-field]")) {
     updateState(updateCharacterMoney(state, characterId, event.target.value));
   }
@@ -321,6 +351,11 @@ app.addEventListener("input", (event) => {
 
   if (event.target.dataset.attributeField) {
     saveStateOnly(updateCharacterAttribute(state, characterId, event.target.dataset.attributeField, event.target.value));
+    return;
+  }
+
+  if (event.target.dataset.goldField) {
+    saveStateOnly(updateCharacterGold(state, characterId, event.target.dataset.goldField, event.target.value));
     return;
   }
 
@@ -479,6 +514,11 @@ app.addEventListener(
 
     if (stepperType === "money") {
       updateState(adjustCharacterMoney(state, characterId, delta));
+      return;
+    }
+
+    if (stepperType === "gold") {
+      updateState(adjustCharacterGold(state, characterId, stepperField, delta));
     }
   },
   { passive: false },
