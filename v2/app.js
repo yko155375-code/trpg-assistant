@@ -315,6 +315,11 @@ app.addEventListener("change", (event) => {
   const characterId = event.target.dataset.characterId;
   if (!characterId) return;
 
+  if (event.target.dataset.characterField) {
+    updateState(updateCharacterField(state, characterId, event.target.dataset.characterField, event.target.value));
+    return;
+  }
+
   if (event.target.dataset.statField) {
     updateState(updateCharacterStat(state, characterId, event.target.dataset.statField, event.target.value));
     return;
@@ -424,7 +429,8 @@ app.addEventListener("submit", (event) => {
   if (addCharacterForm) {
     event.preventDefault();
     const input = addCharacterForm.querySelector("[data-new-character-name]");
-    updateState(addCharacter(state, input.value.trim()));
+    const colorSelect = addCharacterForm.querySelector("[data-new-character-color]");
+    updateState(addCharacter(state, input.value.trim(), colorSelect?.value));
     return;
   }
 
