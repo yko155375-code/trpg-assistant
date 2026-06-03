@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "dice-duality-update",
-  commit: "5f4a6abff6484626e21dce329416817a3e7925c1",
-  sourceCommit: "5f4a6abff6484626e21dce329416817a3e7925c1",
+  label: "dice-formula-normalize",
+  commit: "f12e32833121abfe068793ea9b7fdafdd516e90f",
+  sourceCommit: "f12e32833121abfe068793ea9b7fdafdd516e90f",
   versionCommit: "pending",
-  updatedAt: "2026-06-04T02:40:00+08:00",
-  note: "Dice quick buttons, duality result effects, and critical damage markers."
+  updatedAt: "2026-06-04T03:12:00+08:00",
+  note: "Normalize quick dice formula tokens after button appends."
 };
 
 function shortCommit(commit) {
