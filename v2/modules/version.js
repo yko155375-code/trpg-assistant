@@ -1,9 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "sync-version-marker",
-  commit: "888403cb8a0c98cdf911d21623018ff4b0e2e874",
-  updatedAt: "2026-06-04T02:26:26+08:00",
-  note: "Sync version marker after recent v2 updates."
+  label: "dice-duality-update",
+  commit: "5f4a6abff6484626e21dce329416817a3e7925c1",
+  sourceCommit: "5f4a6abff6484626e21dce329416817a3e7925c1",
+  versionCommit: "pending",
+  updatedAt: "2026-06-04T02:40:00+08:00",
+  note: "Dice quick buttons, duality result effects, and critical damage markers."
 };
 
 function shortCommit(commit) {
