@@ -1,8 +1,17 @@
-import { renderDmCharacterManager } from "./characters.js";
+import {
+  attributeFields,
+  characterColorOptions,
+  getCurrentCharacter,
+  normalizeCharacters,
+  renderAddCharacterForm,
+  statFields,
+} from "./characters.js";
+import { formatGold, goldUnitFields, normalizeGold } from "./assets.js";
 import { renderDicePanel } from "./dice.js";
 import { renderMonsterManager, renderMonsterOverview } from "./monsters.js";
 import { renderPublicInfoEditor } from "./public-info.js";
 import { renderDmShopManager } from "./shop.js";
+import { sortStatusLabels, statusEffectGroups } from "./status-effects.js";
 
 const dmPageContent = {
   overview: {
@@ -41,6 +50,293 @@ const dmPageContent = {
     sections: ["背景音樂", "即時音效", "播放狀態"],
   },
 };
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function renderDmEffectSummary(entries, effectType, maxVisible = 2) {
+  const normalized = sortStatusLabels(effectType, entries);
+  if (!normalized.length) return "無";
+
+  const visible = normalized.slice(0, maxVisible).map(escapeHtml).join("、");
+  const hiddenCount = normalized.length - maxVisible;
+  return hiddenCount > 0 ? `${visible} +${hiddenCount}` : visible;
+}
+
+function renderDmCompactStatControl(character, field, label, valueText) {
+  return `
+    <div class="compact-stat-control" data-character-id="${escapeHtml(character.id)}">
+      <span>${label}</span>
+      <button type="button" data-action="adjust-character-stat" data-character-id="${escapeHtml(character.id)}" data-stat-field="${field}" data-delta="-1" aria-label="${label}減少">−</button>
+      <strong>${valueText}</strong>
+      <button type="button" data-action="adjust-character-stat" data-character-id="${escapeHtml(character.id)}" data-stat-field="${field}" data-delta="1" aria-label="${label}增加">+</button>
+    </div>
+  `;
+}
+
+function renderDmAttributeBadges(character) {
+  return `
+    <div class="compact-attribute-grid" aria-label="六大屬性">
+      ${attributeFields
+        .map(
+          (field) => `
+            <span class="compact-attribute-badge">
+              <b>${field.label}</b>
+              <strong>${character.attributes[field.key]}</strong>
+            </span>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderDmDebuffChips(character) {
+  const entries = sortStatusLabels("debuffs", character.debuffs);
+  const presets = statusEffectGroups.debuffs || [];
+
+  return `
+    <div class="compact-debuff-chips" aria-label="${escapeHtml(character.name)}負面狀態">
+      ${presets
+        .map((effect) => {
+          const isActive = entries.includes(effect.label);
+          return `
+            <button
+              class="compact-debuff-chip ${isActive ? "is-active" : ""}"
+              type="button"
+              data-action="toggle-character-effect"
+              data-character-id="${escapeHtml(character.id)}"
+              data-effect-type="debuffs"
+              data-effect-label="${escapeHtml(effect.label)}"
+              aria-pressed="${isActive}"
+            >
+              ${escapeHtml(effect.label)}
+            </button>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
+function renderDmStepper({ characterId, type, field, label, value }) {
+  return `
+    <label class="number-stepper" data-number-stepper data-character-id="${escapeHtml(characterId)}" data-stepper-type="${type}" data-stepper-field="${field}">
+      <span>${label}</span>
+      <button type="button" data-action="adjust-character-${type}" data-character-id="${escapeHtml(characterId)}" data-${type}-field="${field}" data-delta="-1" aria-label="${label}減一">−</button>
+      <input data-character-id="${escapeHtml(characterId)}" data-${type}-field="${field}" type="number" inputmode="numeric" value="${value}" />
+      <button type="button" data-action="adjust-character-${type}" data-character-id="${escapeHtml(characterId)}" data-${type}-field="${field}" data-delta="1" aria-label="${label}加一">+</button>
+    </label>
+  `;
+}
+
+function renderDmGoldStepper(character) {
+  const gold = normalizeGold(character.assets.gold, character.assets.money);
+
+  return `
+    <div class="gold-stepper-group" aria-label="金幣">
+      <strong class="gold-stepper-title">金幣 ${formatGold(gold)}</strong>
+      <div class="gold-stepper-grid">
+        ${goldUnitFields
+          .map(
+            (unit) => `
+              <label class="number-stepper gold-stepper" data-number-stepper data-character-id="${escapeHtml(character.id)}" data-stepper-type="gold" data-stepper-field="${unit.key}">
+                <span>${unit.label}</span>
+                <button type="button" data-action="adjust-character-gold" data-character-id="${escapeHtml(character.id)}" data-gold-field="${unit.key}" data-delta="-1" aria-label="${unit.label}減一">−</button>
+                <input data-character-id="${escapeHtml(character.id)}" data-gold-field="${unit.key}" type="number" inputmode="numeric" min="0" value="${gold[unit.key]}" />
+                <button type="button" data-action="adjust-character-gold" data-character-id="${escapeHtml(character.id)}" data-gold-field="${unit.key}" data-delta="1" aria-label="${unit.label}加一">+</button>
+              </label>
+            `,
+          )
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderDmEffectEditor(character, effectType, label) {
+  const entries = sortStatusLabels(effectType, character[effectType]);
+  const presets = statusEffectGroups[effectType] || [];
+
+  return `
+    <section class="effect-editor">
+      <h4>${label}</h4>
+      <div class="effect-chip-row" aria-label="${label}快速選擇">
+        ${presets
+          .map((effect) => {
+            const isActive = entries.includes(effect.label);
+            return `
+              <button
+                class="effect-chip ${isActive ? "is-active" : ""}"
+                type="button"
+                data-action="toggle-character-effect"
+                data-character-id="${escapeHtml(character.id)}"
+                data-effect-type="${effectType}"
+                data-effect-label="${escapeHtml(effect.label)}"
+                aria-pressed="${isActive}"
+              >
+                ${escapeHtml(effect.label)}
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
+      <form class="inline-form compact" data-add-character-effect-form data-character-id="${escapeHtml(character.id)}" data-effect-type="${effectType}">
+        <input data-character-effect-input type="text" placeholder="新增${label}" autocomplete="off" />
+        <button type="submit">新增</button>
+      </form>
+      ${
+        entries.length
+          ? `<ul class="effect-list">
+              ${entries
+                .map(
+                  (entry, index) => `
+                    <li>
+                      <span>${escapeHtml(entry)}</span>
+                      <button type="button" data-action="delete-character-effect" data-character-id="${escapeHtml(character.id)}" data-effect-type="${effectType}" data-effect-index="${index}">刪除</button>
+                    </li>
+                  `,
+                )
+                .join("")}
+            </ul>`
+          : `<p class="empty-hint">尚無${label}</p>`
+      }
+    </section>
+  `;
+}
+
+function renderDmCharacterDetails(character) {
+  return `
+    <section class="editor-panel team-detail-panel" data-character-id="${escapeHtml(character.id)}">
+      <div class="editor-heading">
+        <h3>DM 角色詳細編輯</h3>
+        <button class="danger-button" type="button" data-action="delete-character" data-character-id="${escapeHtml(character.id)}">刪除角色</button>
+      </div>
+      <label class="form-field form-field-full">
+        <span>角色名稱</span>
+        <input data-character-id="${escapeHtml(character.id)}" data-character-field="name" type="text" value="${escapeHtml(character.name)}" />
+      </label>
+      <label class="form-field form-field-full character-color-editor">
+        <span>角色顏色</span>
+        <select data-character-id="${escapeHtml(character.id)}" data-character-field="color">
+          ${characterColorOptions
+            .map(
+              (option) => `
+                <option value="${option.value}" ${character.color === option.value ? "selected" : ""}>${option.label}</option>
+              `,
+            )
+            .join("")}
+        </select>
+      </label>
+      <div class="stepper-grid">
+        ${statFields
+          .map((field) =>
+            renderDmStepper({
+              characterId: character.id,
+              type: "stat",
+              field: field.key,
+              label: field.label,
+              value: character.stats[field.key],
+            }),
+          )
+          .join("")}
+        ${renderDmGoldStepper(character)}
+      </div>
+      <h4>六屬性</h4>
+      <div class="stepper-grid attribute-stepper-grid">
+        ${attributeFields
+          .map((field) =>
+            renderDmStepper({
+              characterId: character.id,
+              type: "attribute",
+              field: field.key,
+              label: field.label,
+              value: character.attributes[field.key],
+            }),
+          )
+          .join("")}
+      </div>
+      <div class="effect-grid">
+        ${renderDmEffectEditor(character, "buffs", "增益")}
+        ${renderDmEffectEditor(character, "debuffs", "負面")}
+      </div>
+      <label class="form-field form-field-full">
+        <span>角色備註</span>
+        <textarea data-character-id="${escapeHtml(character.id)}" data-character-field="notes" rows="4">${escapeHtml(character.notes)}</textarea>
+      </label>
+    </section>
+  `;
+}
+
+function renderDmCharacterManager(state) {
+  const characters = normalizeCharacters(state.characters);
+  const current = getCurrentCharacter({ ...state, characters });
+  const expandedId = characters.some((character) => character.id === state.ui.expandedCharacterId)
+    ? state.ui.expandedCharacterId
+    : null;
+  const expandedCharacter = characters.find((character) => character.id === expandedId);
+
+  if (!characters.length) {
+    return `
+      <section class="empty-panel">
+        <strong>尚未建立角色</strong>
+        <p>新增角色後，DM 玩家頁會以緊湊卡片快速管理全隊 HP、壓力、希望、護盾與狀態。</p>
+      </section>
+      <section class="team-add-panel">
+        ${renderAddCharacterForm()}
+      </section>
+    `;
+  }
+
+  return `
+    <div class="team-page-grid dm-player-compact">
+      <div class="team-main-column">
+        <section class="team-roster" aria-label="DM 玩家精簡管理">
+          ${characters
+            .map(
+              (character) => `
+                <article class="team-summary-card ${character.id === current?.id ? "is-current" : ""} ${character.id === expandedId ? "is-expanded" : ""}" style="--character-color: ${escapeHtml(character.color)}">
+                  <div class="team-summary-head">
+                    <button class="team-summary-name-button" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}">
+                      <span class="team-summary-name">
+                        <span class="team-summary-color-dot" aria-hidden="true"></span>
+                        ${escapeHtml(character.name)}
+                      </span>
+                      <small>閃避 ${character.stats.evasion} · 金幣 ${formatGold(character.assets.gold)}</small>
+                    </button>
+                    <button class="team-edit-button" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}" aria-label="編輯 ${escapeHtml(character.name)}">⋯</button>
+                  </div>
+                  <div class="compact-stat-grid" aria-label="${escapeHtml(character.name)}主要數值">
+                    ${renderDmCompactStatControl(character, "hp", "HP", `${character.stats.hp}/${character.stats.maxHp}`)}
+                    ${renderDmCompactStatControl(character, "stress", "壓力", `${character.stats.stress}/${character.stats.maxStress}`)}
+                    ${renderDmCompactStatControl(character, "hope", "希望", character.stats.hope)}
+                    ${renderDmCompactStatControl(character, "shield", "護盾", character.stats.shield)}
+                  </div>
+                  ${renderDmAttributeBadges(character)}
+                  <div class="compact-effect-summary">
+                    <span>增益：${renderDmEffectSummary(character.buffs, "buffs", 2)}</span>
+                    <span>負面：${renderDmEffectSummary(character.debuffs, "debuffs", 2)}</span>
+                  </div>
+                  ${renderDmDebuffChips(character)}
+                </article>
+              `,
+            )
+            .join("")}
+        </section>
+        ${expandedCharacter ? renderDmCharacterDetails(expandedCharacter) : ""}
+        <section class="team-add-panel">
+          ${renderAddCharacterForm()}
+        </section>
+      </div>
+    </div>
+  `;
+}
 
 export function renderDmPage(pageId, state) {
   const page = dmPageContent[pageId] || dmPageContent.overview;
