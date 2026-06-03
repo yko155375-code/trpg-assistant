@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "critical-damage-formula",
-  commit: "3fc8288dc445cfde9be2da20bb26d05c4fab9817",
-  sourceCommit: "3fc8288dc445cfde9be2da20bb26d05c4fab9817",
+  label: "dice-modifier-buttons",
+  commit: "d951a8a02e54079591afb34c1e4580d5b4f30228",
+  sourceCommit: "d951a8a02e54079591afb34c1e4580d5b4f30228",
   versionCommit: "pending",
-  updatedAt: "2026-06-04T03:44:00+08:00",
-  note: "Apply max dice damage to critical damage formula rolls."
+  updatedAt: "2026-06-04T04:31:00+08:00",
+  note: "Move dice modifier buttons beside the formula input."
 };
 
 function shortCommit(commit) {
