@@ -355,7 +355,7 @@ export function clearRolls(state) {
 }
 
 function renderQuickDiceButtons() {
-  const tokens = ["d2", "d4", "d6", "d8", "d10", "d12", "d20", "d100", "+1", "-1"];
+  const tokens = ["d2", "d4", "d6", "d8", "d10", "d12", "d20", "d100"];
   return `
     <div class="quick-dice-row" aria-label="快速加入擲骰公式">
       ${tokens.map((token) => `<button type="button" data-action="append-roll-token" data-roll-token="${token}">${token}</button>`).join("")}
@@ -370,7 +370,7 @@ export function renderDicePanel(state, options = {}) {
     <section class="editor-panel dice-panel">
       <div class="editor-heading"><h3>${title}</h3><button class="danger-button" type="button" data-action="clear-rolls">清空紀錄</button></div>
       <form class="inline-form" data-roll-form data-roll-actor="${escapeHtml(actor)}">
-        <label class="form-field"><span>擲骰公式</span><input data-roll-formula type="text" placeholder="例如 1d20、2d8-1" autocomplete="off" /></label>
+        <label class="form-field"><span>擲骰公式</span><span class="roll-formula-input-row" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:center;min-width:0;"><input data-roll-formula type="text" placeholder="例如 1d20、2d8-1" autocomplete="off" /><span class="roll-modifier-buttons" style="display:flex;gap:3px;align-items:center;"><button type="button" data-action="append-roll-token" data-roll-token="-1" style="width:34px;min-width:34px;padding:0;">-1</button><button type="button" data-action="append-roll-token" data-roll-token="+1" style="width:34px;min-width:34px;padding:0;">+1</button></span></span></label>
         <button class="primary-button" type="submit">擲骰</button>
       </form>
       ${isCriticalDamageRoll ? `<p class="critical-damage-banner">目前為關鍵成功傷害骰：這次公式擲骰會標記為 critical damage roll。</p>` : ""}
