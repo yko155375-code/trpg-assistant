@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "dice-formula-keep",
-  commit: "b7f9afc35ccfc9dc9de0b19e50dfd71b616d46ff",
-  sourceCommit: "b7f9afc35ccfc9dc9de0b19e50dfd71b616d46ff",
+  label: "critical-damage-formula",
+  commit: "3fc8288dc445cfde9be2da20bb26d05c4fab9817",
+  sourceCommit: "3fc8288dc445cfde9be2da20bb26d05c4fab9817",
   versionCommit: "pending",
-  updatedAt: "2026-06-04T03:28:00+08:00",
-  note: "Keep dice formula input after formula rolls."
+  updatedAt: "2026-06-04T03:44:00+08:00",
+  note: "Apply max dice damage to critical damage formula rolls."
 };
 
 function shortCommit(commit) {
