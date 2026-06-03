@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "dice-modifier-buttons",
-  "commit": "d951a8a02e54079591afb34c1e4580d5b4f30228",
-  "sourceCommit": "d951a8a02e54079591afb34c1e4580d5b4f30228",
-  "versionCommit": "4b1e126851b4157b9e67fbfc2387dc93117491ea",
-  "updatedAt": "2026-06-04T04:31:00+08:00",
-  "note": "Move dice modifier buttons beside the formula input."
+  "label": "dm-player-compact",
+  "commit": "5d67168bbe05add791180cb060550aaa3c1ce66b",
+  "sourceCommit": "5d67168bbe05add791180cb060550aaa3c1ce66b",
+  "versionCommit": "098ed180af74fc2bbf6e14733faa41a119df2921",
+  "updatedAt": "2026-06-04T05:12:05+08:00",
+  "note": "Compact DM player management cards."
 }
