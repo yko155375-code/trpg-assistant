@@ -3,7 +3,7 @@ const DEFAULT_VERSION_INFO = {
   label: "dice-modifier-buttons",
   commit: "d951a8a02e54079591afb34c1e4580d5b4f30228",
   sourceCommit: "d951a8a02e54079591afb34c1e4580d5b4f30228",
-  versionCommit: "pending",
+  versionCommit: "3089a7fc4b8293220ab1e0683794f6fc9f13448a",
   updatedAt: "2026-06-04T04:31:00+08:00",
   note: "Move dice modifier buttons beside the formula input."
 };
