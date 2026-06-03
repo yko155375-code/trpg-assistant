@@ -41,75 +41,122 @@ function parseFormulaTerm(token) {
   return { ok: false, error: "公式格式錯誤，請使用像 1d20、2d12、1d6+2、2d8-1 的格式。" };
 }
 
-export function appendFormulaToken(formula, token) {
-  const current = String(formula || "").replace(/\s+/g, "").toLowerCase();
-  const nextToken = String(token || "").toLowerCase();
+function tokenizeFormula(formula) {
+  const normalized = String(formula || "").replace(/\s+/g, "").toLowerCase();
+  if (!normalized) return { ok: true, terms: [], normalized };
 
+  const tokens = normalized.match(/[+-]?(\d*d\d+|\d+)/g) || [];
+  if (tokens.join("") !== normalized) {
+    return { ok: false, terms: [], normalized };
+  }
+
+  const terms = [];
+  for (const token of tokens) {
+    const parsed = parseFormulaTerm(token);
+    if (!parsed.ok) return { ok: false, terms: [], normalized };
+    terms.push(parsed);
+  }
+
+  return { ok: true, terms, normalized };
+}
+
+function summarizeFormulaTerms(terms) {
+  const diceCounts = new Map();
+  let modifier = 0;
+  let diceCount = 0;
+
+  for (const term of terms) {
+    if (term.type === "modifier") {
+      modifier += term.value;
+      continue;
+    }
+
+    diceCount += term.count;
+    diceCounts.set(term.sides, (diceCounts.get(term.sides) || 0) + term.sign * term.count);
+  }
+
+  return { diceCounts, modifier, diceCount };
+}
+
+function appendSignedTerm(segments, term, sign = 1) {
+  if (sign < 0) {
+    segments.push(`-${term}`);
+    return;
+  }
+  segments.push(segments.length ? `+${term}` : term);
+}
+
+function formatFormulaSummary(summary) {
+  const segments = [];
+  const sortedDice = Array.from(summary.diceCounts.entries()).sort((a, b) => a[0] - b[0]);
+
+  for (const [sides, count] of sortedDice) {
+    if (!count) continue;
+    const absoluteCount = Math.abs(count);
+    const term = absoluteCount === 1 ? `d${sides}` : `${absoluteCount}d${sides}`;
+    appendSignedTerm(segments, term, count < 0 ? -1 : 1);
+  }
+
+  if (summary.modifier) {
+    appendSignedTerm(segments, String(Math.abs(summary.modifier)), summary.modifier < 0 ? -1 : 1);
+  }
+
+  return segments.join("");
+}
+
+function appendRawFormulaToken(current, nextToken) {
   if (!current) {
     return nextToken.startsWith("+") ? nextToken.slice(1) : nextToken;
   }
+  return /^[+-]/.test(nextToken) ? `${current}${nextToken}` : `${current}+${nextToken}`;
+}
 
-  if (/^[+-]\d+$/.test(nextToken)) {
-    const simpleMatch = current.match(/^(\d*)d(\d+)([+-]\d+)?$/);
-    if (simpleMatch) {
-      const modifier = toNumber(simpleMatch[3]) + toNumber(nextToken);
-      return `${simpleMatch[1] || ""}d${simpleMatch[2]}${modifier ? `${modifier > 0 ? "+" : ""}${modifier}` : ""}`;
-    }
-    return `${current}${nextToken}`;
-  }
+export function appendFormulaToken(formula, token) {
+  const current = String(formula || "").replace(/\s+/g, "").toLowerCase();
+  const nextToken = String(token || "").replace(/\s+/g, "").toLowerCase();
+  if (!nextToken) return current;
 
-  if (/^d\d+$/.test(nextToken)) {
-    const simpleMatch = current.match(/^(\d*)d(\d+)([+-]\d+)?$/);
-    const sides = nextToken.slice(1);
-    if (simpleMatch && simpleMatch[2] === sides) {
-      const count = Number(simpleMatch[1] || 1) + 1;
-      return `${count}d${sides}${simpleMatch[3] || ""}`;
-    }
-    return `${current}+${nextToken}`;
-  }
+  const candidate = appendRawFormulaToken(current, nextToken);
+  const parsed = tokenizeFormula(candidate);
+  if (!parsed.ok) return candidate;
 
-  return current;
+  return formatFormulaSummary(summarizeFormulaTerms(parsed.terms));
 }
 
 export function rollFormula(formula) {
-  const normalized = String(formula || "").replace(/\s+/g, "").toLowerCase();
-  const tokens = normalized.match(/[+-]?(\d*d\d+|\d+)/g) || [];
-
-  if (!normalized || tokens.join("") !== normalized) {
+  const parsed = tokenizeFormula(formula);
+  if (!parsed.normalized || !parsed.ok) {
     return { ok: false, error: "公式格式錯誤，請使用像 1d20、2d12、1d6+2、2d8-1 的格式。" };
   }
+
+  const summary = summarizeFormulaTerms(parsed.terms);
+  if (!summary.diceCount) {
+    return { ok: false, error: "公式至少需要包含一個骰子，例如 1d20。" };
+  }
+  if (summary.diceCount > 100) return { ok: false, error: "單次擲骰最多 100 顆骰子。" };
 
   const dice = [];
   const terms = [];
   let modifier = 0;
-  let diceCount = 0;
 
-  for (const token of tokens) {
-    const parsed = parseFormulaTerm(token);
-    if (!parsed.ok) return parsed;
-
-    if (parsed.type === "modifier") {
-      modifier += parsed.value;
-      terms.push({ type: "modifier", value: parsed.value });
+  for (const term of parsed.terms) {
+    if (term.type === "modifier") {
+      modifier += term.value;
+      terms.push({ type: "modifier", value: term.value });
       continue;
     }
 
-    diceCount += parsed.count;
-    if (diceCount > 100) return { ok: false, error: "單次擲骰最多 100 顆骰子。" };
-
-    const results = Array.from({ length: parsed.count }, () => rollDie(parsed.sides));
-    dice.push(...results.map((value) => parsed.sign * value));
-    terms.push({ type: "dice", sign: parsed.sign, count: parsed.count, sides: parsed.sides, results });
+    const results = Array.from({ length: term.count }, () => rollDie(term.sides));
+    dice.push(...results.map((value) => term.sign * value));
+    terms.push({ type: "dice", sign: term.sign, count: term.count, sides: term.sides, results });
   }
-
-  if (!diceCount) return { ok: false, error: "公式至少需要包含一個骰子，例如 1d20。" };
 
   const diceTotal = dice.reduce((sum, value) => sum + value, 0);
 
   return {
     ok: true,
     type: "formula",
-    formula: normalized,
+    formula: formatFormulaSummary(summary) || parsed.normalized,
     dice,
     terms,
     modifier,
