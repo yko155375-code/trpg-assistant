@@ -387,4 +387,24 @@ if (typeof document !== "undefined" && !document.documentElement.dataset.v2DiceQ
     input.value = appendFormulaToken(input.value, button.dataset.rollToken);
     input.focus();
   });
+
+  document.addEventListener(
+    "submit",
+    (event) => {
+      const rollForm = event.target.closest?.("[data-roll-form]");
+      if (!rollForm) return;
+
+      const input = rollForm.querySelector("[data-roll-formula]");
+      const formulaValue = input?.value ?? "";
+      const rollActor = rollForm.dataset.rollActor || "";
+
+      window.setTimeout(() => {
+        const forms = Array.from(document.querySelectorAll("[data-roll-form]"));
+        const nextForm = forms.find((form) => (form.dataset.rollActor || "") === rollActor) || forms[0];
+        const nextInput = nextForm?.querySelector("[data-roll-formula]");
+        if (nextInput) nextInput.value = formulaValue;
+      }, 0);
+    },
+    true,
+  );
 }
