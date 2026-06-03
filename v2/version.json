@@ -3,7 +3,7 @@
   "label": "dice-duality-update",
   "commit": "5f4a6abff6484626e21dce329416817a3e7925c1",
   "sourceCommit": "5f4a6abff6484626e21dce329416817a3e7925c1",
-  "versionCommit": "d06d8414cb8a22949e87c342fcfca177bd98de76",
+  "versionCommit": "983ffbc15a165540d8f63bcc55c68d59d110afc5",
   "updatedAt": "2026-06-04T02:40:00+08:00",
   "note": "Dice quick buttons, duality result effects, and critical damage markers."
 }
