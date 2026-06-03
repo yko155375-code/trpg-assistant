@@ -1,7 +1,7 @@
 {
   "version": "v2",
-  "label": "version-check",
-  "commit": "83c756fc275021d2bee0811404c3ff994b86f3df",
-  "updatedAt": "2026-06-04T01:54:06+08:00",
-  "note": "Fixed URL version verification for GitHub Pages v2."
+  "label": "sync-version-marker",
+  "commit": "f24fcdf483f6b36689b55ed46dc5e5e8423bc408",
+  "updatedAt": "2026-06-04T02:26:26+08:00",
+  "note": "Sync version marker after recent v2 updates."
 }
