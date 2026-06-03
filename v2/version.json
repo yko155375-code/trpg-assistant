@@ -1,7 +1,9 @@
 {
   "version": "v2",
-  "label": "sync-version-marker",
-  "commit": "f24fcdf483f6b36689b55ed46dc5e5e8423bc408",
-  "updatedAt": "2026-06-04T02:26:26+08:00",
-  "note": "Sync version marker after recent v2 updates."
+  "label": "dice-duality-update",
+  "commit": "5f4a6abff6484626e21dce329416817a3e7925c1",
+  "sourceCommit": "5f4a6abff6484626e21dce329416817a3e7925c1",
+  "versionCommit": "d06d8414cb8a22949e87c342fcfca177bd98de76",
+  "updatedAt": "2026-06-04T02:40:00+08:00",
+  "note": "Dice quick buttons, duality result effects, and critical damage markers."
 }
