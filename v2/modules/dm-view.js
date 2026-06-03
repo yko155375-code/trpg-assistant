@@ -1,4 +1,4 @@
-import { renderCharacterEditor } from "./characters.js";
+import { renderDmCharacterManager } from "./characters.js";
 import { renderDicePanel } from "./dice.js";
 import { renderMonsterManager, renderMonsterOverview } from "./monsters.js";
 import { renderPublicInfoEditor } from "./public-info.js";
@@ -91,7 +91,7 @@ export function renderDmPage(pageId, state) {
           <h2 id="active-page-title">玩家</h2>
           <p class="placeholder">新增、選擇、編輯、刪除角色，並管理同一份角色狀態與資產。</p>
         </div>
-        ${renderCharacterEditor(state, { includeAssets: true, title: "玩家角色管理" })}
+        ${renderDmCharacterManager(state)}
       </section>
     `;
   }
