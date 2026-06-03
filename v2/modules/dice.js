@@ -295,6 +295,44 @@ export function applyDualityEffects(state, roll) {
   };
 }
 
+function getMaxDiceDamage(roll) {
+  return (Array.isArray(roll.terms) ? roll.terms : []).reduce((sum, term) => {
+    if (term.type !== "dice" || term.sign < 0) return sum;
+    return sum + term.count * term.sides;
+  }, 0);
+}
+
+function applyCriticalDamageFormula(roll) {
+  const maxDiceDamage = getMaxDiceDamage(roll);
+  const normalRollTotal = Array.isArray(roll.dice) ? roll.dice.reduce((sum, value) => sum + value, 0) : 0;
+  const modifierTotal = toNumber(roll.modifier);
+
+  if (!maxDiceDamage) {
+    return {
+      ...roll,
+      criticalDamage: true,
+      isCriticalDamageRoll: true,
+      criticalDamageSkipped: true,
+      note: "關鍵成功傷害骰",
+      criticalDamageMessage: "此公式沒有可計算滿骰傷害的骰子，未套用額外滿骰傷害。",
+    };
+  }
+
+  const totalDamage = maxDiceDamage + normalRollTotal + modifierTotal;
+
+  return {
+    ...roll,
+    criticalDamage: true,
+    isCriticalDamageRoll: true,
+    maxDiceDamage,
+    normalRollTotal,
+    modifierTotal,
+    totalDamage,
+    total: totalDamage,
+    note: "關鍵成功傷害骰",
+  };
+}
+
 export function addRoll(state, roll, actor = "玩家") {
   if (!roll.ok) return state;
   const applied = roll.type === "duality" ? applyDualityEffects(state, roll) : { state, roll };
@@ -302,9 +340,7 @@ export function addRoll(state, roll, actor = "玩家") {
   const nextState = isCriticalDamageRoll
     ? { ...applied.state, ui: { ...applied.state.ui, isCriticalDamageRoll: false } }
     : applied.state;
-  const nextRoll = isCriticalDamageRoll
-    ? { ...applied.roll, criticalDamage: true, note: "關鍵成功傷害骰" }
-    : applied.roll;
+  const nextRoll = isCriticalDamageRoll ? applyCriticalDamageFormula(applied.roll) : applied.roll;
   return {
     ...nextState,
     rolls: [
@@ -360,9 +396,17 @@ function renderDualityRollDetails(roll) {
 
 function renderFormulaRollDetails(roll) {
   const diceText = (roll.dice || []).join("、");
+  if (roll.criticalDamage && !roll.criticalDamageSkipped) {
+    return `
+      <p>骰面：${diceText}${roll.modifier ? `，修正：${roll.modifier}` : ""}</p>
+      <p class="roll-note critical">critical damage roll：關鍵成功傷害骰。</p>
+      <p class="roll-note critical">公式：${escapeHtml(roll.formula)}｜滿骰傷害：${roll.maxDiceDamage}｜正常擲骰：${roll.normalRollTotal}｜固定修正：${roll.modifierTotal}｜總傷害：${roll.totalDamage}</p>
+    `;
+  }
+
   return `
     <p>骰面：${diceText}${roll.modifier ? `，修正：${roll.modifier}` : ""}</p>
-    ${roll.criticalDamage ? `<p class="roll-note critical">critical damage roll：關鍵成功傷害骰。</p>` : ""}
+    ${roll.criticalDamage ? `<p class="roll-note critical">critical damage roll：關鍵成功傷害骰。${roll.criticalDamageMessage ? ` ${escapeHtml(roll.criticalDamageMessage)}` : ""}</p>` : ""}
   `;
 }
 
