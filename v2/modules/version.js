@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "dice-formula-normalize",
-  commit: "f12e32833121abfe068793ea9b7fdafdd516e90f",
-  sourceCommit: "f12e32833121abfe068793ea9b7fdafdd516e90f",
+  label: "dice-formula-keep",
+  commit: "b7f9afc35ccfc9dc9de0b19e50dfd71b616d46ff",
+  sourceCommit: "b7f9afc35ccfc9dc9de0b19e50dfd71b616d46ff",
   versionCommit: "pending",
-  updatedAt: "2026-06-04T03:12:00+08:00",
-  note: "Normalize quick dice formula tokens after button appends."
+  updatedAt: "2026-06-04T03:28:00+08:00",
+  note: "Keep dice formula input after formula rolls."
 };
 
 function shortCommit(commit) {
