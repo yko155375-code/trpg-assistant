@@ -1,0 +1,7 @@
+{
+  "version": "v2",
+  "label": "version-check",
+  "commit": "83c756fc275021d2bee0811404c3ff994b86f3df",
+  "updatedAt": "2026-06-04T01:54:06+08:00",
+  "note": "Fixed URL version verification for GitHub Pages v2."
+}
