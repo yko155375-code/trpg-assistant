@@ -1,0 +1,92 @@
+.quick-dice-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 6px;
+  scrollbar-width: thin;
+}
+
+.quick-dice-row button {
+  flex: 0 0 auto;
+  min-width: 42px;
+  min-height: 34px;
+  padding: 0 8px;
+  border: 1px solid rgba(243, 234, 216, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 13px;
+  touch-action: manipulation;
+}
+
+.critical-damage-banner,
+.roll-note {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(234, 179, 8, 0.34);
+  border-radius: 10px;
+  background: rgba(234, 179, 8, 0.12);
+  color: #fde68a;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.roll-note.critical {
+  border-color: rgba(244, 114, 182, 0.38);
+  background: rgba(244, 114, 182, 0.13);
+  color: #fbcfe8;
+}
+
+.roll-card-duality.hope {
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.roll-card-duality.fear {
+  border-color: rgba(168, 85, 247, 0.46);
+  background: rgba(88, 28, 135, 0.16);
+}
+
+.roll-card-duality.critical,
+.roll-card-critical-damage {
+  border-color: rgba(244, 114, 182, 0.52);
+  background: rgba(157, 23, 77, 0.16);
+}
+
+.duality-result-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.duality-die,
+.duality-outcome {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.duality-die.hope,
+.duality-outcome.hope {
+  border: 1px solid rgba(251, 191, 36, 0.46);
+  background: rgba(251, 191, 36, 0.16);
+  color: #fbbf24;
+}
+
+.duality-die.fear,
+.duality-outcome.fear {
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  background: rgba(88, 28, 135, 0.24);
+  color: #d8b4fe;
+}
+
+.duality-outcome.critical {
+  border: 1px solid rgba(244, 114, 182, 0.58);
+  background: rgba(157, 23, 77, 0.26);
+  color: #f9a8d4;
+}
