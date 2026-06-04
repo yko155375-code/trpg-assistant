@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "value-thresholds",
-  "commit": "0ab99566e556d5e8f025fcd435ce743b445dd7cd",
-  "sourceCommit": "0ab99566e556d5e8f025fcd435ce743b445dd7cd",
-  "versionCommit": "ad868bafc8c962ad4fb65ad6268ed3bd2cf68a41",
-  "updatedAt": "2026-06-05T02:20:08+08:00",
+  "commit": "9399d91ef429401e27961526b66de912f8f54adf",
+  "sourceCommit": "9399d91ef429401e27961526b66de912f8f54adf",
+  "versionCommit": "4c27d026e8a470b5d7ae794814824bf50a67b295",
+  "updatedAt": "2026-06-05T02:30:34+08:00",
   "note": "Enforce hope, shield, and fear thresholds."
 }
