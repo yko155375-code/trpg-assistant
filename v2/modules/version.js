@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "dm-monster-rounds",
-  commit: "5a01765782e02cf8f3d11926707c081118a349cf",
-  sourceCommit: "5a01765782e02cf8f3d11926707c081118a349cf",
-  versionCommit: "5a01765782e02cf8f3d11926707c081118a349cf",
-  updatedAt: "2026-06-05T03:45:00+08:00",
-  note: "Add compact DM monster management and monster round rolls."
+  label: "dm-monster-compact-death",
+  commit: "a7145864bef6bba54dfd3eb23773afbccb465b24",
+  sourceCommit: "a7145864bef6bba54dfd3eb23773afbccb465b24",
+  versionCommit: "a7145864bef6bba54dfd3eb23773afbccb465b24",
+  updatedAt: "2026-06-05T07:50:50+08:00",
+  note: "Add monster death toggles and denser DM monster cards."
 };
 function shortCommit(commit) { return commit ? String(commit).slice(0, 7) : "unknown"; }
 function buildLabel(info) { return `${info.version} · ${info.label} · ${shortCommit(info.commit)}`; }
