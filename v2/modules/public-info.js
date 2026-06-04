@@ -15,11 +15,13 @@ export const publicInfoFields = [
 ];
 
 export function normalizeSession(session = {}) {
+  const fear = Number.isFinite(Number(session.fear)) ? Number(session.fear) : 0;
+
   return {
     scene: session.scene || "",
     publicInfo: session.publicInfo || "",
     gmNotes: session.gmNotes || "",
-    fear: Number.isFinite(Number(session.fear)) ? Number(session.fear) : 0,
+    fear: Math.min(12, Math.max(0, fear)),
     hopePool: Number.isFinite(Number(session.hopePool)) ? Number(session.hopePool) : 0,
     publicClues: session.publicClues || "",
     objectives: session.objectives || "",
