@@ -315,8 +315,8 @@ function renderDmCharacterManager(state) {
                   <div class="compact-stat-grid" aria-label="${escapeHtml(character.name)}主要數值">
                     ${renderDmCompactStatControl(character, "hp", "HP", `${character.stats.hp}/${character.stats.maxHp}`)}
                     ${renderDmCompactStatControl(character, "stress", "壓力", `${character.stats.stress}/${character.stats.maxStress}`)}
-                    ${renderDmCompactStatControl(character, "hope", "希望", character.stats.hope)}
-                    ${renderDmCompactStatControl(character, "shield", "護盾", character.stats.shield)}
+                    ${renderDmCompactStatControl(character, "hope", "希望", `${character.stats.hope}/6`)}
+                    ${renderDmCompactStatControl(character, "shield", "護盾", `${character.stats.shield}/${character.stats.maxShield}`)}
                   </div>
                   ${renderDmAttributeBadges(character)}
                   <div class="compact-effect-summary">
@@ -363,7 +363,7 @@ export function renderDmPage(pageId, state) {
           ${renderMonsterOverview(state)}
           <article class="dm-section-card">
             <span>恐懼點</span>
-            <small>${state.session.fear}</small>
+            <small>${state.session.fear}/12</small>
           </article>
           <article class="dm-section-card">
             <span>希望池</span>
@@ -467,7 +467,7 @@ export function renderDmPage(pageId, state) {
         <span><strong>目前頁面：</strong>${page.title}</span>
         <span><strong>玩家數：</strong>${characterCount}</span>
         <span><strong>怪物數：</strong>${monsterCount}</span>
-        <span><strong>恐懼點：</strong>${state.session.fear}</span>
+        <span><strong>恐懼點：</strong>${state.session.fear}/12</span>
         <span><strong>希望池：</strong>${state.session.hopePool}</span>
       </div>
     </section>
