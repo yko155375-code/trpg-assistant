@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "dm-player-compact",
-  "commit": "5d67168bbe05add791180cb060550aaa3c1ce66b",
-  "sourceCommit": "5d67168bbe05add791180cb060550aaa3c1ce66b",
-  "versionCommit": "098ed180af74fc2bbf6e14733faa41a119df2921",
-  "updatedAt": "2026-06-04T05:12:05+08:00",
-  "note": "Compact DM player management cards."
+  "label": "value-thresholds",
+  "commit": "0ab99566e556d5e8f025fcd435ce743b445dd7cd",
+  "sourceCommit": "0ab99566e556d5e8f025fcd435ce743b445dd7cd",
+  "versionCommit": "ad868bafc8c962ad4fb65ad6268ed3bd2cf68a41",
+  "updatedAt": "2026-06-05T02:20:08+08:00",
+  "note": "Enforce hope, shield, and fear thresholds."
 }
