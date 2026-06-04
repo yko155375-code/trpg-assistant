@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "dm-player-compact",
-  commit: "5d67168bbe05add791180cb060550aaa3c1ce66b",
-  sourceCommit: "5d67168bbe05add791180cb060550aaa3c1ce66b",
-  versionCommit: "4c05933ed4ede8de0d8ac214497cbb105f300f82",
-  updatedAt: "2026-06-04T05:12:05+08:00",
-  note: "Compact DM player management cards."
+  label: "value-thresholds",
+  commit: "0ab99566e556d5e8f025fcd435ce743b445dd7cd",
+  sourceCommit: "0ab99566e556d5e8f025fcd435ce743b445dd7cd",
+  versionCommit: "0ab99566e556d5e8f025fcd435ce743b445dd7cd",
+  updatedAt: "2026-06-05T02:20:08+08:00",
+  note: "Enforce hope, shield, and fear thresholds."
 };
 
 function shortCommit(commit) {
