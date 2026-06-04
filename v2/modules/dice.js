@@ -251,7 +251,7 @@ export function applyDualityEffects(state, roll) {
           ...character,
           stats: {
             ...stats,
-            hope: clamp(toNumber(stats.hope) + hopeDelta, 0),
+            hope: clamp(toNumber(stats.hope) + hopeDelta, 0, 6),
             stress: clamp(toNumber(stats.stress) + stressDelta, 0, maxStress),
           },
         };
@@ -268,7 +268,7 @@ export function applyDualityEffects(state, roll) {
       ...nextState,
       session: {
         ...(nextState.session || {}),
-        fear: clamp(toNumber(nextState.session?.fear) + fearDelta, 0),
+        fear: clamp(toNumber(nextState.session?.fear) + fearDelta, 0, 12),
       },
     };
     effects.push(`fear ${fearDelta > 0 ? "+" : ""}${fearDelta}`);
