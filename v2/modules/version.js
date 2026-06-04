@@ -1,10 +1,10 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
   label: "value-thresholds",
-  commit: "0ab99566e556d5e8f025fcd435ce743b445dd7cd",
-  sourceCommit: "0ab99566e556d5e8f025fcd435ce743b445dd7cd",
-  versionCommit: "0ab99566e556d5e8f025fcd435ce743b445dd7cd",
-  updatedAt: "2026-06-05T02:20:08+08:00",
+  commit: "9399d91ef429401e27961526b66de912f8f54adf",
+  sourceCommit: "9399d91ef429401e27961526b66de912f8f54adf",
+  versionCommit: "9399d91ef429401e27961526b66de912f8f54adf",
+  updatedAt: "2026-06-05T02:30:34+08:00",
   note: "Enforce hope, shield, and fear thresholds."
 };
 
