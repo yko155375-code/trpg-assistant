@@ -455,33 +455,248 @@ function renderMonsterCompactStyles() {
   return `
     <style data-monster-kds-compact-style>
       .monster-panel { gap: 6px; }
-      .monster-name-summary { display: flex; gap: 5px; max-width: 100%; overflow-x: auto; padding: 1px 0 3px; scrollbar-width: thin; }
-      .monster-name-chip { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 5px; min-height: 24px; padding: 2px 7px; border: 1px solid rgba(199, 164, 93, 0.26); border-radius: 999px; background: rgba(199, 164, 93, 0.1); color: var(--text); font-size: 11px; white-space: nowrap; }
-      .monster-name-chip small { color: var(--gold); font-weight: 800; }
-      .monster-name-chip.is-all-dead { opacity: 0.55; filter: grayscale(0.45); }
-      .monster-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 5px; }
-      .monster-card.monster-compact-card { gap: 3px; padding: 5px; min-width: 0; border-radius: 8px; }
-      .monster-card.monster-compact-card.is-dead { opacity: 0.54; filter: grayscale(0.55); }
-      .monster-card.monster-compact-card.is-dead h3 { text-decoration: line-through; }
-      .monster-card-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 3px; }
-      .monster-card-heading > div { gap: 0; }
-      .monster-card-heading h3 { margin: 0; overflow: hidden; font-size: 13px; line-height: 1.12; text-overflow: ellipsis; white-space: nowrap; }
-      .monster-card-heading small { font-size: 10px; line-height: 1.1; }
-      .monster-card-actions { display: flex; align-items: center; gap: 2px; }
-      .monster-death-toggle, .monster-edit-button { min-height: 22px; padding: 0 5px; border-radius: 7px; font-size: 10px; }
-      .monster-edit-button { width: 22px; min-width: 22px; }
-      .monster-death-toggle.is-active { border-color: rgba(188, 64, 78, 0.72); background: rgba(188, 64, 78, 0.22); color: #ffd6dc; }
-      .monster-step-grid { grid-template-columns: 1fr; gap: 2px; }
-      .monster-stepper { display: grid; grid-template-columns: 22px 22px minmax(38px, auto) 22px; align-items: center; gap: 2px; padding: 2px 3px; border-radius: 7px; font-size: 10px; min-width: 0; }
-      .monster-stepper button { width: 22px; min-width: 22px; height: 22px; min-height: 22px; border-radius: 6px; padding: 0; }
-      .monster-stepper strong { font-size: 11px; white-space: nowrap; }
-      .monster-quick-actions { display: grid; grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr) 26px; align-items: center; gap: 3px; }
-      .monster-quick-actions button { min-height: 24px; padding: 0 4px; border-radius: 7px; font-size: 11px; }
-      .monster-formula-pill { min-width: 0; overflow: hidden; padding: 2px 4px; border-radius: 7px; background: rgba(255, 255, 255, 0.04); color: var(--muted); font-size: 10px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
-      .monster-formula-pill b { margin-right: 3px; color: var(--gold); }
-      .monster-skip-note { margin: 4px 0 0; font-size: 12px; color: rgba(243, 234, 216, 0.68); }
-      @media (min-width: 1024px) { .monster-grid { grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); } }
-      @media (max-width: 430px) { .monster-grid { grid-template-columns: 1fr; } .monster-card.monster-compact-card { padding: 5px; } .monster-quick-actions { grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr) 30px; } .monster-quick-actions button { min-height: 26px; } .monster-stepper button { width: 24px; min-width: 24px; height: 24px; min-height: 24px; } }
+      .monster-name-summary {
+        display: flex;
+        gap: 5px;
+        max-width: 100%;
+        overflow-x: auto;
+        padding: 1px 0 3px;
+        scrollbar-width: thin;
+      }
+      .monster-name-chip {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 5px;
+        min-height: 24px;
+        padding: 2px 7px;
+        border: 1px solid rgba(199, 164, 93, 0.26);
+        border-radius: 999px;
+        background: rgba(199, 164, 93, 0.1);
+        color: var(--text);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .monster-name-chip small {
+        color: var(--gold);
+        font-weight: 800;
+      }
+      .monster-name-chip.is-all-dead {
+        opacity: 0.55;
+        filter: grayscale(0.45);
+      }
+      .monster-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+        gap: 5px;
+      }
+      .monster-card.monster-compact-card {
+        gap: 3px;
+        padding: 5px;
+        min-width: 0;
+        border-radius: 8px;
+      }
+      .monster-card.monster-compact-card.is-dead {
+        opacity: 0.54;
+        filter: grayscale(0.55);
+      }
+      .monster-card.monster-compact-card.is-dead h3 {
+        text-decoration: line-through;
+      }
+      .monster-card-heading {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 3px;
+      }
+      .monster-card-heading > div {
+        gap: 0;
+      }
+      .monster-card-heading h3 {
+        margin: 0;
+        overflow: hidden;
+        font-size: 13px;
+        line-height: 1.12;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .monster-card-heading small {
+        font-size: 10px;
+        line-height: 1.1;
+      }
+      .monster-card-actions {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .monster-death-toggle,
+      .monster-edit-button {
+        min-height: 22px;
+        padding: 0 5px;
+        border-radius: 7px;
+        font-size: 10px;
+      }
+      .monster-edit-button {
+        width: 22px;
+        min-width: 22px;
+      }
+      .monster-death-toggle.is-active {
+        border-color: rgba(188, 64, 78, 0.72);
+        background: rgba(188, 64, 78, 0.22);
+        color: #ffd6dc;
+      }
+      .monster-step-grid {
+        grid-template-columns: 1fr;
+        gap: 2px;
+      }
+      .monster-stepper {
+        display: grid;
+        grid-template-columns: 22px 22px minmax(38px, auto) 22px;
+        align-items: center;
+        gap: 2px;
+        padding: 2px 3px;
+        border-radius: 7px;
+        font-size: 10px;
+        min-width: 0;
+      }
+      .monster-stepper button {
+        width: 22px;
+        min-width: 22px;
+        height: 22px;
+        min-height: 22px;
+        border-radius: 6px;
+        padding: 0;
+      }
+      .monster-stepper strong {
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .monster-quick-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr) 26px;
+        align-items: center;
+        gap: 3px;
+      }
+      .monster-quick-actions button {
+        min-height: 24px;
+        padding: 0 4px;
+        border-radius: 7px;
+        font-size: 11px;
+      }
+      .monster-formula-pill {
+        min-width: 0;
+        overflow: hidden;
+        padding: 2px 4px;
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.2;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .monster-formula-pill b {
+        margin-right: 3px;
+        color: var(--gold);
+      }
+      .monster-skip-note {
+        margin: 4px 0 0;
+        font-size: 12px;
+        color: rgba(243, 234, 216, 0.68);
+      }
+      @media (min-width: 1024px) {
+        .monster-grid { grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); }
+      }
+      @media (max-width: 520px) {
+        .monster-panel {
+          gap: 5px;
+          overflow-x: hidden;
+        }
+        .monster-name-summary {
+          gap: 4px;
+          padding-bottom: 2px;
+        }
+        .monster-name-chip {
+          min-height: 22px;
+          padding: 1px 6px;
+          font-size: 10px;
+        }
+        .monster-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 4px;
+          width: 100%;
+          max-width: 100%;
+        }
+        .monster-card.monster-compact-card {
+          gap: 2px;
+          padding: 4px;
+          border-radius: 7px;
+          min-width: 0;
+        }
+        .monster-card-heading {
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 2px;
+        }
+        .monster-card-heading h3 {
+          font-size: 12px;
+          line-height: 1.05;
+        }
+        .monster-card-heading small {
+          font-size: 9px;
+          line-height: 1;
+        }
+        .monster-card-actions {
+          gap: 1px;
+        }
+        .monster-death-toggle,
+        .monster-edit-button {
+          min-height: 20px;
+          padding: 0 4px;
+          border-radius: 6px;
+          font-size: 9px;
+        }
+        .monster-edit-button {
+          width: 20px;
+          min-width: 20px;
+        }
+        .monster-step-grid {
+          gap: 2px;
+        }
+        .monster-stepper {
+          grid-template-columns: 18px 20px minmax(34px, 1fr) 20px;
+          gap: 1px;
+          padding: 1px 2px;
+          border-radius: 6px;
+          font-size: 9px;
+        }
+        .monster-stepper button {
+          width: 20px;
+          min-width: 20px;
+          height: 22px;
+          min-height: 22px;
+          border-radius: 5px;
+        }
+        .monster-stepper strong {
+          font-size: 10px;
+          text-align: center;
+        }
+        .monster-quick-actions {
+          grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr) 22px;
+          gap: 2px;
+        }
+        .monster-quick-actions button {
+          min-height: 22px;
+          padding: 0 2px;
+          border-radius: 6px;
+          font-size: 10px;
+        }
+        .monster-formula-pill {
+          padding: 1px 3px;
+          border-radius: 6px;
+          font-size: 9px;
+          line-height: 1.15;
+        }
+      }
     </style>
   `;
 }
