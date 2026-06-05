@@ -279,7 +279,7 @@ export function renderMonsterManager(state) {
       ${renderMonsterNameSummary(monsters)}
       ${
         monsters.length
-          ? `<div class="monster-grid">${monsters.map(renderMonsterCard).join("")}</div>`
+          ? `<div class="monster-grid monster-mobile-grid">${monsters.map(renderMonsterCard).join("")}</div>`
           : `<section class="empty-panel"><strong>目前沒有怪物</strong><p>新增怪物後即可管理戰鬥狀態與回合擲骰。</p></section>`
       }
       ${expandedMonster ? renderMonsterDetails(expandedMonster) : ""}
@@ -331,7 +331,11 @@ function renderRoundPanel(state) {
           <button type="button" data-action="reset-monster-round">重設回合</button>
         </div>
       </div>
-      ${skippedDeadCount ? `<p class="monster-skip-note">已跳過 ${skippedDeadCount} 隻死亡或 HP 0 的怪物。</p>` : ""}
+      ${
+        skippedDeadCount
+          ? `<p class="monster-skip-note">已跳過 ${skippedDeadCount} 隻死亡或 HP 0 的怪物。</p>`
+          : ""
+      }
       ${
         results.length
           ? `<div class="monster-round-results">
@@ -485,10 +489,12 @@ function renderMonsterCompactStyles() {
         opacity: 0.55;
         filter: grayscale(0.45);
       }
-      .monster-grid {
+      .monster-panel .monster-grid.monster-mobile-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
         gap: 5px;
+        min-width: 0;
+        max-width: 100%;
       }
       .monster-card.monster-compact-card {
         gap: 3px;
@@ -605,7 +611,7 @@ function renderMonsterCompactStyles() {
         color: rgba(243, 234, 216, 0.68);
       }
       @media (min-width: 1024px) {
-        .monster-grid { grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); }
+        .monster-panel .monster-grid.monster-mobile-grid { grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); }
       }
       @media (max-width: 520px) {
         .monster-panel {
@@ -621,17 +627,25 @@ function renderMonsterCompactStyles() {
           padding: 1px 6px;
           font-size: 10px;
         }
-        .monster-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 4px;
-          width: 100%;
-          max-width: 100%;
+        .monster-panel .monster-grid.monster-mobile-grid {
+          display: grid !important;
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          gap: 4px !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          min-width: 0 !important;
+          overflow-x: hidden;
+          align-items: start;
         }
         .monster-card.monster-compact-card {
+          box-sizing: border-box;
+          width: 100%;
+          max-width: 100%;
           gap: 2px;
           padding: 4px;
           border-radius: 7px;
           min-width: 0;
+          overflow: hidden;
         }
         .monster-card-heading {
           grid-template-columns: minmax(0, 1fr) auto;
