@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "dm-monster-mobile-2col-fix",
-  "commit": "ce409018d2202b0625dd6e72d9ea68fa047facf3",
-  "sourceCommit": "ce409018d2202b0625dd6e72d9ea68fa047facf3",
-  "versionCommit": "ce409018d2202b0625dd6e72d9ea68fa047facf3",
-  "updatedAt": "2026-06-06T04:05:53+08:00",
-  "note": "Fix DM monster mobile grid selector so 390 and 430px layouts render two columns."
+  "label": "monster-form-keep",
+  "commit": "2778b22caf4943ff0167c70a3391eb2176fc2718",
+  "sourceCommit": "2778b22caf4943ff0167c70a3391eb2176fc2718",
+  "versionCommit": "2778b22caf4943ff0167c70a3391eb2176fc2718",
+  "updatedAt": "2026-06-06T04:33:37+08:00",
+  "note": "Keep DM monster add form values after creating monsters for rapid duplicate creation."
 }
