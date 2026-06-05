@@ -276,6 +276,7 @@ export function renderMonsterManager(state) {
     <section class="monster-panel">
       ${renderMonsterCompactStyles()}
       ${renderRoundPanel(state)}
+      ${renderMonsterNameSummary(monsters)}
       ${
         monsters.length
           ? `<div class="monster-grid">${monsters.map(renderMonsterCard).join("")}</div>`
@@ -283,6 +284,34 @@ export function renderMonsterManager(state) {
       }
       ${expandedMonster ? renderMonsterDetails(expandedMonster) : ""}
       ${renderAddMonsterForm()}
+    </section>
+  `;
+}
+
+function renderMonsterNameSummary(monsters) {
+  if (!monsters.length) return "";
+  const groups = new Map();
+  for (const monster of monsters) {
+    const key = monster.name || "未命名怪物";
+    const current = groups.get(key) || { name: key, total: 0, alive: 0 };
+    current.total += 1;
+    if (!isMonsterDead(monster)) current.alive += 1;
+    groups.set(key, current);
+  }
+
+  return `
+    <section class="monster-name-summary" aria-label="怪物彙總列">
+      ${Array.from(groups.values())
+        .sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"))
+        .map(
+          (group) => `
+            <span class="monster-name-chip ${group.alive ? "" : "is-all-dead"}">
+              <b>${escapeHtml(group.name)}</b>
+              <small>${group.alive}/${group.total}</small>
+            </span>
+          `,
+        )
+        .join("")}
     </section>
   `;
 }
@@ -302,11 +331,7 @@ function renderRoundPanel(state) {
           <button type="button" data-action="reset-monster-round">重設回合</button>
         </div>
       </div>
-      ${
-        skippedDeadCount
-          ? `<p class="monster-skip-note">已跳過 ${skippedDeadCount} 隻死亡或 HP 0 的怪物。</p>`
-          : ""
-      }
+      ${skippedDeadCount ? `<p class="monster-skip-note">已跳過 ${skippedDeadCount} 隻死亡或 HP 0 的怪物。</p>` : ""}
       ${
         results.length
           ? `<div class="monster-round-results">
@@ -363,7 +388,7 @@ function renderMonsterCard(monster) {
       <div class="monster-card-heading">
         <div>
           <h3>${escapeHtml(monster.name)}</h3>
-          <small>難度 ${monster.difficulty}${monster.threshold ? ` · 閾值 ${escapeHtml(monster.threshold)}` : ""}</small>
+          <small>難度 ${monster.difficulty}</small>
         </div>
         <div class="monster-card-actions">
           <button class="monster-death-toggle ${dead ? "is-active" : ""}" type="button" data-action="adjust-monster" data-monster-id="${escapeHtml(monster.id)}" data-monster-field="isDead" data-delta="1" aria-pressed="${dead}">
@@ -376,12 +401,10 @@ function renderMonsterCard(monster) {
         ${renderMonsterStepper(monster, "hp", "HP", monster.hp, monster.maxHp)}
         ${renderMonsterStepper(monster, "stress", "壓", monster.stress, monster.maxStress)}
       </div>
-      <div class="monster-formula-summary">
-        <span><b>攻</b>${escapeHtml(monster.attack || "未設定")}</span>
-        <span><b>傷</b>${escapeHtml(monster.damage || "未設定")}</span>
-      </div>
       <div class="monster-quick-actions">
+        <span class="monster-formula-pill"><b>攻</b>${escapeHtml(monster.attack || "未設定")}</span>
         <button type="button" data-action="roll-monster-attack" data-monster-id="${escapeHtml(monster.id)}">攻</button>
+        <span class="monster-formula-pill"><b>傷</b>${escapeHtml(monster.damage || "未設定")}</span>
         <button type="button" data-action="roll-monster-damage" data-monster-id="${escapeHtml(monster.id)}">傷</button>
       </div>
     </article>
@@ -430,113 +453,35 @@ function renderMonsterStepper(monster, field, label, value, maxValue) {
 
 function renderMonsterCompactStyles() {
   return `
-    <style data-monster-compact-death-style>
-      .monster-panel { gap: 8px; }
-      .monster-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-        gap: 6px;
-      }
-      .monster-card.monster-compact-card {
-        gap: 5px;
-        padding: 7px;
-        min-width: 0;
-        border-radius: 10px;
-      }
-      .monster-card.monster-compact-card.is-dead {
-        opacity: 0.54;
-        filter: grayscale(0.55);
-      }
-      .monster-card.monster-compact-card.is-dead h3 {
-        text-decoration: line-through;
-      }
-      .monster-card-heading {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: start;
-        gap: 5px;
-      }
-      .monster-card-heading h3 {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .monster-card-actions {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-      .monster-death-toggle,
-      .monster-edit-button {
-        min-height: 26px;
-        padding: 0 6px;
-        font-size: 11px;
-      }
-      .monster-death-toggle.is-active {
-        border-color: rgba(188, 64, 78, 0.72);
-        background: rgba(188, 64, 78, 0.22);
-        color: #ffd6dc;
-      }
-      .monster-step-grid {
-        grid-template-columns: 1fr;
-        gap: 4px;
-      }
-      .monster-stepper {
-        display: grid;
-        grid-template-columns: minmax(22px, 1fr) 24px minmax(42px, auto) 24px;
-        align-items: center;
-        gap: 3px;
-        padding: 3px 4px;
-        font-size: 11px;
-        min-width: 0;
-      }
-      .monster-stepper button {
-        width: 24px;
-        min-width: 24px;
-        height: 24px;
-        min-height: 24px;
-        padding: 0;
-      }
-      .monster-stepper strong {
-        font-size: 12px;
-        white-space: nowrap;
-      }
-      .monster-formula-summary {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 3px;
-      }
-      .monster-formula-summary span {
-        padding: 3px 5px;
-        font-size: 11px;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .monster-formula-summary b { margin-right: 4px; }
-      .monster-quick-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 4px;
-      }
-      .monster-quick-actions button {
-        min-height: 28px;
-        padding: 0 6px;
-        font-size: 12px;
-      }
-      .monster-skip-note {
-        margin: 4px 0 0;
-        font-size: 12px;
-        color: rgba(243, 234, 216, 0.68);
-      }
-      @media (min-width: 1024px) {
-        .monster-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
-      }
-      @media (max-width: 430px) {
-        .monster-grid { grid-template-columns: 1fr; }
-        .monster-card.monster-compact-card { padding: 6px; }
-      }
+    <style data-monster-kds-compact-style>
+      .monster-panel { gap: 6px; }
+      .monster-name-summary { display: flex; gap: 5px; max-width: 100%; overflow-x: auto; padding: 1px 0 3px; scrollbar-width: thin; }
+      .monster-name-chip { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 5px; min-height: 24px; padding: 2px 7px; border: 1px solid rgba(199, 164, 93, 0.26); border-radius: 999px; background: rgba(199, 164, 93, 0.1); color: var(--text); font-size: 11px; white-space: nowrap; }
+      .monster-name-chip small { color: var(--gold); font-weight: 800; }
+      .monster-name-chip.is-all-dead { opacity: 0.55; filter: grayscale(0.45); }
+      .monster-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 5px; }
+      .monster-card.monster-compact-card { gap: 3px; padding: 5px; min-width: 0; border-radius: 8px; }
+      .monster-card.monster-compact-card.is-dead { opacity: 0.54; filter: grayscale(0.55); }
+      .monster-card.monster-compact-card.is-dead h3 { text-decoration: line-through; }
+      .monster-card-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 3px; }
+      .monster-card-heading > div { gap: 0; }
+      .monster-card-heading h3 { margin: 0; overflow: hidden; font-size: 13px; line-height: 1.12; text-overflow: ellipsis; white-space: nowrap; }
+      .monster-card-heading small { font-size: 10px; line-height: 1.1; }
+      .monster-card-actions { display: flex; align-items: center; gap: 2px; }
+      .monster-death-toggle, .monster-edit-button { min-height: 22px; padding: 0 5px; border-radius: 7px; font-size: 10px; }
+      .monster-edit-button { width: 22px; min-width: 22px; }
+      .monster-death-toggle.is-active { border-color: rgba(188, 64, 78, 0.72); background: rgba(188, 64, 78, 0.22); color: #ffd6dc; }
+      .monster-step-grid { grid-template-columns: 1fr; gap: 2px; }
+      .monster-stepper { display: grid; grid-template-columns: 22px 22px minmax(38px, auto) 22px; align-items: center; gap: 2px; padding: 2px 3px; border-radius: 7px; font-size: 10px; min-width: 0; }
+      .monster-stepper button { width: 22px; min-width: 22px; height: 22px; min-height: 22px; border-radius: 6px; padding: 0; }
+      .monster-stepper strong { font-size: 11px; white-space: nowrap; }
+      .monster-quick-actions { display: grid; grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr) 26px; align-items: center; gap: 3px; }
+      .monster-quick-actions button { min-height: 24px; padding: 0 4px; border-radius: 7px; font-size: 11px; }
+      .monster-formula-pill { min-width: 0; overflow: hidden; padding: 2px 4px; border-radius: 7px; background: rgba(255, 255, 255, 0.04); color: var(--muted); font-size: 10px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+      .monster-formula-pill b { margin-right: 3px; color: var(--gold); }
+      .monster-skip-note { margin: 4px 0 0; font-size: 12px; color: rgba(243, 234, 216, 0.68); }
+      @media (min-width: 1024px) { .monster-grid { grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); } }
+      @media (max-width: 430px) { .monster-grid { grid-template-columns: 1fr; } .monster-card.monster-compact-card { padding: 5px; } .monster-quick-actions { grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr) 30px; } .monster-quick-actions button { min-height: 26px; } .monster-stepper button { width: 24px; min-width: 24px; height: 24px; min-height: 24px; } }
     </style>
   `;
 }
