@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "monster-form-keep",
-  "commit": "2778b22caf4943ff0167c70a3391eb2176fc2718",
-  "sourceCommit": "2778b22caf4943ff0167c70a3391eb2176fc2718",
-  "versionCommit": "2778b22caf4943ff0167c70a3391eb2176fc2718",
-  "updatedAt": "2026-06-06T04:33:37+08:00",
-  "note": "Keep DM monster add form values after creating monsters for rapid duplicate creation."
+  "label": "monster-instance-identity",
+  "commit": "252a5c901f3d46a8be896d74687709d57e777be5",
+  "sourceCommit": "252a5c901f3d46a8be896d74687709d57e777be5",
+  "versionCommit": "252a5c901f3d46a8be896d74687709d57e777be5",
+  "updatedAt": "2026-06-06T05:08:25+08:00",
+  "note": "Add stable same-name monster instance numbering, colors, and optional tags."
 }
