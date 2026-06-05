@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "dm-kds-compact-monsters",
-  "commit": "5b53d909bb400f0c436b971c97cdbc4feaebed2a",
-  "sourceCommit": "5b53d909bb400f0c436b971c97cdbc4feaebed2a",
-  "versionCommit": "5b53d909bb400f0c436b971c97cdbc4feaebed2a",
-  "updatedAt": "2026-06-06T03:30:26+08:00",
-  "note": "Add KDS-style DM tabs and denser monster board."
+  "label": "dm-monster-mobile-2col",
+  "commit": "c2431c3475631587249f5703d6e0c06f0b92a0f1",
+  "sourceCommit": "c2431c3475631587249f5703d6e0c06f0b92a0f1",
+  "versionCommit": "c2431c3475631587249f5703d6e0c06f0b92a0f1",
+  "updatedAt": "2026-06-06T03:45:47+08:00",
+  "note": "Make DM monster cards two-column and denser on mobile."
 }
