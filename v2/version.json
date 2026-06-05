@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "dm-monster-compact-death",
-  "commit": "2100d6277ffb833f6fd6f7aff1d1ac83bfe40963",
-  "sourceCommit": "a7145864bef6bba54dfd3eb23773afbccb465b24",
-  "versionCommit": "2100d6277ffb833f6fd6f7aff1d1ac83bfe40963",
-  "updatedAt": "2026-06-05T07:50:50+08:00",
-  "note": "Add monster death toggles and denser DM monster cards."
+  "label": "dm-kds-compact-monsters",
+  "commit": "5b53d909bb400f0c436b971c97cdbc4feaebed2a",
+  "sourceCommit": "5b53d909bb400f0c436b971c97cdbc4feaebed2a",
+  "versionCommit": "5b53d909bb400f0c436b971c97cdbc4feaebed2a",
+  "updatedAt": "2026-06-06T03:30:26+08:00",
+  "note": "Add KDS-style DM tabs and denser monster board."
 }
