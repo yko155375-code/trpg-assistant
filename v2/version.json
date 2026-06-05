@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "monster-instance-identity",
-  "commit": "252a5c901f3d46a8be896d74687709d57e777be5",
-  "sourceCommit": "252a5c901f3d46a8be896d74687709d57e777be5",
-  "versionCommit": "252a5c901f3d46a8be896d74687709d57e777be5",
-  "updatedAt": "2026-06-06T05:08:25+08:00",
+  "commit": "2ceca275d25a718f25994e90843339243320fed4",
+  "sourceCommit": "2ceca275d25a718f25994e90843339243320fed4",
+  "versionCommit": "2ceca275d25a718f25994e90843339243320fed4",
+  "updatedAt": "2026-06-06T05:19:49+08:00",
   "note": "Add stable same-name monster instance numbering, colors, and optional tags."
 }
