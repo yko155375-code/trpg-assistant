@@ -127,6 +127,20 @@ export function addMonster(state, values = {}) {
   return {
     ...state,
     monsters: [...normalizeMonsters(state.monsters), monster],
+    ui: {
+      ...state.ui,
+      monsterFormDraft: {
+        name: values.name ?? "",
+        hp: values.hp ?? "",
+        maxHp: values.maxHp ?? "",
+        stress: values.stress ?? "",
+        maxStress: values.maxStress ?? "",
+        difficulty: values.difficulty ?? "",
+        attack: values.attack ?? "",
+        damage: values.damage ?? "",
+        notes: values.notes ?? "",
+      },
+    },
   };
 }
 
@@ -283,7 +297,7 @@ export function renderMonsterManager(state) {
           : `<section class="empty-panel"><strong>目前沒有怪物</strong><p>新增怪物後即可管理戰鬥狀態與回合擲骰。</p></section>`
       }
       ${expandedMonster ? renderMonsterDetails(expandedMonster) : ""}
-      ${renderAddMonsterForm()}
+      ${renderAddMonsterForm(state.ui?.monsterFormDraft)}
     </section>
   `;
 }
@@ -369,16 +383,24 @@ function renderActionResult(label, result = {}) {
   return `<span><b>${label}</b> ${escapeHtml(result.formula)} = <strong>${result.total}</strong></span>`;
 }
 
-function renderAddMonsterForm() {
+function monsterFormValue(values, field, fallback = "") {
+  return escapeHtml(values?.[field] ?? fallback);
+}
+
+function renderAddMonsterForm(values = {}) {
   return `
     <form class="editor-panel monster-add-form" data-add-monster-form>
       <div class="editor-heading"><h3>新增怪物</h3></div>
       <div class="monster-add-grid">
-        <label class="form-field"><span>名稱</span><input data-new-monster-field="name" type="text" placeholder="怪物名稱" autocomplete="off" /></label>
-        <label class="form-field"><span>最大 HP</span><input data-new-monster-field="maxHp" type="number" inputmode="numeric" min="0" value="10" /></label>
-        <label class="form-field"><span>HP</span><input data-new-monster-field="hp" type="number" inputmode="numeric" min="0" value="10" /></label>
-        <label class="form-field"><span>攻擊公式</span><input data-new-monster-field="attack" type="text" value="d20" /></label>
-        <label class="form-field"><span>傷害公式</span><input data-new-monster-field="damage" type="text" value="1d6" /></label>
+        <label class="form-field"><span>名稱</span><input data-new-monster-field="name" type="text" placeholder="怪物名稱" autocomplete="off" value="${monsterFormValue(values, "name")}" /></label>
+        <label class="form-field"><span>最大 HP</span><input data-new-monster-field="maxHp" type="number" inputmode="numeric" min="0" value="${monsterFormValue(values, "maxHp", "10")}" /></label>
+        <label class="form-field"><span>HP</span><input data-new-monster-field="hp" type="number" inputmode="numeric" min="0" value="${monsterFormValue(values, "hp", "10")}" /></label>
+        <label class="form-field"><span>最大壓力</span><input data-new-monster-field="maxStress" type="number" inputmode="numeric" min="0" value="${monsterFormValue(values, "maxStress", "6")}" /></label>
+        <label class="form-field"><span>壓力</span><input data-new-monster-field="stress" type="number" inputmode="numeric" min="0" value="${monsterFormValue(values, "stress", "0")}" /></label>
+        <label class="form-field"><span>難度</span><input data-new-monster-field="difficulty" type="number" inputmode="numeric" min="0" value="${monsterFormValue(values, "difficulty", "10")}" /></label>
+        <label class="form-field"><span>攻擊公式</span><input data-new-monster-field="attack" type="text" value="${monsterFormValue(values, "attack", "d20")}" /></label>
+        <label class="form-field"><span>傷害公式</span><input data-new-monster-field="damage" type="text" value="${monsterFormValue(values, "damage", "1d6")}" /></label>
+        <label class="form-field form-field-full"><span>備註</span><textarea data-new-monster-field="notes" rows="2">${monsterFormValue(values, "notes")}</textarea></label>
       </div>
       <button class="primary-button" type="submit">新增怪物</button>
     </form>
