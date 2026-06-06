@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "dm-kds-compact-monsters",
-  commit: "9103f687a923cf3c0ee9d842842f9b8f4b3f7ffd",
-  sourceCommit: "9103f687a923cf3c0ee9d842842f9b8f4b3f7ffd",
-  versionCommit: "9103f687a923cf3c0ee9d842842f9b8f4b3f7ffd",
-  updatedAt: "2026-06-06T00:00:00+08:00",
-  note: "Add KDS-style DM tabs and denser monster board.",
+  label: "advantage-active-style-fix",
+  commit: "b1383f1e3e66a9c339ba96d3c8bca191e2efc5b7",
+  sourceCommit: "b1383f1e3e66a9c339ba96d3c8bca191e2efc5b7",
+  versionCommit: "b1383f1e3e66a9c339ba96d3c8bca191e2efc5b7",
+  updatedAt: "2026-06-07T00:00:00+08:00",
+  note: "Strengthen visible active state for player advantage and disadvantage dice controls.",
 };
 
 const dmTabs = [
@@ -78,18 +78,7 @@ function ensureBadgeStyle() {
     .dm-kds-tab.is-active {
       border-color: rgba(199, 164, 93, 0.72);
       background: rgba(199, 164, 93, 0.18);
-      color: #fff8e8;
-    }
-
-    @media (min-width: 760px) {
-      .layout.is-dm .dm-kds-tabs {
-        position: sticky;
-        top: 8px;
-        z-index: 12;
-        margin-bottom: 2px;
-        padding: 3px 0 5px;
-        background: linear-gradient(180deg, rgba(7, 17, 31, 0.96), rgba(7, 17, 31, 0.72));
-      }
+      color: #f3ead8;
     }
   `;
   document.head.appendChild(style);
@@ -97,57 +86,46 @@ function ensureBadgeStyle() {
 
 function renderBadge(info) {
   ensureBadgeStyle();
-  const badge = document.querySelector("[data-v2-version-badge]") || document.createElement("div");
-  badge.className = "v2-version-badge";
+  const existing = document.querySelector("[data-v2-version-badge]");
+  const badge = existing || document.createElement("div");
   badge.dataset.v2VersionBadge = "true";
+  badge.className = "v2-version-badge";
   badge.textContent = buildLabel(info);
-  if (!badge.parentElement) document.body.appendChild(badge);
+  if (!existing) document.body.appendChild(badge);
+  console.log(`TRPG Assistant v2 build: ${info.label} / ${info.commit}`);
 }
 
-function syncDmKdsTabs() {
-  const layout = document.querySelector("#app .layout.is-dm");
-  if (!layout) return;
-
-  const active = layout.querySelector(".sidebar-button.is-active, .dm-mobile-menu-button.is-active")?.dataset.page || "overview";
-  let nav = layout.querySelector("[data-dm-kds-tabs]");
-  if (!nav) {
-    nav = document.createElement("nav");
-    nav.className = "dm-kds-tabs";
-    nav.dataset.dmKdsTabs = "true";
-    nav.setAttribute("aria-label", "DM 快速切換");
-    const sidebar = layout.querySelector(".sidebar-list");
-    layout.insertBefore(nav, sidebar || layout.firstElementChild);
-  }
-
-  nav.innerHTML = dmTabs
-    .map(
-      ([id, label]) =>
-        `<button class="dm-kds-tab ${id === active ? "is-active" : ""}" type="button" data-page="${id}" aria-pressed="${id === active}">${label}</button>`,
-    )
-    .join("");
-}
-
-async function loadVersionInfo() {
-  let info = { ...DEFAULT_VERSION_INFO };
-
+async function getVersionInfo() {
   try {
     const response = await fetch("./version.json", { cache: "no-store" });
-    if (response.ok) {
-      info = { ...info, ...(await response.json()) };
-    }
-  } catch {
-    info = { ...DEFAULT_VERSION_INFO };
+    if (!response.ok) throw new Error(`version fetch failed: ${response.status}`);
+    return { ...DEFAULT_VERSION_INFO, ...(await response.json()) };
+  } catch (error) {
+    console.warn("TRPG Assistant v2 version fallback:", error);
+    return DEFAULT_VERSION_INFO;
   }
-
-  console.log(`TRPG Assistant v2 build: ${info.label} / ${shortCommit(info.commit)}`);
-  renderBadge(info);
-  syncDmKdsTabs();
 }
 
-const appRoot = document.querySelector("#app");
-if (appRoot) {
-  new MutationObserver(() => syncDmKdsTabs()).observe(appRoot, { childList: true, subtree: false });
-  syncDmKdsTabs();
+function injectDmTabs() {
+  const shell = document.querySelector(".dm-shell");
+  const content = document.querySelector(".dm-content");
+  if (!shell || !content || content.querySelector("[data-dm-kds-tabs]")) return;
+
+  const current = document.querySelector(".dm-sidebar button.is-active")?.dataset.dmPage || "overview";
+  const tabs = document.createElement("div");
+  tabs.className = "dm-kds-tabs";
+  tabs.dataset.dmKdsTabs = "true";
+  tabs.innerHTML = dmTabs
+    .map(([page, label]) => `<button type="button" class="dm-kds-tab ${page === current ? "is-active" : ""}" data-action="set-dm-page" data-dm-page="${page}">${label}</button>`)
+    .join("");
+  content.prepend(tabs);
 }
 
-loadVersionInfo();
+function setupDmTabsObserver() {
+  const observer = new MutationObserver(() => injectDmTabs());
+  observer.observe(document.body, { childList: true, subtree: true });
+  injectDmTabs();
+}
+
+getVersionInfo().then(renderBadge);
+setupDmTabsObserver();
