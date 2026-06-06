@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "dice-monster-event-fix",
-  "commit": "effffbb6678be8f9365433abec747299138d16ea",
+  "commit": "46b1405243b6788fb88df66088855cde6f7b544e",
   "sourceCommit": "effffbb6678be8f9365433abec747299138d16ea",
-  "versionCommit": "effffbb6678be8f9365433abec747299138d16ea",
-  "updatedAt": "2026-06-07T02:45:50+08:00",
+  "versionCommit": "46b1405243b6788fb88df66088855cde6f7b544e",
+  "updatedAt": "2026-06-07T02:46:46+08:00",
   "note": "Prevent mobile quick dice buttons from focusing formula input and guard monster controls from default submission."
 }
