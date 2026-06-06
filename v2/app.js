@@ -49,6 +49,30 @@ function rollD6() {
   return Math.floor(Math.random() * 6) + 1;
 }
 
+function getRollActor(formOrPanel) {
+  const form = formOrPanel?.matches?.("[data-roll-form]") ? formOrPanel : formOrPanel?.querySelector?.("[data-roll-form]");
+  return form?.dataset.rollActor || "玩家";
+}
+
+function saveRollFormulaDraft(nextState, actor, formula) {
+  return {
+    ...nextState,
+    ui: {
+      ...(nextState.ui || {}),
+      rollFormulaDrafts: {
+        ...(nextState.ui?.rollFormulaDrafts || {}),
+        [actor || "玩家"]: formula || "",
+      },
+    },
+  };
+}
+
+function getFormulaFromButton(button) {
+  const panel = button.closest(".dice-panel");
+  const input = panel?.querySelector("[data-roll-formula]");
+  return { panel, input, actor: getRollActor(panel), formula: input?.value || "" };
+}
+
 function applyRollEdge(roll, mode) {
   const edgeDie = rollD6();
   const baseTotal = roll.total;
@@ -71,17 +95,30 @@ function applyRollEdge(roll, mode) {
 
 function appendRollToken(button, event) {
   event?.preventDefault();
-  const input = button.closest(".dice-panel")?.querySelector("[data-roll-formula]");
+  const { input, actor } = getFormulaFromButton(button);
   if (!input) return;
   input.value = appendFormulaToken(input.value, button.dataset.rollToken);
+  saveStateOnly(saveRollFormulaDraft(state, actor, input.value));
   if (document.activeElement === input) input.blur();
 }
 
 function toggleRollEdge(button) {
   const selected = button.dataset.rollEdgeMode;
   if (!EDGE_MODES.has(selected)) return;
+  const { input, actor, formula } = getFormulaFromButton(button);
   const nextMode = state.ui?.rollEdgeMode === selected ? "" : selected;
-  updateState({ ...state, ui: { ...(state.ui || {}), rollEdgeMode: nextMode } });
+  updateState({
+    ...state,
+    ui: {
+      ...(state.ui || {}),
+      rollEdgeMode: nextMode,
+      rollFormulaDrafts: {
+        ...(state.ui?.rollFormulaDrafts || {}),
+        [actor]: formula,
+      },
+    },
+  });
+  if (input && document.activeElement === input) input.blur();
 }
 
 function renderModeButton(mode, label) {
@@ -117,15 +154,23 @@ function renderPanel() {
   return state.ui.mode === "player" ? renderPlayerPage(page.id, state) : renderDmPage(page.id, state);
 }
 
-function renderDmMobileNav(pages) {
+function renderDmRuneNav(pages) {
   const active = pages.find((page) => page.id === getActivePageId(state)) || pages[0];
-  return `<div class="dm-mobile-nav"><button class="dm-menu-button" type="button" data-dm-menu-toggle aria-expanded="${isDmMenuOpen}"><span>☰</span><span>DM 選單</span></button><strong>${active.label}</strong></div><nav class="dm-mobile-menu ${isDmMenuOpen ? "is-open" : ""}">${pages.map((page) => renderPageButton(page, "dm-mobile-menu-button")).join("")}</nav>`;
+  return `
+    <div class="dm-rune-nav" data-dm-rune-nav>
+      <button class="dm-rune-button" type="button" data-dm-menu-toggle aria-expanded="${isDmMenuOpen}" aria-label="開啟 DM 選單">✦</button>
+      <strong class="dm-rune-current">${active.label}</strong>
+      <nav class="dm-rune-menu ${isDmMenuOpen ? "is-open" : ""}" aria-label="DM 頁面切換">
+        ${pages.map((page) => renderPageButton(page, "dm-rune-menu-button")).join("")}
+      </nav>
+    </div>
+  `;
 }
 
 function render() {
   const pages = getActivePages(state.ui.mode);
   const player = state.ui.mode === "player";
-  app.innerHTML = `<header class="app-header"><div class="brand-block"><p class="eyebrow">TRPG Assistant</p><h1 class="app-title">v2 基礎架構</h1><p class="app-subtitle">HTML / CSS / 原生 JS / ES Modules / localStorage</p></div><nav class="mode-switch">${renderModeButton("player", "玩家")}${renderModeButton("dm", "DM")}</nav></header><main class="layout ${player ? "is-player" : "is-dm"}">${player ? `<nav class="tab-list player-bottom-tabs">${pages.map((page) => renderPageButton(page, "tab-button")).join("")}</nav>` : renderDmMobileNav(pages)}<nav class="sidebar-list">${pages.map((page) => renderPageButton(page, "sidebar-button")).join("")}</nav>${renderPanel()}</main><p class="footer-note" data-version-label>${renderBuildLabel()}</p>`;
+  app.innerHTML = `<header class="app-header"><div class="brand-block"><p class="eyebrow">TRPG Assistant</p><h1 class="app-title">v2 基礎架構</h1><p class="app-subtitle">HTML / CSS / 原生 JS / ES Modules / localStorage</p></div><nav class="mode-switch">${renderModeButton("player", "玩家")}${renderModeButton("dm", "DM")}</nav></header><main class="layout ${player ? "is-player" : "is-dm"}">${player ? `<nav class="tab-list player-bottom-tabs">${pages.map((page) => renderPageButton(page, "tab-button")).join("")}</nav>` : renderDmRuneNav(pages)}<nav class="sidebar-list">${pages.map((page) => renderPageButton(page, "sidebar-button")).join("")}</nav>${renderPanel()}</main><p class="footer-note" data-version-label>${renderBuildLabel()}</p>`;
 }
 
 app.addEventListener("click", (event) => {
@@ -135,6 +180,7 @@ app.addEventListener("click", (event) => {
   const button = event.target.closest("[data-action]");
 
   if (menu) {
+    event.preventDefault();
     isDmMenuOpen = !isDmMenuOpen;
     render();
     return;
@@ -267,6 +313,12 @@ app.addEventListener("change", (event) => {
 });
 
 app.addEventListener("input", (event) => {
+  const rollInput = event.target.closest?.("[data-roll-formula]");
+  if (rollInput) {
+    const actor = getRollActor(rollInput.closest("[data-roll-form]"));
+    return saveStateOnly(saveRollFormulaDraft(state, actor, rollInput.value));
+  }
+
   const id = event.target.dataset.characterId;
   if (id) {
     if (event.target.dataset.characterField) return saveStateOnly(updateCharacterField(state, id, event.target.dataset.characterField, event.target.value));
@@ -324,17 +376,21 @@ app.addEventListener("submit", (event) => {
   if (form.matches("[data-roll-form]")) {
     event.preventDefault();
     const input = form.querySelector("[data-roll-formula]");
-    const result = rollFormula(input.value);
+    const actor = getRollActor(form);
+    const formula = input.value;
+    const stateWithDraft = saveRollFormulaDraft(state, actor, formula);
+    const result = rollFormula(formula);
     const message = form.parentElement.querySelector("[data-roll-message]");
     if (!result.ok) {
+      saveStateOnly(stateWithDraft);
       if (message) message.textContent = result.error;
       return;
     }
     if (message) message.textContent = "";
-    const edgeMode = form.dataset.rollEdgeEnabled === "true" && EDGE_MODES.has(state.ui?.rollEdgeMode) ? state.ui.rollEdgeMode : "";
+    const edgeMode = form.dataset.rollEdgeEnabled === "true" && EDGE_MODES.has(stateWithDraft.ui?.rollEdgeMode) ? stateWithDraft.ui.rollEdgeMode : "";
     const roll = edgeMode ? applyRollEdge(result, edgeMode) : result;
-    const nextState = edgeMode ? { ...state, ui: { ...(state.ui || {}), rollEdgeMode: "" } } : state;
-    updateState(addRoll(nextState, roll, form.dataset.rollActor || "玩家"));
+    const nextState = edgeMode ? { ...stateWithDraft, ui: { ...(stateWithDraft.ui || {}), rollEdgeMode: "" } } : stateWithDraft;
+    updateState(addRoll(nextState, roll, actor));
   }
 });
 
