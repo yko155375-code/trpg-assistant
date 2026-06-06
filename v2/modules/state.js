@@ -10,7 +10,7 @@ export function createDefaultState() {
   return {
     meta: { version: APP_VERSION, createdAt: now, updatedAt: now },
     session: { scene: "", publicInfo: "", gmNotes: "", fear: 0, hopePool: 0, round: 0, monsterRoundResults: [] },
-    characters: [], monsters: [], shop: { items: [], purchaseLog: [] }, rolls: [],
+    characters: [], monsters: [], encounters: [], shop: { items: [], purchaseLog: [] }, rolls: [],
     audio: { currentTrackId: null, isPlaying: false, volume: 0.7 },
     ui: { mode: "player", currentCharacterId: null, playerPage: "characters", dmPage: "overview", isTeamStatusOpen: false, expandedMonsterId: null },
   };
@@ -26,6 +26,7 @@ export function normalizeState(input) {
     meta: { ...fallback.meta, ...(source.meta || {}), version: APP_VERSION },
     session: normalizeSession({ ...fallback.session, ...(source.session || {}) }),
     characters, monsters,
+    encounters: Array.isArray(source.encounters) ? source.encounters : fallback.encounters,
     shop: normalizeShop({ ...fallback.shop, ...(source.shop || {}) }),
     rolls: Array.isArray(source.rolls) ? source.rolls : fallback.rolls,
     audio: { ...fallback.audio, ...(source.audio || {}) },
