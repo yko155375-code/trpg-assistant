@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "advantage-ui-focus-fix",
-  "commit": "530575a920c1678c2e2d1b052a61101424b412e9",
-  "sourceCommit": "530575a920c1678c2e2d1b052a61101424b412e9",
-  "versionCommit": "530575a920c1678c2e2d1b052a61101424b412e9",
-  "updatedAt": "2026-06-07T04:16:10+08:00",
-  "note": "Restore advantage and disadvantage UI through the hard no-reload dice handler and cache-bust the v2 event module."
+  "label": "dice-player-advantage-focus-fix",
+  "commit": "57326a928163a0d9ba329cbfe1862a7f861f3f4b",
+  "sourceCommit": "57326a928163a0d9ba329cbfe1862a7f861f3f4b",
+  "versionCommit": "57326a928163a0d9ba329cbfe1862a7f861f3f4b",
+  "updatedAt": "2026-06-07T05:24:53+08:00",
+  "note": "Render player advantage and disadvantage controls in dice panel and stop quick dice buttons from focusing formula inputs."
 }
