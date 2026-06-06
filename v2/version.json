@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "monster-instance-identity",
-  "commit": "2ceca275d25a718f25994e90843339243320fed4",
-  "sourceCommit": "2ceca275d25a718f25994e90843339243320fed4",
-  "versionCommit": "2ceca275d25a718f25994e90843339243320fed4",
-  "updatedAt": "2026-06-06T05:19:49+08:00",
-  "note": "Add stable same-name monster instance numbering, colors, and optional tags."
+  "label": "monster-encounter-templates",
+  "commit": "b8321963ac41d5d9799894644509e5078b3b56cb",
+  "sourceCommit": "b8321963ac41d5d9799894644509e5078b3b56cb",
+  "versionCommit": "b8321963ac41d5d9799894644509e5078b3b56cb",
+  "updatedAt": "2026-06-06T09:27:53+08:00",
+  "note": "Add DM monster encounter template save, load, append, and delete tools."
 }
