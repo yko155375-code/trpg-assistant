@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "advantage-active-style-fix",
-  "commit": "e476bf58b18a6e4d3f2b7b3077e7ce1065024485",
-  "sourceCommit": "e476bf58b18a6e4d3f2b7b3077e7ce1065024485",
-  "versionCommit": "e476bf58b18a6e4d3f2b7b3077e7ce1065024485",
+  "label": "dice-advantage-keep-formula-dm-rune-nav",
+  "commit": "8bfda93d48e63861edf7c3624932a9fc30ad8465",
+  "sourceCommit": "8bfda93d48e63861edf7c3624932a9fc30ad8465",
+  "versionCommit": "8bfda93d48e63861edf7c3624932a9fc30ad8465",
   "updatedAt": "2026-06-07T00:00:00+08:00",
-  "note": "Strengthen visible active state for player advantage and disadvantage dice controls."
+  "note": "Keep dice formulas while toggling advantage/disadvantage and replace DM page tabs with a small rune menu."
 }
