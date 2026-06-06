@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "hard-no-reload-fix",
-  "commit": "2c448b2540406add3378d88d1656a182b23fc065",
+  "commit": "1313b17a4dc4aad97e442cc04c82d34205a933cc",
   "sourceCommit": "2c448b2540406add3378d88d1656a182b23fc065",
-  "versionCommit": "2c448b2540406add3378d88d1656a182b23fc065",
+  "versionCommit": "1313b17a4dc4aad97e442cc04c82d34205a933cc",
   "updatedAt": "2026-06-07T03:07:28+08:00",
   "note": "Hard stop native submit/reload paths and remove legacy reload-prone v2 handlers."
 }
