@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "dice-monster-event-fix",
-  "commit": "46b1405243b6788fb88df66088855cde6f7b544e",
-  "sourceCommit": "effffbb6678be8f9365433abec747299138d16ea",
-  "versionCommit": "46b1405243b6788fb88df66088855cde6f7b544e",
-  "updatedAt": "2026-06-07T02:46:46+08:00",
-  "note": "Prevent mobile quick dice buttons from focusing formula input and guard monster controls from default submission."
+  "label": "hard-no-reload-fix",
+  "commit": "1955c37ee9f5653dc26001fef77c537e68c2ecf3",
+  "sourceCommit": "1955c37ee9f5653dc26001fef77c537e68c2ecf3",
+  "versionCommit": "1955c37ee9f5653dc26001fef77c537e68c2ecf3",
+  "updatedAt": "2026-06-07T03:04:22+08:00",
+  "note": "Hard stop native submit/reload paths for edge formula rolls, monster actions, and encounter actions."
 }
