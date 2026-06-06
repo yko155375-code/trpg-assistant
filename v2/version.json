@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "dice-no-refresh-fix",
-  "commit": "ad195ed17490ee0600a5c7ac8a3ba455cfa7f873",
+  "commit": "5e0bb13d1855f9d86fbf0600905bec59dc9bd943",
   "sourceCommit": "ad195ed17490ee0600a5c7ac8a3ba455cfa7f873",
-  "versionCommit": "ad195ed17490ee0600a5c7ac8a3ba455cfa7f873",
-  "updatedAt": "2026-06-07T02:23:19+08:00",
+  "versionCommit": "5e0bb13d1855f9d86fbf0600905bec59dc9bd943",
+  "updatedAt": "2026-06-07T02:24:53+08:00",
   "note": "Fix v2 dice and monster controls so handled buttons do not refresh the page."
 }
