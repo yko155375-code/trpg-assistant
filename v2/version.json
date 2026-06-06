@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "advantage-active-style-fix",
-  "commit": "ec1ce066a8fc47ef1067f8f5335de3f2a4e3e0bb",
-  "sourceCommit": "ec1ce066a8fc47ef1067f8f5335de3f2a4e3e0bb",
-  "versionCommit": "ec1ce066a8fc47ef1067f8f5335de3f2a4e3e0bb",
+  "commit": "e476bf58b18a6e4d3f2b7b3077e7ce1065024485",
+  "sourceCommit": "e476bf58b18a6e4d3f2b7b3077e7ce1065024485",
+  "versionCommit": "e476bf58b18a6e4d3f2b7b3077e7ce1065024485",
   "updatedAt": "2026-06-07T00:00:00+08:00",
   "note": "Strengthen visible active state for player advantage and disadvantage dice controls."
 }
