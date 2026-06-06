@@ -19,6 +19,40 @@
   touch-action: manipulation;
 }
 
+.roll-edge-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 6px 0;
+}
+
+.dice-panel .roll-edge-button {
+  min-height: 34px;
+  padding: 4px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.36);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: rgba(226, 232, 240, 0.78);
+  font-size: 13px;
+  font-weight: 800;
+  opacity: 0.78;
+  touch-action: manipulation;
+}
+
+.dice-panel .roll-edge-button.is-active,
+.dice-panel .roll-edge-button[aria-pressed="true"] {
+  border-color: #facc15 !important;
+  background: linear-gradient(180deg, rgba(250, 204, 21, 0.34), rgba(180, 83, 9, 0.26)) !important;
+  color: #fff7c2 !important;
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.36), 0 0 14px rgba(250, 204, 21, 0.28);
+  opacity: 1 !important;
+}
+
+.dice-panel .roll-edge-button.is-active::before,
+.dice-panel .roll-edge-button[aria-pressed="true"]::before {
+  content: "✓ ";
+}
+
 .critical-damage-banner,
 .roll-note {
   margin: 0;
