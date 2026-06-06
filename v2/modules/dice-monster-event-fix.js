@@ -127,12 +127,68 @@ function applyEdgeToRoll(roll, mode) {
   };
 }
 
+function ensureEdgeStyles() {
+  if (document.querySelector("[data-hard-no-reload-edge-style]")) return;
+  const style = document.createElement("style");
+  style.dataset.hardNoReloadEdgeStyle = "true";
+  style.textContent = `
+    .roll-edge-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 6px 0;
+    }
+    .roll-edge-button {
+      min-height: 32px;
+      padding: 4px 10px;
+      border-color: rgba(148, 163, 184, 0.32);
+      opacity: 0.78;
+      touch-action: manipulation;
+    }
+    .roll-edge-button.is-active {
+      border-color: #facc15;
+      background: rgba(250, 204, 21, 0.16);
+      color: #fde68a;
+      opacity: 1;
+    }
+    .roll-edge-result-note {
+      margin: 6px 0;
+      padding: 7px 9px;
+      border: 1px solid rgba(96, 165, 250, 0.24);
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.72);
+      color: #dbeafe;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+  `;
+  document.head.append(style);
+}
+
 function updateEdgeButtons(panel, mode) {
   if (!panel) return;
   panel.querySelectorAll("[data-roll-edge-mode]").forEach((button) => {
     const active = button.dataset.rollEdgeMode === mode;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", String(active));
+  });
+}
+
+function ensureDiceEdgeControls() {
+  ensureEdgeStyles();
+  const state = loadState();
+  const mode = state.ui?.rollEdgeMode || "";
+  document.querySelectorAll(".dice-panel").forEach((panel) => {
+    const form = panel.querySelector("[data-roll-form]");
+    if (!form || panel.querySelector("[data-roll-edge-controls]")) return;
+    form.insertAdjacentHTML(
+      "afterend",
+      `<div class="roll-edge-controls" data-roll-edge-controls>
+        <button class="roll-edge-button" type="button" data-roll-edge-mode="advantage" aria-pressed="false">優勢</button>
+        <button class="roll-edge-button" type="button" data-roll-edge-mode="disadvantage" aria-pressed="false">劣勢</button>
+      </div>`,
+    );
+    updateEdgeButtons(panel, mode);
   });
 }
 
@@ -153,6 +209,7 @@ function saveAndRenderDice(state, panel) {
   saveState(state);
   const history = panel?.querySelector(".roll-history, .empty-panel");
   if (history) history.outerHTML = renderRollHistory(state);
+  ensureDiceEdgeControls();
   updateEdgeButtons(panel, state.ui?.rollEdgeMode || "");
   renderEdgeNote(state, panel);
 }
@@ -168,6 +225,10 @@ function stopHard(event) {
   event.stopImmediatePropagation();
   event.stopPropagation();
 }
+
+const edgeObserver = new MutationObserver(ensureDiceEdgeControls);
+edgeObserver.observe(document.body, { childList: true, subtree: true });
+ensureDiceEdgeControls();
 
 document.addEventListener(
   "pointerdown",
