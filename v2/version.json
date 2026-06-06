@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "monster-encounter-templates",
-  "commit": "b8321963ac41d5d9799894644509e5078b3b56cb",
-  "sourceCommit": "b8321963ac41d5d9799894644509e5078b3b56cb",
-  "versionCommit": "b8321963ac41d5d9799894644509e5078b3b56cb",
-  "updatedAt": "2026-06-06T09:27:53+08:00",
-  "note": "Add DM monster encounter template save, load, append, and delete tools."
+  "label": "advantage-monster-crit",
+  "commit": "28ae30c9eb3cf4076340535f866f7339cf855f6f",
+  "sourceCommit": "34510b7c7a8792acaca04fd8fbfef9dd1a5d91e3",
+  "versionCommit": "28ae30c9eb3cf4076340535f866f7339cf855f6f",
+  "updatedAt": "2026-06-07T01:52:46+08:00",
+  "note": "Add advantage/disadvantage formula rolls and monster natural 20 critical damage handling."
 }
