@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "dice-player-advantage-focus-fix",
-  "commit": "40d219d33642241814751aa25b96b4eee2d838ae",
-  "sourceCommit": "40d219d33642241814751aa25b96b4eee2d838ae",
-  "versionCommit": "40d219d33642241814751aa25b96b4eee2d838ae",
-  "updatedAt": "2026-06-07T05:27:00+08:00",
-  "note": "Render player advantage and disadvantage controls in dice panel and stop quick dice buttons from focusing formula inputs."
+  "label": "advantage-active-style-fix",
+  "commit": "ec1ce066a8fc47ef1067f8f5335de3f2a4e3e0bb",
+  "sourceCommit": "ec1ce066a8fc47ef1067f8f5335de3f2a4e3e0bb",
+  "versionCommit": "ec1ce066a8fc47ef1067f8f5335de3f2a4e3e0bb",
+  "updatedAt": "2026-06-07T00:00:00+08:00",
+  "note": "Strengthen visible active state for player advantage and disadvantage dice controls."
 }
