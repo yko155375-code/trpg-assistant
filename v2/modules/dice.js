@@ -363,16 +363,30 @@ function renderQuickDiceButtons() {
   `;
 }
 
+function renderRollEdgeControls(state, enabled) {
+  const mode = state.ui?.rollEdgeMode || "";
+  if (!enabled) return `<span data-roll-edge-controls hidden></span>`;
+
+  return `
+    <div class="roll-edge-controls" data-roll-edge-controls>
+      <button class="roll-edge-button ${mode === "advantage" ? "is-active" : ""}" type="button" data-action="toggle-roll-edge" data-roll-edge-mode="advantage" aria-pressed="${mode === "advantage"}">優勢</button>
+      <button class="roll-edge-button ${mode === "disadvantage" ? "is-active" : ""}" type="button" data-action="toggle-roll-edge" data-roll-edge-mode="disadvantage" aria-pressed="${mode === "disadvantage"}">劣勢</button>
+    </div>
+  `;
+}
+
 export function renderDicePanel(state, options = {}) {
   const { actor = "玩家", title = "擲骰" } = options;
+  const showEdgeControls = options.showEdgeControls ?? actor !== "DM";
   const isCriticalDamageRoll = Boolean(state.ui?.isCriticalDamageRoll);
   return `
     <section class="editor-panel dice-panel">
       <div class="editor-heading"><h3>${title}</h3><button class="danger-button" type="button" data-action="clear-rolls">清空紀錄</button></div>
-      <form class="inline-form" data-roll-form data-roll-actor="${escapeHtml(actor)}">
+      <form class="inline-form" data-roll-form ${showEdgeControls ? 'data-roll-edge-enabled="true"' : ""} data-roll-actor="${escapeHtml(actor)}">
         <label class="form-field"><span>擲骰公式</span><span class="roll-formula-input-row" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:center;min-width:0;"><input data-roll-formula type="text" placeholder="例如 1d20、2d8-1" autocomplete="off" /><span class="roll-modifier-buttons" style="display:flex;gap:3px;align-items:center;"><button type="button" data-action="append-roll-token" data-roll-token="-1" style="width:34px;min-width:34px;padding:0;">-1</button><button type="button" data-action="append-roll-token" data-roll-token="+1" style="width:34px;min-width:34px;padding:0;">+1</button></span></span></label>
         <button class="primary-button" type="submit">擲骰</button>
       </form>
+      ${renderRollEdgeControls(state, showEdgeControls)}
       ${isCriticalDamageRoll ? `<p class="critical-damage-banner">目前為關鍵成功傷害骰：這次公式擲骰會標記為 critical damage roll。</p>` : ""}
       ${renderQuickDiceButtons()}
       <button class="primary-button full-width-button" type="button" data-action="roll-duality" data-roll-actor="${escapeHtml(actor)}">二元骰：希望 / 恐懼</button>
@@ -396,6 +410,15 @@ function renderDualityRollDetails(roll) {
 
 function renderFormulaRollDetails(roll) {
   const diceText = (roll.dice || []).join("、");
+  if (roll.edgeBreakdown) {
+    const modeLabel = roll.edgeBreakdown.mode === "advantage" ? "優勢骰" : "劣勢骰";
+    const sign = roll.edgeBreakdown.mode === "advantage" ? "+" : "-";
+    return `
+      <p>骰面：${diceText}${roll.modifier ? `，修正：${roll.modifier}` : ""}</p>
+      <p class="roll-note">${modeLabel}：原結果 ${roll.edgeBreakdown.baseTotal}，${sign}${roll.edgeBreakdown.die}，最終 ${roll.edgeBreakdown.finalTotal}</p>
+    `;
+  }
+
   if (roll.criticalDamage && !roll.criticalDamageSkipped) {
     return `
       <p>骰面：${diceText}${roll.modifier ? `，修正：${roll.modifier}` : ""}</p>
@@ -423,14 +446,21 @@ export function renderRollHistory(state) {
 
 if (typeof document !== "undefined" && !document.documentElement.dataset.v2DiceQuickButtons) {
   document.documentElement.dataset.v2DiceQuickButtons = "true";
-  document.addEventListener("click", (event) => {
-    const button = event.target.closest('[data-action="append-roll-token"]');
-    if (!button) return;
-    const input = button.closest(".dice-panel")?.querySelector("[data-roll-formula]");
-    if (!input) return;
-    input.value = appendFormulaToken(input.value, button.dataset.rollToken);
-    input.focus();
-  });
+  document.addEventListener(
+    "click",
+    (event) => {
+      const button = event.target.closest('[data-action="append-roll-token"]');
+      if (!button) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+      const input = button.closest(".dice-panel")?.querySelector("[data-roll-formula]");
+      if (!input) return;
+      input.value = appendFormulaToken(input.value, button.dataset.rollToken);
+      if (document.activeElement === input) input.blur();
+    },
+    true,
+  );
 
   document.addEventListener(
     "submit",
