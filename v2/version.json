@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "hard-no-reload-fix",
-  "commit": "d9b38b40b9c46c26f198c107abc3d23beb3d40a5",
-  "sourceCommit": "1955c37ee9f5653dc26001fef77c537e68c2ecf3",
-  "versionCommit": "d9b38b40b9c46c26f198c107abc3d23beb3d40a5",
-  "updatedAt": "2026-06-07T03:04:22+08:00",
-  "note": "Hard stop native submit/reload paths for edge formula rolls, monster actions, and encounter actions."
+  "commit": "2c448b2540406add3378d88d1656a182b23fc065",
+  "sourceCommit": "2c448b2540406add3378d88d1656a182b23fc065",
+  "versionCommit": "2c448b2540406add3378d88d1656a182b23fc065",
+  "updatedAt": "2026-06-07T03:07:28+08:00",
+  "note": "Hard stop native submit/reload paths and remove legacy reload-prone v2 handlers."
 }
