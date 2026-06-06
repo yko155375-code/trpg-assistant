@@ -36,6 +36,24 @@ function getFormulaInput(button) {
   return button.closest(".dice-panel")?.querySelector("[data-roll-formula]") || null;
 }
 
+function getRollActor(formOrPanel) {
+  const form = formOrPanel?.matches?.("[data-roll-form]") ? formOrPanel : formOrPanel?.querySelector?.("[data-roll-form]");
+  return form?.dataset.rollActor || "玩家";
+}
+
+function withFormulaDraft(state, actor, formula) {
+  return {
+    ...state,
+    ui: {
+      ...(state.ui || {}),
+      rollFormulaDrafts: {
+        ...(state.ui?.rollFormulaDrafts || {}),
+        [actor || "玩家"]: formula || "",
+      },
+    },
+  };
+}
+
 function blurFormulaInput(input) {
   if (input && document.activeElement === input) {
     input.blur();
@@ -145,11 +163,13 @@ function ensureEdgeStyles() {
       opacity: 0.78;
       touch-action: manipulation;
     }
-    .roll-edge-button.is-active {
-      border-color: #facc15;
-      background: rgba(250, 204, 21, 0.16);
-      color: #fde68a;
-      opacity: 1;
+    .dice-panel .roll-edge-button.is-active,
+    .dice-panel .roll-edge-button[aria-pressed="true"] {
+      border-color: #facc15 !important;
+      background: linear-gradient(180deg, rgba(250, 204, 21, 0.34), rgba(180, 83, 9, 0.26)) !important;
+      color: #fff7c2 !important;
+      box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.36), 0 0 14px rgba(250, 204, 21, 0.28);
+      opacity: 1 !important;
     }
     .roll-edge-result-note {
       margin: 6px 0;
@@ -174,13 +194,27 @@ function updateEdgeButtons(panel, mode) {
   });
 }
 
+function restoreFormulaDraft(panel, state) {
+  const form = panel?.querySelector?.("[data-roll-form]");
+  const input = form?.querySelector?.("[data-roll-formula]");
+  if (!form || !input || input.value) return;
+  const actor = getRollActor(form);
+  const draft = state.ui?.rollFormulaDrafts?.[actor];
+  if (typeof draft === "string") input.value = draft;
+}
+
 function ensureDiceEdgeControls() {
   ensureEdgeStyles();
   const state = loadState();
   const mode = state.ui?.rollEdgeMode || "";
   document.querySelectorAll(".dice-panel").forEach((panel) => {
     const form = panel.querySelector("[data-roll-form]");
-    if (!form || panel.querySelector("[data-roll-edge-controls]")) return;
+    if (!form) return;
+    restoreFormulaDraft(panel, state);
+    if (!form.dataset.rollEdgeEnabled || panel.querySelector("[data-roll-edge-controls]")) {
+      updateEdgeButtons(panel, mode);
+      return;
+    }
     form.insertAdjacentHTML(
       "afterend",
       `<div class="roll-edge-controls" data-roll-edge-controls>
@@ -242,6 +276,7 @@ document.addEventListener(
 
     const edgeButton = isEdgeButton(event.target);
     if (edgeButton) {
+      event.preventDefault();
       blurFormulaInput(edgeButton.closest(".dice-panel")?.querySelector("[data-roll-formula]"));
       return;
     }
@@ -263,6 +298,9 @@ document.addEventListener(
       const input = getFormulaInput(quickButton);
       if (!input) return;
       input.value = appendFormulaToken(input.value, quickButton.dataset.rollToken);
+      const panel = quickButton.closest(".dice-panel");
+      const actor = getRollActor(panel);
+      saveState(withFormulaDraft(loadState(), actor, input.value));
       blurFormulaInput(input);
       return;
     }
@@ -270,13 +308,18 @@ document.addEventListener(
     const edgeButton = isEdgeButton(event.target);
     if (edgeButton) {
       stopHard(event);
+      const panel = edgeButton.closest(".dice-panel");
+      const input = panel?.querySelector("[data-roll-formula]");
+      const actor = getRollActor(panel);
+      const formula = input?.value || "";
       const selected = edgeButton.dataset.rollEdgeMode;
-      const state = loadState();
+      const state = withFormulaDraft(loadState(), actor, formula);
       const nextMode = state.ui?.rollEdgeMode === selected ? "" : selected;
       const nextState = { ...state, ui: { ...(state.ui || {}), rollEdgeMode: nextMode } };
       saveState(nextState);
-      updateEdgeButtons(edgeButton.closest(".dice-panel"), nextMode);
-      blurFormulaInput(edgeButton.closest(".dice-panel")?.querySelector("[data-roll-formula]"));
+      if (input) input.value = formula;
+      updateEdgeButtons(panel, nextMode);
+      blurFormulaInput(input);
       return;
     }
 
@@ -329,25 +372,29 @@ document.addEventListener(
       stopHard(event);
       const input = rollForm.querySelector("[data-roll-formula]");
       const message = rollForm.parentElement.querySelector("[data-roll-message]");
+      const actor = getRollActor(rollForm);
       const formula = input?.value || "";
+      const stateWithDraft = withFormulaDraft(state, actor, formula);
       const result = rollFormula(formula);
       if (!result.ok) {
+        saveState(stateWithDraft);
         if (message) message.textContent = result.error;
         return;
       }
 
       if (message) message.textContent = "";
-      const criticalRoll = state.ui?.isCriticalDamageRoll ? applyPlayerCriticalDamage(result) : result;
+      const criticalRoll = stateWithDraft.ui?.isCriticalDamageRoll ? applyPlayerCriticalDamage(result) : result;
       const edgeRoll = applyEdgeToRoll(criticalRoll, mode);
       const nextState = {
-        ...state,
+        ...stateWithDraft,
         ui: {
-          ...(state.ui || {}),
+          ...(stateWithDraft.ui || {}),
           isCriticalDamageRoll: false,
           rollEdgeMode: "",
         },
       };
-      saveAndRenderDice(prependRolls(nextState, [makeRollRecord(edgeRoll, rollForm.dataset.rollActor || "玩家")]), rollForm.closest(".dice-panel"));
+      saveAndRenderDice(prependRolls(nextState, [makeRollRecord(edgeRoll, actor)]), rollForm.closest(".dice-panel"));
+      if (input) input.value = formula;
       return;
     }
 
