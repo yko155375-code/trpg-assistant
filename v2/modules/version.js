@@ -1,9 +1,9 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
   label: "entry-rune-adventurer-nav",
-  commit: "f3ec5ef3a0b0a3a026d3eee15ef680f7a0f0528d",
-  sourceCommit: "c5b49e34c1299befdceab2e32332e4299817f9b6",
-  versionCommit: "e2e19d60a9768cc76ecf0aaa64453f46c562c2b1",
+  commit: "133294859e17408b1436b27ee9bd8e484a3c71c4",
+  sourceCommit: "133294859e17408b1436b27ee9bd8e484a3c71c4",
+  versionCommit: "133294859e17408b1436b27ee9bd8e484a3c71c4",
   updatedAt: "2026-06-07T00:00:00+08:00",
   note: "Set v2 default entry to player mode and add rune/adventurer navigation.",
 };
