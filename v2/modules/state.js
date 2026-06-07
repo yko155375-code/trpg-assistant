@@ -12,7 +12,15 @@ export function createDefaultState() {
     session: { scene: "", publicInfo: "", gmNotes: "", fear: 0, hopePool: 0, round: 0, monsterRoundResults: [] },
     characters: [], monsters: [], encounters: [], shop: { items: [], purchaseLog: [] }, rolls: [],
     audio: { currentTrackId: null, isPlaying: false, volume: 0.7 },
-    ui: { mode: "player", currentCharacterId: null, playerPage: "characters", dmPage: "overview", isTeamStatusOpen: false, expandedMonsterId: null },
+    ui: {
+      mode: "player",
+      currentCharacterId: null,
+      playerPage: "characters",
+      dmPage: "overview",
+      isTeamStatusOpen: false,
+      expandedMonsterId: null,
+      rollFormulaDrafts: {},
+    },
   };
 }
 
@@ -21,6 +29,7 @@ export function normalizeState(input) {
   const source = input && typeof input === "object" ? input : {};
   const characters = normalizeCharacters(source.characters);
   const monsters = normalizeMonsters(source.monsters);
+  const sourceUi = source.ui && typeof source.ui === "object" ? source.ui : {};
   return {
     ...fallback, ...source,
     meta: { ...fallback.meta, ...(source.meta || {}), version: APP_VERSION },
@@ -31,10 +40,12 @@ export function normalizeState(input) {
     rolls: Array.isArray(source.rolls) ? source.rolls : fallback.rolls,
     audio: { ...fallback.audio, ...(source.audio || {}) },
     ui: {
-      ...fallback.ui, ...(source.ui || {}),
-      currentCharacterId: characters.some((character) => character.id === source.ui?.currentCharacterId) ? source.ui.currentCharacterId : characters[0]?.id || null,
-      expandedCharacterId: characters.some((character) => character.id === source.ui?.expandedCharacterId) ? source.ui.expandedCharacterId : null,
-      expandedMonsterId: monsters.some((monster) => monster.id === source.ui?.expandedMonsterId) ? source.ui.expandedMonsterId : null,
+      ...fallback.ui, ...sourceUi,
+      rollFormulaDrafts:
+        sourceUi.rollFormulaDrafts && typeof sourceUi.rollFormulaDrafts === "object" ? sourceUi.rollFormulaDrafts : {},
+      currentCharacterId: characters.some((character) => character.id === sourceUi.currentCharacterId) ? sourceUi.currentCharacterId : characters[0]?.id || null,
+      expandedCharacterId: characters.some((character) => character.id === sourceUi.expandedCharacterId) ? sourceUi.expandedCharacterId : null,
+      expandedMonsterId: monsters.some((monster) => monster.id === sourceUi.expandedMonsterId) ? sourceUi.expandedMonsterId : null,
     },
   };
 }
