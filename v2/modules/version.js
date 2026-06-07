@@ -1,32 +1,23 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "app-black-screen-fix",
-  commit: "7f5ee24068af4ae1702a498fca5a94f6bc9be509",
-  sourceCommit: "7f5ee24068af4ae1702a498fca5a94f6bc9be509",
-  versionCommit: "7f5ee24068af4ae1702a498fca5a94f6bc9be509",
+  label: "rollback-to-dice-formula-draft-source-fix",
+  commit: "local",
+  sourceCommit: "local",
+  versionCommit: "local",
   updatedAt: "2026-06-07T00:00:00+08:00",
-  note: "Fix v2 app module import errors that prevented render.",
+  note: "Rollback v2 entry to the last known usable dice formula draft source fix build.",
 };
-
-export const VERSION_LABEL = DEFAULT_VERSION_INFO.label;
 
 function shortCommit(commit) {
   return commit ? String(commit).slice(0, 7) : "unknown";
 }
 
 function buildLabel(info) {
-  return `${info.version} · ${info.label} · ${shortCommit(info.commit)}`;
-}
-
-export function renderBuildLabel(info = DEFAULT_VERSION_INFO) {
-  return buildLabel(info);
-}
-
-export function logBuildInfo(info = DEFAULT_VERSION_INFO) {
-  console.log(`TRPG Assistant v2 build: ${info.label} / ${info.commit}`);
+  return `${info.version} · ${info.label} · ${shortCommit(info.versionCommit || info.commit)}`;
 }
 
 function ensureBadgeStyle() {
+  if (typeof document === "undefined") return;
   if (document.querySelector("[data-v2-version-style]")) return;
 
   const style = document.createElement("style");
@@ -55,25 +46,30 @@ function ensureBadgeStyle() {
 }
 
 function renderBadge(info) {
+  if (typeof document === "undefined") return;
   ensureBadgeStyle();
-  const existing = document.querySelector("[data-v2-version-badge]");
-  const badge = existing || document.createElement("div");
-  badge.dataset.v2VersionBadge = "true";
+  const badge = document.querySelector("[data-v2-version-badge]") || document.createElement("div");
   badge.className = "v2-version-badge";
+  badge.dataset.v2VersionBadge = "true";
   badge.textContent = buildLabel(info);
-  if (!existing) document.body.appendChild(badge);
-  logBuildInfo(info);
+  if (!badge.parentElement) document.body.appendChild(badge);
 }
 
-async function getVersionInfo() {
+export async function loadVersionInfo() {
+  let info = { ...DEFAULT_VERSION_INFO };
+
   try {
     const response = await fetch("./version.json", { cache: "no-store" });
-    if (!response.ok) throw new Error(`version fetch failed: ${response.status}`);
-    return { ...DEFAULT_VERSION_INFO, ...(await response.json()) };
-  } catch (error) {
-    console.warn("TRPG Assistant v2 version fallback:", error);
-    return DEFAULT_VERSION_INFO;
+    if (response.ok) info = { ...info, ...(await response.json()) };
+  } catch {
+    info = { ...DEFAULT_VERSION_INFO };
   }
+
+  console.log(`TRPG Assistant v2 build: ${info.label} / ${shortCommit(info.versionCommit || info.commit)}`);
+  renderBadge(info);
+  return info;
 }
 
-getVersionInfo().then(renderBadge);
+if (typeof document !== "undefined") {
+  loadVersionInfo();
+}
