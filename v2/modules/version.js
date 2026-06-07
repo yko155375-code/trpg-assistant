@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "formula-draft-dm-rune-real-fix",
-  commit: "194bff1c45a222cd18bf37c531bd98c408e0b34f",
-  sourceCommit: "089f3ddeff87caa499217c1374d2c29346bdbc3f",
-  versionCommit: "194bff1c45a222cd18bf37c531bd98c408e0b34f",
+  label: "dice-formula-draft-source-fix",
+  commit: "baa62c7f39adf3991fd2a854018f2b673087eb98",
+  sourceCommit: "baa62c7f39adf3991fd2a854018f2b673087eb98",
+  versionCommit: "baa62c7f39adf3991fd2a854018f2b673087eb98",
   updatedAt: "2026-06-07T00:00:00+08:00",
-  note: "Preserve dice formula drafts when toggling advantage/disadvantage and render the DM rune menu directly.",
+  note: "Use roll formula drafts as the direct render source for dice inputs.",
 };
 
 function shortCommit(commit) {
