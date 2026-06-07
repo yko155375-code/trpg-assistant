@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "app-black-screen-fix",
-  "commit": "e567680199e5cda4011e66580fe3f5d6752047dd",
-  "sourceCommit": "e567680199e5cda4011e66580fe3f5d6752047dd",
-  "versionCommit": "e567680199e5cda4011e66580fe3f5d6752047dd",
+  "label": "rollback-to-dice-formula-draft-source-fix",
+  "commit": "140e95f1d3d25f4e9b5872518430d650f7418f4d",
+  "sourceCommit": "140e95f1d3d25f4e9b5872518430d650f7418f4d",
+  "versionCommit": "140e95f1d3d25f4e9b5872518430d650f7418f4d",
   "updatedAt": "2026-06-07T00:00:00+08:00",
-  "note": "Fix v2 app module import errors that prevented render."
+  "note": "Rollback v2 entry to the last known usable dice formula draft source fix build."
 }
