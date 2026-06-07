@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "entry-rune-adventurer-nav",
-  commit: "133294859e17408b1436b27ee9bd8e484a3c71c4",
-  sourceCommit: "133294859e17408b1436b27ee9bd8e484a3c71c4",
-  versionCommit: "133294859e17408b1436b27ee9bd8e484a3c71c4",
+  label: "app-black-screen-fix",
+  commit: "1993910cc3cba31eda90ed5ea0fddfa766cd59b7",
+  sourceCommit: "1993910cc3cba31eda90ed5ea0fddfa766cd59b7",
+  versionCommit: "1993910cc3cba31eda90ed5ea0fddfa766cd59b7",
   updatedAt: "2026-06-07T00:00:00+08:00",
-  note: "Set v2 default entry to player mode and add rune/adventurer navigation.",
+  note: "Fix v2 app module import errors that prevented render.",
 };
 
 export const VERSION_LABEL = DEFAULT_VERSION_INFO.label;
