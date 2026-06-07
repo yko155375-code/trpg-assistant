@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "entry-rune-adventurer-nav",
-  "commit": "e78c63c0f87f6f7c242e343ca8ac5c0b9c438cad",
-  "sourceCommit": "e78c63c0f87f6f7c242e343ca8ac5c0b9c438cad",
-  "versionCommit": "e78c63c0f87f6f7c242e343ca8ac5c0b9c438cad",
+  "commit": "05b1e5c1e4d879f7504f670e0a21fcbd64e1f0cb",
+  "sourceCommit": "05b1e5c1e4d879f7504f670e0a21fcbd64e1f0cb",
+  "versionCommit": "05b1e5c1e4d879f7504f670e0a21fcbd64e1f0cb",
   "updatedAt": "2026-06-07T00:00:00+08:00",
   "note": "Set v2 default entry to player mode and add rune/adventurer navigation."
 }
