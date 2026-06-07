@@ -7,7 +7,7 @@ import { addCharacter, deleteCharacter, selectCharacter, updateCharacter, addAss
 import { addShopItem, updateShopItem, deleteShopItem, purchaseShopItem } from "./modules/shop.js";
 import { rollFormula, rollDuality, addRoll, clearRolls, appendFormulaToken } from "./modules/dice.js";
 import { updatePublicInfo } from "./modules/public-info.js";
-import { addMonster, updateMonster, deleteMonster, adjustMonsterValue, rollMonsterAction, advanceMonsterRound, resetMonsterRound, saveCurrentEncounter, loadEncounterTemplate, deleteEncounterTemplate } from "./modules/monsters.js";
+import { addMonster, updateMonster, deleteMonster, adjustMonsterValue, rollMonsterAction, advanceMonsterRound, resetMonsterRound } from "./modules/monsters.js";
 import { logBuildInfo, renderBuildLabel } from "./modules/version.js";
 
 const app = document.querySelector("#app");
@@ -21,6 +21,37 @@ let state = saveState({
 });
 let isDmMenuOpen = false;
 logBuildInfo();
+
+function makeId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function saveCurrentEncounterLocal(sourceState, name) {
+  const encounterName = String(name || "").trim();
+  const monsters = Array.isArray(sourceState.monsters) ? sourceState.monsters : [];
+  if (!encounterName || !monsters.length) return sourceState;
+  const template = {
+    id: makeId("encounter"),
+    name: encounterName,
+    monsters: monsters.map(({ id, instanceNumber, color, isDead, ...monster }) => ({ ...monster })),
+    createdAt: new Date().toISOString()
+  };
+  return { ...sourceState, encounters: [template, ...(Array.isArray(sourceState.encounters) ? sourceState.encounters : [])] };
+}
+
+function loadEncounterTemplateLocal(sourceState, encounterId, mode = "replace") {
+  const encounter = (Array.isArray(sourceState.encounters) ? sourceState.encounters : []).find((entry) => entry.id === encounterId);
+  if (!encounter) return sourceState;
+  const baseState = mode === "append" ? sourceState : { ...sourceState, monsters: [] };
+  return (Array.isArray(encounter.monsters) ? encounter.monsters : []).reduce((nextState, monster) => addMonster(nextState, { ...monster, isDead: false }), baseState);
+}
+
+function deleteEncounterTemplateLocal(sourceState, encounterId) {
+  return {
+    ...sourceState,
+    encounters: (Array.isArray(sourceState.encounters) ? sourceState.encounters : []).filter((entry) => entry.id !== encounterId)
+  };
+}
 
 function setFormulaDraftLocal(sourceState, actor, formula) {
   return {
@@ -50,11 +81,6 @@ function setRollEdgeModeLocal(sourceState, edgeMode) {
 function updateState(nextState) {
   state = saveState(nextState);
   render();
-}
-
-function renderModeButton(mode, label) {
-  const active = state.ui.mode === mode;
-  return `<button class="mode-button ${active ? "is-active" : ""}" type="button" data-mode="${mode}">${label}</button>`;
 }
 
 function renderPageButton(page, className = "tab-button") {
@@ -122,15 +148,7 @@ app.addEventListener("input", (event) => {
     if (itemId) updateState(updateShopItem(state, itemId, { [field]: value }));
     if (monsterId) updateState(updateMonster(state, monsterId, field, value));
     if (publicField) updateState(updatePublicInfo(state, { [publicField]: value }));
-    if (encounterDraft) {
-      updateState({
-        ...state,
-        ui: {
-          ...state.ui,
-          encounterDraftName: value
-        }
-      });
-    }
+    if (encounterDraft) updateState({ ...state, ui: { ...state.ui, encounterDraftName: value } });
   }
 
   if (target.matches("[data-roll-formula]")) {
@@ -143,27 +161,11 @@ app.addEventListener("change", (event) => {
   const target = event.target;
   if (target.matches("[data-select-character]")) updateState(selectCharacter(state, target.value));
   if (target.matches("[data-add-character-color]")) return;
-  if (target.matches("[data-color-field]")) {
-    updateState(updateCharacter(state, target.dataset.colorField, { color: target.value }));
-  }
-  if (target.matches("[data-gold-unit]")) {
-    const { characterId, unit } = target.dataset;
-    updateState(setCharacterGoldUnit(state, characterId, unit, target.value));
-  }
-  if (target.matches("[data-monster-field]")) {
-    updateState(updateMonster(state, target.dataset.monsterId, target.dataset.monsterField, target.value));
-  }
+  if (target.matches("[data-color-field]")) updateState(updateCharacter(state, target.dataset.colorField, { color: target.value }));
+  if (target.matches("[data-gold-unit]")) updateState(setCharacterGoldUnit(state, target.dataset.characterId, target.dataset.unit, target.value));
+  if (target.matches("[data-monster-field]")) updateState(updateMonster(state, target.dataset.monsterId, target.dataset.monsterField, target.value));
   if (target.matches("[data-new-monster-field]")) {
-    updateState({
-      ...state,
-      ui: {
-        ...state.ui,
-        monsterFormDraft: {
-          ...(state.ui?.monsterFormDraft || {}),
-          [target.dataset.newMonsterField]: target.value
-        }
-      }
-    });
+    updateState({ ...state, ui: { ...state.ui, monsterFormDraft: { ...(state.ui?.monsterFormDraft || {}), [target.dataset.newMonsterField]: target.value } } });
   }
 });
 
@@ -188,13 +190,7 @@ app.addEventListener("submit", (event) => {
 
   if (action === "add-shop-item") {
     const data = new FormData(form);
-    updateState(addShopItem(state, {
-      name: data.get("name"),
-      type: data.get("type"),
-      price: data.get("price"),
-      stock: data.get("stock"),
-      description: data.get("description")
-    }));
+    updateState(addShopItem(state, { name: data.get("name"), type: data.get("type"), price: data.get("price"), stock: data.get("stock"), description: data.get("description") }));
     form.reset();
     return;
   }
@@ -212,17 +208,7 @@ app.addEventListener("submit", (event) => {
     }
 
     const nextState = addRoll(stateWithDraft, result, actor);
-    updateState({
-      ...nextState,
-      ui: {
-        ...nextState.ui,
-        rollFormulaDrafts: {
-          ...(nextState.ui.rollFormulaDrafts || {}),
-          [actor]: formula
-        },
-        lastRollError: ""
-      }
-    });
+    updateState({ ...nextState, ui: { ...nextState.ui, rollFormulaDrafts: { ...(nextState.ui.rollFormulaDrafts || {}), [actor]: formula }, lastRollError: "" } });
     return;
   }
 
@@ -250,107 +236,47 @@ app.addEventListener("click", (event) => {
   const menu = event.target.closest("[data-dm-menu-toggle]");
   const button = event.target.closest("[data-action]");
 
-  if (menu) {
-    event.preventDefault();
-    isDmMenuOpen = !isDmMenuOpen;
-    render();
-    return;
-  }
-
-  if (mode) {
-    event.preventDefault();
-    isDmMenuOpen = false;
-    updateState(setMode(state, mode.dataset.mode));
-    return;
-  }
-
-  if (page) {
-    event.preventDefault();
-    isDmMenuOpen = false;
-    updateState(setActivePage(state, page.dataset.page));
-    return;
-  }
-
+  if (menu) { event.preventDefault(); isDmMenuOpen = !isDmMenuOpen; render(); return; }
+  if (mode) { event.preventDefault(); isDmMenuOpen = false; updateState(setMode(state, mode.dataset.mode)); return; }
+  if (page) { event.preventDefault(); isDmMenuOpen = false; updateState(setActivePage(state, page.dataset.page)); return; }
   if (!button) return;
   event.preventDefault();
   const action = button.dataset.action;
 
   if (action === "select-character") updateState(selectCharacter(state, button.dataset.characterId));
   if (action === "delete-character") updateState(deleteCharacter(state, button.dataset.characterId));
-  if (action === "toggle-character-editor") {
-    const current = state.ui.expandedCharacterId;
-    updateState({ ...state, ui: { ...state.ui, expandedCharacterId: current === button.dataset.characterId ? null : button.dataset.characterId } });
-  }
-  if (action === "adjust-character-stat") {
-    updateState(adjustCharacterStat(state, button.dataset.characterId, button.dataset.stat, Number(button.dataset.delta)));
-  }
-  if (action === "toggle-status") {
-    updateState(toggleCharacterStatus(state, button.dataset.characterId, button.dataset.statusType, button.dataset.statusName));
-  }
-  if (action === "toggle-team-status") {
-    updateState({ ...state, ui: { ...state.ui, teamStatusOpen: !state.ui.teamStatusOpen } });
-  }
+  if (action === "toggle-character-editor") updateState({ ...state, ui: { ...state.ui, expandedCharacterId: state.ui.expandedCharacterId === button.dataset.characterId ? null : button.dataset.characterId } });
+  if (action === "adjust-character-stat") updateState(adjustCharacterStat(state, button.dataset.characterId, button.dataset.stat, Number(button.dataset.delta)));
+  if (action === "toggle-status") updateState(toggleCharacterStatus(state, button.dataset.characterId, button.dataset.statusType, button.dataset.statusName));
+  if (action === "toggle-team-status") updateState({ ...state, ui: { ...state.ui, teamStatusOpen: !state.ui.teamStatusOpen } });
   if (action === "delete-asset") updateState(deleteAssetEntry(state, button.dataset.characterId, button.dataset.assetType, button.dataset.assetId));
   if (action === "buy-item") updateState(purchaseShopItem(state, button.dataset.itemId));
-  if (action === "delete-shop-item") {
-    if (confirm("確定刪除這個商品？")) updateState(deleteShopItem(state, button.dataset.itemId));
-  }
+  if (action === "delete-shop-item" && confirm("確定刪除這個商品？")) updateState(deleteShopItem(state, button.dataset.itemId));
   if (action === "clear-rolls") updateState(clearRolls(state));
-  if (action === "roll-duality") {
-    const actor = button.dataset.rollActor || button.dataset.actor || "玩家";
-    const roll = rollDuality();
-    updateState(addRoll(state, roll, actor));
-  }
+  if (action === "roll-duality") updateState(addRoll(state, rollDuality(), button.dataset.rollActor || button.dataset.actor || "玩家"));
   if (action === "append-roll-token") {
     const actor = button.dataset.actor || button.closest(".dice-panel")?.querySelector("[data-roll-form]")?.dataset.rollActor || "玩家";
     const input = app.querySelector(`[data-roll-form][data-roll-actor="${actor}"] [data-roll-formula]`) || button.closest(".dice-panel")?.querySelector("[data-roll-formula]");
-    const currentFormula = input?.value || state.ui.rollFormulaDrafts?.[actor] || "";
-    const nextFormula = appendFormulaToken(currentFormula, button.dataset.rollToken || button.dataset.token || "");
-    if (document.activeElement && document.activeElement !== document.body && button.contains(document.activeElement) === false) {
-      document.activeElement.blur?.();
-    }
+    const nextFormula = appendFormulaToken(input?.value || state.ui.rollFormulaDrafts?.[actor] || "", button.dataset.rollToken || button.dataset.token || "");
+    if (document.activeElement && document.activeElement !== document.body && button.contains(document.activeElement) === false) document.activeElement.blur?.();
     updateState(setFormulaDraftLocal(state, actor, nextFormula));
   }
   if (action === "set-roll-edge" || action === "toggle-roll-edge") {
     const actor = button.dataset.actor || button.closest(".dice-panel")?.querySelector("[data-roll-form]")?.dataset.rollActor || "玩家";
     const input = button.closest(".dice-panel")?.querySelector("[data-roll-formula]");
-    const currentFormula = input?.value || state.ui.rollFormulaDrafts?.[actor] || "";
-    const nextState = setFormulaDraftLocal(state, actor, currentFormula);
-    updateState(setRollEdgeModeLocal(nextState, button.dataset.edge || button.dataset.rollEdgeMode));
+    updateState(setRollEdgeModeLocal(setFormulaDraftLocal(state, actor, input?.value || state.ui.rollFormulaDrafts?.[actor] || ""), button.dataset.edge || button.dataset.rollEdgeMode));
   }
-  if (action === "reset-v2") {
-    if (confirm("確定重設 v2 測試資料？此動作會清除目前 v2 localStorage。")) {
-      state = saveState(createDefaultState());
-      render();
-    }
-  }
+  if (action === "reset-v2" && confirm("確定重設 v2 測試資料？此動作會清除目前 v2 localStorage。")) { state = saveState(createDefaultState()); render(); }
   if (action === "adjust-monster") updateState(adjustMonsterValue(state, button.dataset.monsterId, button.dataset.monsterField || button.dataset.field, Number(button.dataset.delta)));
-  if (action === "roll-monster" || action === "roll-monster-attack" || action === "roll-monster-damage") {
-    const kind = button.dataset.kind || (action === "roll-monster-damage" ? "damage" : "attack");
-    updateState(rollMonsterAction(state, button.dataset.monsterId, kind));
-  }
+  if (action === "roll-monster" || action === "roll-monster-attack" || action === "roll-monster-damage") updateState(rollMonsterAction(state, button.dataset.monsterId, button.dataset.kind || (action === "roll-monster-damage" ? "damage" : "attack")));
   if (action === "advance-round" || action === "next-monster-round") updateState(advanceMonsterRound(state));
-  if (action === "reset-round" || action === "reset-monster-round") {
-    if (confirm("確定重設回合？")) updateState(resetMonsterRound(state));
-  }
-  if (action === "toggle-monster-editor" || action === "expand-monster") {
-    const current = state.ui.expandedMonsterId;
-    updateState({ ...state, ui: { ...state.ui, expandedMonsterId: current === button.dataset.monsterId ? null : button.dataset.monsterId } });
-  }
-  if (action === "delete-monster") {
-    if (confirm("確定刪除這隻怪物？")) updateState(deleteMonster(state, button.dataset.monsterId));
-  }
-  if (action === "save-encounter") {
-    const name = state.ui.encounterDraftName || "";
-    updateState(saveCurrentEncounter(state, name));
-  }
-  if (action === "load-encounter" || action === "load-encounter-replace") {
-    if (confirm("載入此遭遇並清空目前怪物？")) updateState(loadEncounterTemplate(state, button.dataset.encounterId, "replace"));
-  }
-  if (action === "append-encounter" || action === "load-encounter-append") updateState(loadEncounterTemplate(state, button.dataset.encounterId, "append"));
-  if (action === "delete-encounter") {
-    if (confirm("確定刪除此遭遇模板？")) updateState(deleteEncounterTemplate(state, button.dataset.encounterId));
-  }
+  if ((action === "reset-round" || action === "reset-monster-round") && confirm("確定重設回合？")) updateState(resetMonsterRound(state));
+  if (action === "toggle-monster-editor" || action === "expand-monster") updateState({ ...state, ui: { ...state.ui, expandedMonsterId: state.ui.expandedMonsterId === button.dataset.monsterId ? null : button.dataset.monsterId } });
+  if (action === "delete-monster" && confirm("確定刪除這隻怪物？")) updateState(deleteMonster(state, button.dataset.monsterId));
+  if (action === "save-encounter") updateState(saveCurrentEncounterLocal(state, state.ui.encounterDraftName || ""));
+  if ((action === "load-encounter" || action === "load-encounter-replace") && confirm("載入此遭遇並清空目前怪物？")) updateState(loadEncounterTemplateLocal(state, button.dataset.encounterId, "replace"));
+  if (action === "append-encounter" || action === "load-encounter-append") updateState(loadEncounterTemplateLocal(state, button.dataset.encounterId, "append"));
+  if (action === "delete-encounter" && confirm("確定刪除此遭遇模板？")) updateState(deleteEncounterTemplateLocal(state, button.dataset.encounterId));
 });
 
 window.addEventListener("beforeunload", () => saveState(state));
