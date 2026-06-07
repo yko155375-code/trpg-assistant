@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "formula-draft-dm-rune-real-fix",
-  "commit": "be341e7ee433ffd6e3169472a53eb0755a4d6adb",
-  "sourceCommit": "be341e7ee433ffd6e3169472a53eb0755a4d6adb",
-  "versionCommit": "be341e7ee433ffd6e3169472a53eb0755a4d6adb",
+  "label": "dice-formula-draft-source-fix",
+  "commit": "a7e92aeab090913f3bf91a8a189cd88691f2609d",
+  "sourceCommit": "a7e92aeab090913f3bf91a8a189cd88691f2609d",
+  "versionCommit": "a7e92aeab090913f3bf91a8a189cd88691f2609d",
   "updatedAt": "2026-06-07T00:00:00+08:00",
-  "note": "Preserve dice formula drafts when toggling advantage/disadvantage and render the DM rune menu directly."
+  "note": "Use roll formula drafts as the direct render source for dice inputs."
 }
