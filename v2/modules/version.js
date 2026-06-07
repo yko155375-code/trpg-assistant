@@ -1,9 +1,9 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
   label: "app-black-screen-fix",
-  commit: "1993910cc3cba31eda90ed5ea0fddfa766cd59b7",
-  sourceCommit: "1993910cc3cba31eda90ed5ea0fddfa766cd59b7",
-  versionCommit: "1993910cc3cba31eda90ed5ea0fddfa766cd59b7",
+  commit: "7f5ee24068af4ae1702a498fca5a94f6bc9be509",
+  sourceCommit: "7f5ee24068af4ae1702a498fca5a94f6bc9be509",
+  versionCommit: "7f5ee24068af4ae1702a498fca5a94f6bc9be509",
   updatedAt: "2026-06-07T00:00:00+08:00",
   note: "Fix v2 app module import errors that prevented render.",
 };
