@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "rollback-to-dice-formula-draft-source-fix",
+  label: "normalize-encounters-import-fix",
   commit: "local",
   sourceCommit: "local",
   versionCommit: "local",
-  updatedAt: "2026-06-07T00:00:00+08:00",
-  note: "Rollback v2 entry to the last known usable dice formula draft source fix build.",
+  updatedAt: "2026-06-07T14:40:00+08:00",
+  note: "Fix normalizeEncounters import/export alignment for v2 startup.",
 };
 
 function shortCommit(commit) {
