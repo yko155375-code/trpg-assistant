@@ -1,5 +1,5 @@
 import { normalizeCharacters } from "./characters.js";
-import { normalizeMonsters } from "./monsters.js";
+import { normalizeEncounters, normalizeMonsters } from "./monsters.js";
 import { normalizeSession } from "./public-info.js";
 import { normalizeShop } from "./shop.js";
 
@@ -7,11 +7,35 @@ export const APP_VERSION = "v2-stage-5";
 
 export function createDefaultState() {
   const now = new Date().toISOString();
+
   return {
-    meta: { version: APP_VERSION, createdAt: now, updatedAt: now },
-    session: { scene: "", publicInfo: "", gmNotes: "", fear: 0, hopePool: 0, round: 0, monsterRoundResults: [] },
-    characters: [], monsters: [], encounters: [], shop: { items: [], purchaseLog: [] }, rolls: [],
-    audio: { currentTrackId: null, isPlaying: false, volume: 0.7 },
+    meta: {
+      version: APP_VERSION,
+      createdAt: now,
+      updatedAt: now,
+    },
+    session: {
+      scene: "",
+      publicInfo: "",
+      gmNotes: "",
+      fear: 0,
+      hopePool: 0,
+      round: 0,
+      monsterRoundResults: [],
+    },
+    characters: [],
+    monsters: [],
+    encounters: [],
+    shop: {
+      items: [],
+      purchaseLog: [],
+    },
+    rolls: [],
+    audio: {
+      currentTrackId: null,
+      isPlaying: false,
+      volume: 0.7,
+    },
     ui: {
       mode: "player",
       currentCharacterId: null,
@@ -20,6 +44,8 @@ export function createDefaultState() {
       isTeamStatusOpen: false,
       expandedMonsterId: null,
       rollFormulaDrafts: {},
+      rollEdgeMode: "",
+      isCriticalDamageRoll: false,
     },
   };
 }
@@ -29,23 +55,44 @@ export function normalizeState(input) {
   const source = input && typeof input === "object" ? input : {};
   const characters = normalizeCharacters(source.characters);
   const monsters = normalizeMonsters(source.monsters);
-  const sourceUi = source.ui && typeof source.ui === "object" ? source.ui : {};
+  const encounters = normalizeEncounters(source.encounters);
+
   return {
-    ...fallback, ...source,
-    meta: { ...fallback.meta, ...(source.meta || {}), version: APP_VERSION },
+    ...fallback,
+    ...source,
+    meta: {
+      ...fallback.meta,
+      ...(source.meta || {}),
+      version: APP_VERSION,
+    },
     session: normalizeSession({ ...fallback.session, ...(source.session || {}) }),
-    characters, monsters,
-    encounters: Array.isArray(source.encounters) ? source.encounters : fallback.encounters,
+    characters,
+    monsters,
+    encounters,
     shop: normalizeShop({ ...fallback.shop, ...(source.shop || {}) }),
     rolls: Array.isArray(source.rolls) ? source.rolls : fallback.rolls,
-    audio: { ...fallback.audio, ...(source.audio || {}) },
+    audio: {
+      ...fallback.audio,
+      ...(source.audio || {}),
+    },
     ui: {
-      ...fallback.ui, ...sourceUi,
+      ...fallback.ui,
+      ...(source.ui || {}),
+      currentCharacterId: characters.some((character) => character.id === source.ui?.currentCharacterId)
+        ? source.ui.currentCharacterId
+        : characters[0]?.id || null,
+      expandedCharacterId: characters.some((character) => character.id === source.ui?.expandedCharacterId)
+        ? source.ui.expandedCharacterId
+        : null,
+      expandedMonsterId: monsters.some((monster) => monster.id === source.ui?.expandedMonsterId)
+        ? source.ui.expandedMonsterId
+        : null,
       rollFormulaDrafts:
-        sourceUi.rollFormulaDrafts && typeof sourceUi.rollFormulaDrafts === "object" ? sourceUi.rollFormulaDrafts : {},
-      currentCharacterId: characters.some((character) => character.id === sourceUi.currentCharacterId) ? sourceUi.currentCharacterId : characters[0]?.id || null,
-      expandedCharacterId: characters.some((character) => character.id === sourceUi.expandedCharacterId) ? sourceUi.expandedCharacterId : null,
-      expandedMonsterId: monsters.some((monster) => monster.id === sourceUi.expandedMonsterId) ? sourceUi.expandedMonsterId : null,
+        source.ui?.rollFormulaDrafts && typeof source.ui.rollFormulaDrafts === "object"
+          ? source.ui.rollFormulaDrafts
+          : {},
+      rollEdgeMode: ["advantage", "disadvantage"].includes(source.ui?.rollEdgeMode) ? source.ui.rollEdgeMode : "",
+      isCriticalDamageRoll: Boolean(source.ui?.isCriticalDamageRoll),
     },
   };
 }
