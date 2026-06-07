@@ -22,35 +22,23 @@
 .roll-edge-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 6px;
   margin: 6px 0;
 }
 
-.dice-panel .roll-edge-button {
-  min-height: 34px;
-  padding: 4px 12px;
-  border: 1px solid rgba(148, 163, 184, 0.36);
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.72);
-  color: rgba(226, 232, 240, 0.78);
-  font-size: 13px;
-  font-weight: 800;
+.roll-edge-button {
+  min-height: 32px;
+  padding: 4px 10px;
+  border-color: rgba(148, 163, 184, 0.32);
   opacity: 0.78;
-  touch-action: manipulation;
 }
 
-.dice-panel .roll-edge-button.is-active,
-.dice-panel .roll-edge-button[aria-pressed="true"] {
-  border-color: #facc15 !important;
-  background: linear-gradient(180deg, rgba(250, 204, 21, 0.34), rgba(180, 83, 9, 0.26)) !important;
-  color: #fff7c2 !important;
-  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.36), 0 0 14px rgba(250, 204, 21, 0.28);
-  opacity: 1 !important;
-}
-
-.dice-panel .roll-edge-button.is-active::before,
-.dice-panel .roll-edge-button[aria-pressed="true"]::before {
-  content: "✓ ";
+.roll-edge-button.is-active {
+  border-color: #facc15;
+  background: rgba(250, 204, 21, 0.18);
+  color: #fde68a;
+  opacity: 1;
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.18);
 }
 
 .critical-damage-banner,
@@ -114,161 +102,39 @@
 
 .duality-die.fear,
 .duality-outcome.fear {
-  border: 1px solid rgba(168, 85, 247, 0.5);
-  background: rgba(88, 28, 135, 0.24);
+  border: 1px solid rgba(168, 85, 247, 0.46);
+  background: rgba(88, 28, 135, 0.28);
   color: #d8b4fe;
 }
 
 .duality-outcome.critical {
-  border: 1px solid rgba(244, 114, 182, 0.58);
-  background: rgba(157, 23, 77, 0.26);
-  color: #f9a8d4;
+  border: 1px solid rgba(244, 114, 182, 0.5);
+  background: rgba(244, 114, 182, 0.18);
+  color: #fbcfe8;
 }
 
-.layout.is-player {
-  position: relative;
-}
+@media (max-width: 520px) {
+  .quick-dice-row {
+    gap: 4px;
+    padding-bottom: 4px;
+  }
 
-.layout.is-player .player-dm-rune-entry {
-  position: fixed;
-  top: 8px;
-  left: 8px;
-  z-index: 40;
-  width: 32px;
-  min-width: 32px;
-  height: 32px;
-  min-height: 32px;
-  padding: 0;
-  border: 1px solid rgba(199, 164, 93, 0.2);
-  border-radius: 10px;
-  background: radial-gradient(circle, rgba(199, 164, 93, 0.12), rgba(7, 17, 31, 0.18));
-  color: rgba(255, 247, 214, 0.72);
-  font-size: 15px;
-  line-height: 1;
-  opacity: 0.2;
-  box-shadow: inset 0 0 10px rgba(199, 164, 93, 0.08);
-  touch-action: manipulation;
-}
+  .quick-dice-row button {
+    min-width: 36px;
+    min-height: 31px;
+    padding: 0 7px;
+    font-size: 12px;
+  }
 
-.layout.is-player .player-dm-rune-entry:hover,
-.layout.is-player .player-dm-rune-entry:focus-visible {
-  opacity: 0.78;
-  border-color: rgba(199, 164, 93, 0.62);
-}
+  .roll-edge-button {
+    min-height: 30px;
+    padding: 3px 9px;
+    font-size: 12px;
+  }
 
-.layout.is-dm {
-  position: relative;
-  grid-template-columns: 1fr !important;
-  padding-top: 42px;
-}
-
-.layout.is-dm .sidebar-list,
-.layout.is-dm .dm-kds-tabs,
-.layout.is-dm .dm-mobile-nav,
-.layout.is-dm .dm-mobile-menu {
-  display: none !important;
-}
-
-.layout.is-dm .dm-rune-nav {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 24;
-  display: block !important;
-  width: 42px;
-  height: 42px;
-}
-
-.layout.is-dm .dm-rune-current {
-  position: absolute;
-  left: 46px;
-  top: 8px;
-  max-width: min(180px, calc(100vw - 82px));
-  overflow: hidden;
-  color: rgba(199, 164, 93, 0.76);
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.layout.is-dm .dm-rune-button {
-  width: 38px;
-  min-width: 38px;
-  height: 38px;
-  min-height: 38px;
-  padding: 0;
-  border: 1px solid rgba(199, 164, 93, 0.38);
-  border-radius: 12px;
-  background: radial-gradient(circle, rgba(199, 164, 93, 0.22), rgba(7, 17, 31, 0.56));
-  color: #fff7d6;
-  font-size: 18px;
-  line-height: 1;
-  opacity: 0.78;
-  box-shadow: inset 0 0 12px rgba(199, 164, 93, 0.12), 0 0 0 1px rgba(7, 17, 31, 0.8);
-  touch-action: manipulation;
-}
-
-.layout.is-dm .dm-rune-button:hover,
-.layout.is-dm .dm-rune-button:focus-visible,
-.layout.is-dm .dm-rune-button[aria-expanded="true"] {
-  opacity: 1;
-  border-color: rgba(199, 164, 93, 0.72);
-}
-
-.layout.is-dm .dm-rune-menu {
-  position: absolute;
-  top: 44px;
-  left: 0;
-  z-index: 25;
-  display: none;
-  width: min(220px, calc(100vw - 28px));
-  max-width: calc(100vw - 28px);
-  grid-template-columns: 1fr;
-  gap: 6px;
-  padding: 8px;
-  border: 1px solid rgba(199, 164, 93, 0.28);
-  border-radius: 12px;
-  background: rgba(7, 17, 31, 0.96);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.36);
-}
-
-.layout.is-dm .dm-rune-menu.is-open {
-  display: grid !important;
-}
-
-.layout.is-dm .dm-rune-adventurer-button {
-  min-height: 38px;
-  padding: 0 10px;
-  border: 1px solid rgba(45, 212, 191, 0.4);
-  border-radius: 10px;
-  background: linear-gradient(180deg, rgba(20, 184, 166, 0.2), rgba(15, 23, 42, 0.72));
-  color: #ccfbf1;
-  font-size: 13px;
-  font-weight: 800;
-  text-align: left;
-  box-shadow: inset 4px 0 0 rgba(45, 212, 191, 0.72);
-  touch-action: manipulation;
-}
-
-.layout.is-dm .dm-rune-adventurer-button:hover,
-.layout.is-dm .dm-rune-adventurer-button:focus-visible {
-  border-color: rgba(45, 212, 191, 0.76);
-  background: rgba(20, 184, 166, 0.26);
-}
-
-.layout.is-dm .dm-rune-menu-button {
-  min-height: 34px;
-  padding: 0 9px;
-  border: 1px solid rgba(243, 234, 216, 0.12);
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
-  font-size: 13px;
-  text-align: left;
-}
-
-.layout.is-dm .dm-rune-menu-button.is-active {
-  border-color: var(--gold);
-  background: var(--gold-soft);
+  .critical-damage-banner,
+  .roll-note {
+    padding: 5px 7px;
+    font-size: 12px;
+  }
 }
