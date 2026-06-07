@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "monster-critical-damage-restore",
-  "commit": "37d994a1d5463f1fd95fd7fda32894272d935e9e",
+  "commit": "3662b26a621dda720e907d4c6ef80c92ad47a880",
   "sourceCommit": "37d994a1d5463f1fd95fd7fda32894272d935e9e",
-  "versionCommit": "37d994a1d5463f1fd95fd7fda32894272d935e9e",
-  "updatedAt": "2026-06-07T15:10:00+08:00",
+  "versionCommit": "3662b26a621dda720e907d4c6ef80c92ad47a880",
+  "updatedAt": "2026-06-07T15:12:00+08:00",
   "note": "Restore monster natural 20 critical damage pending and damage breakdown."
 }
