@@ -1,9 +1,47 @@
 import { normalizeCharacters } from "./characters.js";
-import { normalizeEncounters, normalizeMonsters } from "./monsters.js";
+import { normalizeMonsters } from "./monsters.js";
 import { normalizeSession } from "./public-info.js";
 import { normalizeShop } from "./shop.js";
 
 export const APP_VERSION = "v2-stage-5";
+
+function makeEncounterId() {
+  return `encounter-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeEncounterMonster(monster = {}) {
+  const maxHp = Math.max(1, Number(monster.maxHp ?? monster.hp ?? 1) || 1);
+  const hp = Math.min(maxHp, Math.max(0, Number(monster.hp ?? maxHp) || 0));
+  const maxStress = Math.max(0, Number(monster.maxStress ?? monster.stress ?? 0) || 0);
+  const stress = Math.min(maxStress, Math.max(0, Number(monster.stress ?? 0) || 0));
+
+  return {
+    name: String(monster.name || "未命名怪物").trim() || "未命名怪物",
+    hp,
+    maxHp,
+    stress,
+    maxStress,
+    difficulty: Math.max(0, Number(monster.difficulty ?? 10) || 10),
+    attack: String(monster.attack || monster.attackFormula || "").trim(),
+    damage: String(monster.damage || monster.damageFormula || "").trim(),
+    threshold: String(monster.threshold || "").trim(),
+    notes: String(monster.notes || monster.note || "").trim(),
+    tag: String(monster.tag || "").trim(),
+  };
+}
+
+export function normalizeEncounter(encounter = {}) {
+  return {
+    id: String(encounter.id || makeEncounterId()),
+    name: String(encounter.name || "未命名遭遇").trim() || "未命名遭遇",
+    monsters: Array.isArray(encounter.monsters) ? encounter.monsters.map(normalizeEncounterMonster) : [],
+    createdAt: encounter.createdAt || new Date().toISOString(),
+  };
+}
+
+export function normalizeEncounters(encounters) {
+  return Array.isArray(encounters) ? encounters.map(normalizeEncounter) : [];
+}
 
 export function createDefaultState() {
   const now = new Date().toISOString();
