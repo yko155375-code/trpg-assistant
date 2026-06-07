@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "monster-critical-damage-restore",
-  "commit": "3662b26a621dda720e907d4c6ef80c92ad47a880",
-  "sourceCommit": "37d994a1d5463f1fd95fd7fda32894272d935e9e",
-  "versionCommit": "3662b26a621dda720e907d4c6ef80c92ad47a880",
-  "updatedAt": "2026-06-07T15:12:00+08:00",
-  "note": "Restore monster natural 20 critical damage pending and damage breakdown."
+  "label": "player-dm-entry-button-only",
+  "commit": "0f6504ca00341567a9c56837a913c7fc419952be",
+  "sourceCommit": "0f6504ca00341567a9c56837a913c7fc419952be",
+  "versionCommit": "0f6504ca00341567a9c56837a913c7fc419952be",
+  "updatedAt": "2026-06-07T15:24:00+08:00",
+  "note": "Style the existing player mode DM switch as a small hidden rune entry without changing the v2 startup chain."
 }
