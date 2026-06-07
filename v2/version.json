@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "rollback-to-dice-formula-draft-source-fix",
-  "commit": "140e95f1d3d25f4e9b5872518430d650f7418f4d",
-  "sourceCommit": "140e95f1d3d25f4e9b5872518430d650f7418f4d",
-  "versionCommit": "140e95f1d3d25f4e9b5872518430d650f7418f4d",
+  "commit": "951955ed1f11595cd1add9c6b0e2ba990af48d87",
+  "sourceCommit": "951955ed1f11595cd1add9c6b0e2ba990af48d87",
+  "versionCommit": "951955ed1f11595cd1add9c6b0e2ba990af48d87",
   "updatedAt": "2026-06-07T00:00:00+08:00",
   "note": "Rollback v2 entry to the last known usable dice formula draft source fix build."
 }
