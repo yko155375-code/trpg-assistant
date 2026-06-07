@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "app-black-screen-fix",
-  "commit": "859a9e0b504934529facc0d8ae915618a023420b",
-  "sourceCommit": "859a9e0b504934529facc0d8ae915618a023420b",
-  "versionCommit": "859a9e0b504934529facc0d8ae915618a023420b",
+  "commit": "e567680199e5cda4011e66580fe3f5d6752047dd",
+  "sourceCommit": "e567680199e5cda4011e66580fe3f5d6752047dd",
+  "versionCommit": "e567680199e5cda4011e66580fe3f5d6752047dd",
   "updatedAt": "2026-06-07T00:00:00+08:00",
   "note": "Fix v2 app module import errors that prevented render."
 }
