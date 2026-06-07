@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "rollback-to-dice-formula-draft-source-fix",
-  "commit": "951955ed1f11595cd1add9c6b0e2ba990af48d87",
-  "sourceCommit": "951955ed1f11595cd1add9c6b0e2ba990af48d87",
-  "versionCommit": "951955ed1f11595cd1add9c6b0e2ba990af48d87",
-  "updatedAt": "2026-06-07T00:00:00+08:00",
-  "note": "Rollback v2 entry to the last known usable dice formula draft source fix build."
+  "label": "normalize-encounters-import-fix",
+  "commit": "845b5379b0e5a595724cf991fa35365df87a7100",
+  "sourceCommit": "845b5379b0e5a595724cf991fa35365df87a7100",
+  "versionCommit": "845b5379b0e5a595724cf991fa35365df87a7100",
+  "updatedAt": "2026-06-07T14:40:00+08:00",
+  "note": "Fix normalizeEncounters import/export alignment for v2 startup."
 }
