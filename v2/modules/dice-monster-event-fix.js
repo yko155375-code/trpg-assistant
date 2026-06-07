@@ -1,8 +1,8 @@
 import { appendFormulaToken, renderRollHistory, rollFormula } from "./dice.js";
 import {
   advanceMonsterRound,
-  deleteEncounter,
-  loadEncounter,
+  deleteEncounterTemplate as deleteEncounter,
+  loadEncounterTemplate as loadEncounter,
   renderMonsterManager,
   rollMonsterAction,
   saveCurrentEncounter,
@@ -297,7 +297,8 @@ document.addEventListener(
       stopHard(event);
       const input = getFormulaInput(quickButton);
       if (!input) return;
-      input.value = appendFormulaToken(input.value, quickButton.dataset.rollToken);
+      const token = quickButton.dataset.rollToken || quickButton.dataset.token || "";
+      input.value = appendFormulaToken(input.value, token);
       const panel = quickButton.closest(".dice-panel");
       const actor = getRollActor(panel);
       saveState(withFormulaDraft(loadState(), actor, input.value));
