@@ -70,7 +70,6 @@ function summarizeFormulaTerms(terms) {
       modifier += term.value;
       continue;
     }
-
     diceCount += term.count;
     diceCounts.set(term.sides, (diceCounts.get(term.sides) || 0) + term.sign * term.count);
   }
@@ -105,10 +104,26 @@ function formatFormulaSummary(summary) {
 }
 
 function appendRawFormulaToken(current, nextToken) {
-  if (!current) {
-    return nextToken.startsWith("+") ? nextToken.slice(1) : nextToken;
-  }
+  if (!current) return nextToken.startsWith("+") ? nextToken.slice(1) : nextToken;
   return /^[+-]/.test(nextToken) ? `${current}${nextToken}` : `${current}+${nextToken}`;
+}
+
+function actorDraftKeys(actor) {
+  const key = String(actor || "玩家");
+  const keys = [key];
+  if (key === "玩家") keys.push("player");
+  if (key === "DM") keys.push("dm");
+  if (key.toLowerCase() === "player") keys.push("玩家");
+  if (key.toLowerCase() === "dm") keys.push("DM");
+  return [...new Set(keys)];
+}
+
+function getFormulaDraft(state, actor) {
+  const drafts = state?.ui?.rollFormulaDrafts || {};
+  for (const key of actorDraftKeys(actor)) {
+    if (typeof drafts[key] === "string") return drafts[key];
+  }
+  return "";
 }
 
 export function appendFormulaToken(formula, token) {
@@ -119,7 +134,6 @@ export function appendFormulaToken(formula, token) {
   const candidate = appendRawFormulaToken(current, nextToken);
   const parsed = tokenizeFormula(candidate);
   if (!parsed.ok) return candidate;
-
   return formatFormulaSummary(summarizeFormulaTerms(parsed.terms));
 }
 
@@ -145,14 +159,12 @@ export function rollFormula(formula) {
       terms.push({ type: "modifier", value: term.value });
       continue;
     }
-
     const results = Array.from({ length: term.count }, () => rollDie(term.sides));
     dice.push(...results.map((value) => term.sign * value));
     terms.push({ type: "dice", sign: term.sign, count: term.count, sides: term.sides, results });
   }
 
   const diceTotal = dice.reduce((sum, value) => sum + value, 0);
-
   return {
     ok: true,
     type: "formula",
@@ -266,22 +278,13 @@ export function applyDualityEffects(state, roll) {
   if (fearDelta) {
     nextState = {
       ...nextState,
-      session: {
-        ...(nextState.session || {}),
-        fear: clamp(toNumber(nextState.session?.fear) + fearDelta, 0, 12),
-      },
+      session: { ...(nextState.session || {}), fear: clamp(toNumber(nextState.session?.fear) + fearDelta, 0, 12) },
     };
     effects.push(`fear ${fearDelta > 0 ? "+" : ""}${fearDelta}`);
   }
 
   if (roll.outcomeClass === "critical") {
-    nextState = {
-      ...nextState,
-      ui: {
-        ...(nextState.ui || {}),
-        isCriticalDamageRoll: true,
-      },
-    };
+    nextState = { ...nextState, ui: { ...(nextState.ui || {}), isCriticalDamageRoll: true } };
   }
 
   return {
@@ -319,7 +322,6 @@ function applyCriticalDamageFormula(roll) {
   }
 
   const totalDamage = maxDiceDamage + normalRollTotal + modifierTotal;
-
   return {
     ...roll,
     criticalDamage: true,
@@ -337,16 +339,11 @@ export function addRoll(state, roll, actor = "玩家") {
   if (!roll.ok) return state;
   const applied = roll.type === "duality" ? applyDualityEffects(state, roll) : { state, roll };
   const isCriticalDamageRoll = Boolean(applied.state.ui?.isCriticalDamageRoll) && applied.roll.type === "formula";
-  const nextState = isCriticalDamageRoll
-    ? { ...applied.state, ui: { ...applied.state.ui, isCriticalDamageRoll: false } }
-    : applied.state;
+  const nextState = isCriticalDamageRoll ? { ...applied.state, ui: { ...applied.state.ui, isCriticalDamageRoll: false } } : applied.state;
   const nextRoll = isCriticalDamageRoll ? applyCriticalDamageFormula(applied.roll) : applied.roll;
   return {
     ...nextState,
-    rolls: [
-      { id: `roll-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, actor, ...nextRoll },
-      ...(Array.isArray(nextState.rolls) ? nextState.rolls : []),
-    ].slice(0, 80),
+    rolls: [{ id: `roll-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, actor, ...nextRoll }, ...(Array.isArray(nextState.rolls) ? nextState.rolls : [])].slice(0, 80),
   };
 }
 
@@ -366,7 +363,6 @@ function renderQuickDiceButtons() {
 function renderRollEdgeControls(state, enabled) {
   const mode = state.ui?.rollEdgeMode || "";
   if (!enabled) return `<span data-roll-edge-controls hidden></span>`;
-
   return `
     <div class="roll-edge-controls" data-roll-edge-controls>
       <button class="roll-edge-button ${mode === "advantage" ? "is-active" : ""}" type="button" data-action="toggle-roll-edge" data-roll-edge-mode="advantage" aria-pressed="${mode === "advantage"}">優勢</button>
@@ -379,11 +375,12 @@ export function renderDicePanel(state, options = {}) {
   const { actor = "玩家", title = "擲骰" } = options;
   const showEdgeControls = options.showEdgeControls ?? actor !== "DM";
   const isCriticalDamageRoll = Boolean(state.ui?.isCriticalDamageRoll);
+  const formulaDraft = getFormulaDraft(state, actor);
   return `
     <section class="editor-panel dice-panel">
       <div class="editor-heading"><h3>${title}</h3><button class="danger-button" type="button" data-action="clear-rolls">清空紀錄</button></div>
       <form class="inline-form" data-roll-form ${showEdgeControls ? 'data-roll-edge-enabled="true"' : ""} data-roll-actor="${escapeHtml(actor)}">
-        <label class="form-field"><span>擲骰公式</span><span class="roll-formula-input-row" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:center;min-width:0;"><input data-roll-formula type="text" placeholder="例如 1d20、2d8-1" autocomplete="off" /><span class="roll-modifier-buttons" style="display:flex;gap:3px;align-items:center;"><button type="button" data-action="append-roll-token" data-roll-token="-1" style="width:34px;min-width:34px;padding:0;">-1</button><button type="button" data-action="append-roll-token" data-roll-token="+1" style="width:34px;min-width:34px;padding:0;">+1</button></span></span></label>
+        <label class="form-field"><span>擲骰公式</span><span class="roll-formula-input-row" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:center;min-width:0;"><input data-roll-formula type="text" placeholder="例如 1d20、2d8-1" autocomplete="off" value="${escapeHtml(formulaDraft)}" /><span class="roll-modifier-buttons" style="display:flex;gap:3px;align-items:center;"><button type="button" data-action="append-roll-token" data-roll-token="-1" style="width:34px;min-width:34px;padding:0;">-1</button><button type="button" data-action="append-roll-token" data-roll-token="+1" style="width:34px;min-width:34px;padding:0;">+1</button></span></span></label>
         <button class="primary-button" type="submit">擲骰</button>
       </form>
       ${renderRollEdgeControls(state, showEdgeControls)}
@@ -418,7 +415,6 @@ function renderFormulaRollDetails(roll) {
       <p class="roll-note">${modeLabel}：原結果 ${roll.edgeBreakdown.baseTotal}，${sign}${roll.edgeBreakdown.die}，最終 ${roll.edgeBreakdown.finalTotal}</p>
     `;
   }
-
   if (roll.criticalDamage && !roll.criticalDamageSkipped) {
     return `
       <p>骰面：${diceText}${roll.modifier ? `，修正：${roll.modifier}` : ""}</p>
@@ -426,7 +422,6 @@ function renderFormulaRollDetails(roll) {
       <p class="roll-note critical">公式：${escapeHtml(roll.formula)}｜滿骰傷害：${roll.maxDiceDamage}｜正常擲骰：${roll.normalRollTotal}｜固定修正：${roll.modifierTotal}｜總傷害：${roll.totalDamage}</p>
     `;
   }
-
   return `
     <p>骰面：${diceText}${roll.modifier ? `，修正：${roll.modifier}` : ""}</p>
     ${roll.criticalDamage ? `<p class="roll-note critical">critical damage roll：關鍵成功傷害骰。${roll.criticalDamageMessage ? ` ${escapeHtml(roll.criticalDamageMessage)}` : ""}</p>` : ""}
@@ -467,11 +462,9 @@ if (typeof document !== "undefined" && !document.documentElement.dataset.v2DiceQ
     (event) => {
       const rollForm = event.target.closest?.("[data-roll-form]");
       if (!rollForm) return;
-
       const input = rollForm.querySelector("[data-roll-formula]");
       const formulaValue = input?.value ?? "";
       const rollActor = rollForm.dataset.rollActor || "";
-
       window.setTimeout(() => {
         const forms = Array.from(document.querySelectorAll("[data-roll-form]"));
         const nextForm = forms.find((form) => (form.dataset.rollActor || "") === rollActor) || forms[0];
