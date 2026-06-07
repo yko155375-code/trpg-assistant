@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "entry-rune-adventurer-nav",
-  "commit": "05b1e5c1e4d879f7504f670e0a21fcbd64e1f0cb",
-  "sourceCommit": "05b1e5c1e4d879f7504f670e0a21fcbd64e1f0cb",
-  "versionCommit": "05b1e5c1e4d879f7504f670e0a21fcbd64e1f0cb",
+  "label": "app-black-screen-fix",
+  "commit": "859a9e0b504934529facc0d8ae915618a023420b",
+  "sourceCommit": "859a9e0b504934529facc0d8ae915618a023420b",
+  "versionCommit": "859a9e0b504934529facc0d8ae915618a023420b",
   "updatedAt": "2026-06-07T00:00:00+08:00",
-  "note": "Set v2 default entry to player mode and add rune/adventurer navigation."
+  "note": "Fix v2 app module import errors that prevented render."
 }
