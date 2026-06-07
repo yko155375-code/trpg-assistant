@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "dice-advantage-keep-formula-dm-rune-nav",
-  commit: "b955165b520a0a0cac5a948ddd9be0aaab003ac4",
-  sourceCommit: "b955165b520a0a0cac5a948ddd9be0aaab003ac4",
-  versionCommit: "b955165b520a0a0cac5a948ddd9be0aaab003ac4",
+  label: "formula-draft-dm-rune-real-fix",
+  commit: "194bff1c45a222cd18bf37c531bd98c408e0b34f",
+  sourceCommit: "089f3ddeff87caa499217c1374d2c29346bdbc3f",
+  versionCommit: "194bff1c45a222cd18bf37c531bd98c408e0b34f",
   updatedAt: "2026-06-07T00:00:00+08:00",
-  note: "Keep dice formulas while toggling advantage/disadvantage and replace DM page tabs with a small rune menu.",
+  note: "Preserve dice formula drafts when toggling advantage/disadvantage and render the DM rune menu directly.",
 };
 
 function shortCommit(commit) {
