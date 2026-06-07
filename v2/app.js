@@ -1,157 +1,43 @@
-import { loadState, saveState } from "./modules/storage.js";
-import {
-  addAssetEntry,
-  addCharacterEffect,
-  addCharacter,
-  adjustCharacterAttribute,
-  adjustCharacterGold,
-  adjustCharacterMoney,
-  adjustCharacterStat,
-  deleteAssetEntry,
-  deleteCharacter,
-  deleteCharacterEffect,
-  expandCharacter,
-  selectCharacter,
-  toggleCharacterEffect,
-  updateAssetEntry,
-  updateCharacterAttribute,
-  updateCharacterField,
-  updateCharacterGold,
-  updateCharacterMoney,
-  updateCharacterStat,
-} from "./modules/characters.js";
-import { addRoll, appendFormulaToken, applyDualityEffects, clearRolls, rollDuality, rollFormula } from "./modules/dice.js";
-import { addMonster, adjustMonsterValue, advanceMonsterRound, deleteMonster, expandMonster, resetMonsterRound, rollMonsterAction, updateMonster } from "./modules/monsters.js";
-import { updatePublicInfoField } from "./modules/public-info.js";
-import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js";
-import { createDefaultState } from "./modules/state.js";
-import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js";
-import { renderDmPage } from "./modules/dm-view.js";
-import { renderPlayerPage } from "./modules/player-view.js";
+import { loadState, saveState, resetState } from "./modules/storage.js";
+import { setMode, getActivePages, getActivePageId, setActivePage } from "./modules/router.js";
+import { renderPlayerView } from "./modules/player-view.js";
+import { renderDmView } from "./modules/dm-view.js";
+import { addCharacter, deleteCharacter, selectCharacter, updateCharacter, addAssetEntry, updateAssetEntry, deleteAssetEntry, adjustCharacterStat, toggleCharacterStatus, setCharacterGoldUnit } from "./modules/characters.js";
+import { addShopItem, updateShopItem, deleteShopItem, purchaseShopItem } from "./modules/shop.js";
+import { rollFormula, rollDuality, clearRolls, appendFormulaToken, setFormulaDraft, setRollEdgeMode, setCriticalDamagePending } from "./modules/dice.js";
+import { updatePublicInfo } from "./modules/public-info.js";
+import { addMonster, updateMonster, deleteMonster, adjustMonsterValue, rollMonsterAction, advanceMonsterRound, resetMonsterRound, saveCurrentEncounter, loadEncounterTemplate, deleteEncounterTemplate } from "./modules/monsters.js";
+import { VERSION_LABEL, logBuildInfo, renderBuildLabel } from "./modules/version.js";
 
 const app = document.querySelector("#app");
-const DEFAULT_BUILD_INFO = { version: "v2", label: "version-check", commit: "unknown", updatedAt: "", note: "" };
-const EDGE_MODES = new Set(["advantage", "disadvantage"]);
-let state = saveState(loadState());
+const loadedState = loadState();
+let state = saveState({
+  ...loadedState,
+  ui: {
+    ...(loadedState.ui || {}),
+    mode: "player"
+  }
+});
 let isDmMenuOpen = false;
-let buildInfo = { ...DEFAULT_BUILD_INFO };
+logBuildInfo();
 
 function updateState(nextState) {
   state = saveState(nextState);
   render();
 }
 
-function saveStateOnly(nextState) {
-  state = saveState(nextState);
-}
-
-function rollD6() {
-  return Math.floor(Math.random() * 6) + 1;
-}
-
-function getRollActor(formOrPanel) {
-  const form = formOrPanel?.matches?.("[data-roll-form]") ? formOrPanel : formOrPanel?.querySelector?.("[data-roll-form]");
-  return form?.dataset.rollActor || "玩家";
-}
-
-function saveRollFormulaDraft(nextState, actor, formula) {
-  return {
-    ...nextState,
-    ui: {
-      ...(nextState.ui || {}),
-      rollFormulaDrafts: {
-        ...(nextState.ui?.rollFormulaDrafts || {}),
-        [actor || "玩家"]: formula || "",
-      },
-    },
-  };
-}
-
-function getFormulaFromButton(button) {
-  const panel = button.closest(".dice-panel");
-  const input = panel?.querySelector("[data-roll-formula]");
-  return { panel, input, actor: getRollActor(panel), formula: input?.value || "" };
-}
-
-function applyRollEdge(roll, mode) {
-  const edgeDie = rollD6();
-  const baseTotal = roll.total;
-  const delta = mode === "advantage" ? edgeDie : -edgeDie;
-  return {
-    ...roll,
-    rollEdgeMode: mode,
-    rollEdgeDie: edgeDie,
-    baseTotal,
-    total: baseTotal + delta,
-    edgeBreakdown: {
-      mode,
-      die: edgeDie,
-      baseTotal,
-      finalTotal: baseTotal + delta,
-    },
-    note: mode === "advantage" ? "優勢骰 +1d6" : "劣勢骰 -1d6",
-  };
-}
-
-function appendRollToken(button, event) {
-  event?.preventDefault();
-  const { input, actor } = getFormulaFromButton(button);
-  if (!input) return;
-  input.value = appendFormulaToken(input.value, button.dataset.rollToken);
-  saveStateOnly(saveRollFormulaDraft(state, actor, input.value));
-  if (document.activeElement === input) input.blur();
-}
-
-function toggleRollEdge(button) {
-  const selected = button.dataset.rollEdgeMode;
-  if (!EDGE_MODES.has(selected)) return;
-  const { input, actor, formula } = getFormulaFromButton(button);
-  const nextMode = state.ui?.rollEdgeMode === selected ? "" : selected;
-  updateState({
-    ...state,
-    ui: {
-      ...(state.ui || {}),
-      rollEdgeMode: nextMode,
-      rollFormulaDrafts: {
-        ...(state.ui?.rollFormulaDrafts || {}),
-        [actor]: formula,
-      },
-    },
-  });
-  if (input && document.activeElement === input) input.blur();
-}
-
 function renderModeButton(mode, label) {
   const active = state.ui.mode === mode;
-  return `<button class="mode-button ${active ? "is-active" : ""}" type="button" data-mode="${mode}" aria-pressed="${active}">${label}</button>`;
+  return `<button class="mode-button ${active ? "is-active" : ""}" type="button" data-mode="${mode}">${label}</button>`;
 }
 
-function renderPageButton(page, className) {
-  const active = page.id === getActivePageId(state);
-  return `<button class="${className} ${active ? "is-active" : ""}" type="button" data-page="${page.id}" aria-pressed="${active}">${page.label}</button>`;
+function renderPageButton(page, className = "tab-button") {
+  const active = getActivePageId(state) === page.id;
+  return `<button class="${className} ${active ? "is-active" : ""}" type="button" data-page="${page.id}">${page.label}</button>`;
 }
 
-function shortCommit(commit) {
-  return commit ? String(commit).slice(0, 7) : "unknown";
-}
-
-function renderBuildLabel() {
-  return `${buildInfo.version} · ${buildInfo.label} · ${shortCommit(buildInfo.commit)}`;
-}
-
-async function loadBuildInfo() {
-  try {
-    const response = await fetch(`./version.json?ts=${Date.now()}`, { cache: "no-store" });
-    if (response.ok) buildInfo = { ...DEFAULT_BUILD_INFO, ...(await response.json()) };
-  } catch {}
-  console.info(`TRPG Assistant v2 build: ${buildInfo.label} / ${shortCommit(buildInfo.commit)}`);
-  render();
-}
-
-function renderPanel() {
-  const pages = getActivePages(state.ui.mode);
-  const page = pages.find((item) => item.id === getActivePageId(state)) || pages[0];
-  return state.ui.mode === "player" ? renderPlayerPage(page.id, state) : renderDmPage(page.id, state);
+function renderPlayerDmEntry() {
+  return `<button class="player-dm-rune-entry" type="button" data-mode="dm" aria-label="進入 DM 介面" title="">ᚱ</button>`;
 }
 
 function renderDmRuneNav(pages) {
@@ -161,17 +47,167 @@ function renderDmRuneNav(pages) {
       <button class="dm-rune-button" type="button" data-dm-menu-toggle aria-expanded="${isDmMenuOpen}" aria-label="開啟 DM 選單">✦</button>
       <strong class="dm-rune-current">${active.label}</strong>
       <nav class="dm-rune-menu ${isDmMenuOpen ? "is-open" : ""}" aria-label="DM 頁面切換">
+        <button class="dm-rune-adventurer-button" type="button" data-mode="player" aria-label="返回玩家介面">🧭 冒險者</button>
         ${pages.map((page) => renderPageButton(page, "dm-rune-menu-button")).join("")}
       </nav>
     </div>
   `;
 }
 
+function renderPanel() {
+  return state.ui.mode === "dm" ? renderDmView(state) : renderPlayerView(state);
+}
+
 function render() {
   const pages = getActivePages(state.ui.mode);
   const player = state.ui.mode === "player";
-  app.innerHTML = `<header class="app-header"><div class="brand-block"><p class="eyebrow">TRPG Assistant</p><h1 class="app-title">v2 基礎架構</h1><p class="app-subtitle">HTML / CSS / 原生 JS / ES Modules / localStorage</p></div><nav class="mode-switch">${renderModeButton("player", "玩家")}${renderModeButton("dm", "DM")}</nav></header><main class="layout ${player ? "is-player" : "is-dm"}">${player ? `<nav class="tab-list player-bottom-tabs">${pages.map((page) => renderPageButton(page, "tab-button")).join("")}</nav>` : renderDmRuneNav(pages)}<nav class="sidebar-list">${pages.map((page) => renderPageButton(page, "sidebar-button")).join("")}</nav>${renderPanel()}</main><p class="footer-note" data-version-label>${renderBuildLabel()}</p>`;
+  const primaryNavigation = player
+    ? `${renderPlayerDmEntry()}<nav class="tab-list player-bottom-tabs">${pages.map((page) => renderPageButton(page, "tab-button")).join("")}</nav>`
+    : renderDmRuneNav(pages);
+
+  app.innerHTML = `
+    <header class="app-header">
+      <div class="brand-block">
+        <p class="eyebrow">TRPG Assistant</p>
+        <h1 class="app-title">v2 基礎架構</h1>
+        <p class="app-subtitle">HTML / CSS / 原生 JS / ES Modules / localStorage</p>
+      </div>
+    </header>
+    <main class="layout ${player ? "is-player" : "is-dm"}">
+      ${primaryNavigation}
+      <nav class="sidebar-list">${pages.map((page) => renderPageButton(page, "sidebar-button")).join("")}</nav>
+      ${renderPanel()}
+    </main>
+    <p class="footer-note" data-version-label>${renderBuildLabel()}</p>
+  `;
 }
+
+app.addEventListener("input", (event) => {
+  const target = event.target;
+  if (target.matches("[data-field]")) {
+    const { characterId, field, scope, assetType, assetId, itemId, monsterId, publicField, encounterDraft } = target.dataset;
+    const value = target.type === "number" ? Number(target.value) : target.value;
+
+    if (characterId && scope === "stats") updateState(updateCharacter(state, characterId, { stats: { [field]: value } }));
+    if (characterId && scope === "attributes") updateState(updateCharacter(state, characterId, { attributes: { [field]: value } }));
+    if (characterId && scope === "assets") updateState(updateCharacter(state, characterId, { assets: { [field]: value } }));
+    if (characterId && scope === "base") updateState(updateCharacter(state, characterId, { [field]: value }));
+    if (characterId && assetType && assetId) updateState(updateAssetEntry(state, characterId, assetType, assetId, value));
+    if (itemId) updateState(updateShopItem(state, itemId, { [field]: value }));
+    if (monsterId) updateState(updateMonster(state, monsterId, { [field]: value }));
+    if (publicField) updateState(updatePublicInfo(state, { [publicField]: value }));
+    if (encounterDraft) {
+      updateState({
+        ...state,
+        ui: {
+          ...state.ui,
+          encounterDraftName: value
+        }
+      });
+    }
+  }
+
+  if (target.matches("[data-roll-formula]")) {
+    const actor = target.dataset.rollFormula;
+    updateState(setFormulaDraft(state, actor, target.value));
+  }
+});
+
+app.addEventListener("change", (event) => {
+  const target = event.target;
+  if (target.matches("[data-select-character]")) updateState(selectCharacter(state, target.value));
+  if (target.matches("[data-add-character-color]")) return;
+  if (target.matches("[data-color-field]")) {
+    updateState(updateCharacter(state, target.dataset.colorField, { color: target.value }));
+  }
+  if (target.matches("[data-gold-unit]")) {
+    const { characterId, unit } = target.dataset;
+    updateState(setCharacterGoldUnit(state, characterId, unit, target.value));
+  }
+});
+
+app.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const form = event.target;
+  const action = form.dataset.form;
+
+  if (action === "add-character") {
+    const name = new FormData(form).get("name");
+    const color = new FormData(form).get("color");
+    updateState(addCharacter(state, String(name || "").trim(), String(color || "auto")));
+    form.reset();
+    return;
+  }
+
+  if (action === "add-asset") {
+    const data = new FormData(form);
+    updateState(addAssetEntry(state, data.get("characterId"), data.get("type"), data.get("name")));
+    form.reset();
+    return;
+  }
+
+  if (action === "add-shop-item") {
+    const data = new FormData(form);
+    updateState(addShopItem(state, {
+      name: data.get("name"),
+      type: data.get("type"),
+      price: data.get("price"),
+      stock: data.get("stock"),
+      description: data.get("description")
+    }));
+    form.reset();
+    return;
+  }
+
+  if (action === "roll-formula") {
+    const data = new FormData(form);
+    const actor = data.get("actor");
+    const formula = data.get("formula");
+    const result = rollFormula(formula, {
+      actor,
+      criticalDamagePending: actor === "玩家" ? state.ui.criticalDamagePending : false,
+      edgeMode: actor === "玩家" ? state.ui.rollEdgeMode : null
+    });
+
+    if (!result.ok) {
+      updateState({ ...state, ui: { ...state.ui, lastRollError: result.error }, rolls: state.rolls });
+      return;
+    }
+
+    updateState({
+      ...setCriticalDamagePending(setFormulaDraft(state, actor, formula), false),
+      rolls: [result.roll, ...state.rolls].slice(0, 80),
+      ui: {
+        ...state.ui,
+        rollFormulaDrafts: {
+          ...(state.ui.rollFormulaDrafts || {}),
+          [actor]: formula
+        },
+        rollEdgeMode: null,
+        criticalDamagePending: false,
+        lastRollError: ""
+      }
+    });
+    return;
+  }
+
+  if (action === "add-monster") {
+    const data = new FormData(form);
+    updateState(addMonster(state, {
+      name: data.get("name"),
+      hp: data.get("hp"),
+      maxHp: data.get("maxHp"),
+      stress: data.get("stress"),
+      maxStress: data.get("maxStress"),
+      difficulty: data.get("difficulty"),
+      attack: data.get("attack"),
+      damage: data.get("damage"),
+      tag: data.get("tag"),
+      notes: data.get("notes")
+    }));
+    return;
+  }
+});
 
 app.addEventListener("click", (event) => {
   const mode = event.target.closest("[data-mode]");
@@ -185,230 +221,101 @@ app.addEventListener("click", (event) => {
     render();
     return;
   }
+
   if (mode) {
+    event.preventDefault();
     isDmMenuOpen = false;
     updateState(setMode(state, mode.dataset.mode));
     return;
   }
+
   if (page) {
+    event.preventDefault();
     isDmMenuOpen = false;
     updateState(setActivePage(state, page.dataset.page));
+    return;
   }
+
   if (!button) return;
-
+  event.preventDefault();
   const action = button.dataset.action;
-  if (action === "toggle-team-status") {
-    updateState({ ...state, ui: { ...state.ui, isTeamStatusOpen: !state.ui.isTeamStatusOpen } });
-    return;
-  }
 
-  if (action === "delete-character") {
-    updateState(deleteCharacter(state, button.dataset.characterId));
-    return;
-  }
-  if (action === "expand-character") {
-    updateState(expandCharacter(state, button.dataset.characterId));
-    return;
+  if (action === "select-character") updateState(selectCharacter(state, button.dataset.characterId));
+  if (action === "delete-character") updateState(deleteCharacter(state, button.dataset.characterId));
+  if (action === "toggle-character-editor") {
+    const current = state.ui.expandedCharacterId;
+    updateState({ ...state, ui: { ...state.ui, expandedCharacterId: current === button.dataset.characterId ? null : button.dataset.characterId } });
   }
   if (action === "adjust-character-stat") {
-    updateState(adjustCharacterStat(state, button.dataset.characterId, button.dataset.statField, Number(button.dataset.delta)));
-    return;
+    updateState(adjustCharacterStat(state, button.dataset.characterId, button.dataset.stat, Number(button.dataset.delta)));
   }
-  if (action === "adjust-character-attribute") {
-    updateState(adjustCharacterAttribute(state, button.dataset.characterId, button.dataset.attributeField, Number(button.dataset.delta)));
-    return;
+  if (action === "toggle-status") {
+    updateState(toggleCharacterStatus(state, button.dataset.characterId, button.dataset.statusType, button.dataset.statusName));
   }
-  if (action === "adjust-character-money") {
-    updateState(adjustCharacterMoney(state, button.dataset.characterId, Number(button.dataset.delta)));
-    return;
+  if (action === "toggle-team-status") {
+    updateState({ ...state, ui: { ...state.ui, teamStatusOpen: !state.ui.teamStatusOpen } });
   }
-  if (action === "adjust-character-gold") {
-    updateState(adjustCharacterGold(state, button.dataset.characterId, button.dataset.goldField, Number(button.dataset.delta)));
-    return;
-  }
-  if (action === "delete-character-effect") {
-    updateState(deleteCharacterEffect(state, button.dataset.characterId, button.dataset.effectType, Number(button.dataset.effectIndex)));
-    return;
-  }
-  if (action === "toggle-character-effect") {
-    updateState(toggleCharacterEffect(state, button.dataset.characterId, button.dataset.effectType, button.dataset.effectLabel));
-    return;
-  }
-  if (action === "delete-asset-entry") {
-    updateState(deleteAssetEntry(state, button.dataset.characterId, button.dataset.listKey, Number(button.dataset.entryIndex)));
-    return;
-  }
-  if (action === "clear-rolls") {
-    updateState(clearRolls(state));
-    return;
-  }
-  if (action === "append-roll-token") {
-    appendRollToken(button, event);
-    return;
-  }
-  if (action === "toggle-roll-edge") {
-    event.preventDefault();
-    toggleRollEdge(button);
-    return;
-  }
-  if (action === "roll-duality") {
-    const target = button.closest(".dice-panel")?.querySelector("[data-duality-target]")?.value;
-    const applied = applyDualityEffects(state, rollDuality({ target }));
-    updateState(addRoll(applied.state, applied.roll, button.dataset.rollActor || "玩家"));
-    return;
+  if (action === "delete-asset") updateState(deleteAssetEntry(state, button.dataset.characterId, button.dataset.assetType, button.dataset.assetId));
+  if (action === "buy-item") {
+    updateState(purchaseShopItem(state, button.dataset.itemId));
   }
   if (action === "delete-shop-item") {
-    if (confirm("確定要刪除這個商品嗎？")) updateState(deleteShopItem(state, button.dataset.shopItemId));
-    return;
+    if (confirm("確定刪除這個商品？")) updateState(deleteShopItem(state, button.dataset.itemId));
   }
-  if (action === "purchase-shop-item") {
-    updateState(purchaseShopItem(state, button.dataset.shopItemId));
-    return;
+  if (action === "clear-rolls") updateState(clearRolls(state));
+  if (action === "roll-duality") {
+    const result = rollDuality(state, button.dataset.actor || "玩家");
+    updateState(result.state);
+  }
+  if (action === "append-roll-token") {
+    const actor = button.dataset.actor;
+    const input = app.querySelector(`[data-roll-formula="${actor}"]`);
+    const currentFormula = input?.value || state.ui.rollFormulaDrafts?.[actor] || "";
+    const nextFormula = appendFormulaToken(currentFormula, button.dataset.token);
+    if (document.activeElement && document.activeElement !== document.body && button.contains(document.activeElement) === false) {
+      document.activeElement.blur?.();
+    }
+    updateState(setFormulaDraft(state, actor, nextFormula));
+  }
+  if (action === "set-roll-edge") {
+    const actor = button.dataset.actor;
+    const input = app.querySelector(`[data-roll-formula="${actor}"]`);
+    const currentFormula = input?.value || state.ui.rollFormulaDrafts?.[actor] || "";
+    const nextState = setFormulaDraft(state, actor, currentFormula);
+    updateState(setRollEdgeMode(nextState, button.dataset.edge));
+  }
+  if (action === "reset-v2") {
+    if (confirm("確定重設 v2 測試資料？此動作會清除目前 v2 localStorage。")) {
+      state = saveState(resetState());
+      render();
+    }
+  }
+  if (action === "adjust-monster") updateState(adjustMonsterValue(state, button.dataset.monsterId, button.dataset.field, Number(button.dataset.delta)));
+  if (action === "roll-monster") updateState(rollMonsterAction(state, button.dataset.monsterId, button.dataset.kind));
+  if (action === "advance-round") updateState(advanceMonsterRound(state));
+  if (action === "reset-round") {
+    if (confirm("確定重設回合？")) updateState(resetMonsterRound(state));
+  }
+  if (action === "toggle-monster-editor") {
+    const current = state.ui.expandedMonsterId;
+    updateState({ ...state, ui: { ...state.ui, expandedMonsterId: current === button.dataset.monsterId ? null : button.dataset.monsterId } });
   }
   if (action === "delete-monster") {
-    if (confirm("確定要刪除這隻怪物嗎？")) updateState(deleteMonster(state, button.dataset.monsterId));
-    return;
+    if (confirm("確定刪除這隻怪物？")) updateState(deleteMonster(state, button.dataset.monsterId));
   }
-  if (action === "adjust-monster") {
-    updateState(adjustMonsterValue(state, button.dataset.monsterId, button.dataset.monsterField, Number(button.dataset.delta)));
-    return;
+  if (action === "save-encounter") {
+    const name = state.ui.encounterDraftName || "";
+    updateState(saveCurrentEncounter(state, name));
   }
-  if (action === "expand-monster") {
-    updateState(expandMonster(state, button.dataset.monsterId));
-    return;
+  if (action === "load-encounter") {
+    if (confirm("載入此遭遇並清空目前怪物？")) updateState(loadEncounterTemplate(state, button.dataset.encounterId, "replace"));
   }
-  if (action === "roll-monster-attack") {
-    updateState(rollMonsterAction(state, button.dataset.monsterId, "attack"));
-    return;
-  }
-  if (action === "roll-monster-damage") {
-    updateState(rollMonsterAction(state, button.dataset.monsterId, "damage"));
-    return;
-  }
-  if (action === "next-monster-round") {
-    updateState(advanceMonsterRound(state));
-    return;
-  }
-  if (action === "reset-monster-round") {
-    if (confirm("確定要重設怪物回合？") && confirm("再次確認：回合將回到 0。")) updateState(resetMonsterRound(state));
-    return;
-  }
-  if (action === "reset-v2-state" && confirm("確定要重設 v2 測試資料嗎？") && confirm("再次確認：這會清空目前 v2 localStorage。")) {
-    updateState(createDefaultState());
+  if (action === "append-encounter") updateState(loadEncounterTemplate(state, button.dataset.encounterId, "append"));
+  if (action === "delete-encounter") {
+    if (confirm("確定刪除此遭遇模板？")) updateState(deleteEncounterTemplate(state, button.dataset.encounterId));
   }
 });
 
-app.addEventListener("change", (event) => {
-  const selector = event.target.closest("[data-character-select]");
-  if (selector) updateState(selectCharacter(state, selector.value));
-  const shop = event.target.closest("[data-shop-item-field]");
-  if (shop) updateState(updateShopItem(state, shop.dataset.shopItemId, shop.dataset.shopItemField, shop.value));
-  const id = event.target.dataset.characterId;
-  if (!id) return;
-  if (event.target.dataset.characterField) updateState(updateCharacterField(state, id, event.target.dataset.characterField, event.target.value));
-  else if (event.target.dataset.statField) updateState(updateCharacterStat(state, id, event.target.dataset.statField, event.target.value));
-  else if (event.target.dataset.attributeField) updateState(updateCharacterAttribute(state, id, event.target.dataset.attributeField, event.target.value));
-  else if (event.target.dataset.goldField) updateState(updateCharacterGold(state, id, event.target.dataset.goldField, event.target.value));
-  else if (event.target.matches("[data-money-field]")) updateState(updateCharacterMoney(state, id, event.target.value));
-});
-
-app.addEventListener("input", (event) => {
-  const rollInput = event.target.closest?.("[data-roll-formula]");
-  if (rollInput) {
-    const actor = getRollActor(rollInput.closest("[data-roll-form]"));
-    return saveStateOnly(saveRollFormulaDraft(state, actor, rollInput.value));
-  }
-
-  const id = event.target.dataset.characterId;
-  if (id) {
-    if (event.target.dataset.characterField) return saveStateOnly(updateCharacterField(state, id, event.target.dataset.characterField, event.target.value));
-    if (event.target.dataset.statField) return saveStateOnly(updateCharacterStat(state, id, event.target.dataset.statField, event.target.value));
-    if (event.target.dataset.attributeField) return saveStateOnly(updateCharacterAttribute(state, id, event.target.dataset.attributeField, event.target.value));
-    if (event.target.dataset.goldField) return saveStateOnly(updateCharacterGold(state, id, event.target.dataset.goldField, event.target.value));
-    if (event.target.matches("[data-money-field]")) return saveStateOnly(updateCharacterMoney(state, id, event.target.value));
-  }
-  const asset = event.target.closest("[data-asset-entry-field]");
-  if (asset) return saveStateOnly(updateAssetEntry(state, asset.dataset.characterId, asset.dataset.listKey, Number(asset.dataset.entryIndex), asset.value));
-  const publicField = event.target.dataset.publicInfoField;
-  if (publicField) return saveStateOnly(updatePublicInfoField(state, publicField, event.target.value));
-  const shop = event.target.closest("[data-shop-item-field]");
-  if (shop) return saveStateOnly(updateShopItem(state, shop.dataset.shopItemId, shop.dataset.shopItemField, shop.value));
-  const monster = event.target.closest("[data-monster-field]");
-  if (monster) saveStateOnly(updateMonster(state, monster.dataset.monsterId, monster.dataset.monsterField, monster.value));
-});
-
-app.addEventListener("submit", (event) => {
-  const form = event.target;
-  if (form.matches("[data-add-character-form]")) {
-    event.preventDefault();
-    updateState(addCharacter(state, form.querySelector("[data-new-character-name]").value.trim(), form.querySelector("[data-new-character-color]")?.value));
-    return;
-  }
-  if (form.matches("[data-add-character-effect-form]")) {
-    event.preventDefault();
-    updateState(addCharacterEffect(state, form.dataset.characterId, form.dataset.effectType, form.querySelector("[data-character-effect-input]").value));
-    return;
-  }
-  if (form.matches("[data-add-asset-form]")) {
-    event.preventDefault();
-    updateState(addAssetEntry(state, form.dataset.characterId, form.dataset.listKey, form.querySelector("[data-asset-entry-input]").value));
-    return;
-  }
-  if (form.matches("[data-add-shop-item-form]")) {
-    event.preventDefault();
-    updateState(
-      addShopItem(state, {
-        name: form.querySelector("[data-new-shop-name]").value.trim(),
-        type: form.querySelector("[data-new-shop-type]").value,
-        price: form.querySelector("[data-new-shop-price]").value,
-        stock: form.querySelector("[data-new-shop-stock]").value,
-        description: form.querySelector("[data-new-shop-description]").value,
-      }),
-    );
-    return;
-  }
-  if (form.matches("[data-add-monster-form]")) {
-    event.preventDefault();
-    const values = Object.fromEntries([...form.querySelectorAll("[data-new-monster-field]")].map((input) => [input.dataset.newMonsterField, input.value]));
-    updateState(addMonster(state, values));
-    return;
-  }
-  if (form.matches("[data-roll-form]")) {
-    event.preventDefault();
-    const input = form.querySelector("[data-roll-formula]");
-    const actor = getRollActor(form);
-    const formula = input.value;
-    const stateWithDraft = saveRollFormulaDraft(state, actor, formula);
-    const result = rollFormula(formula);
-    const message = form.parentElement.querySelector("[data-roll-message]");
-    if (!result.ok) {
-      saveStateOnly(stateWithDraft);
-      if (message) message.textContent = result.error;
-      return;
-    }
-    if (message) message.textContent = "";
-    const edgeMode = form.dataset.rollEdgeEnabled === "true" && EDGE_MODES.has(stateWithDraft.ui?.rollEdgeMode) ? stateWithDraft.ui.rollEdgeMode : "";
-    const roll = edgeMode ? applyRollEdge(result, edgeMode) : result;
-    const nextState = edgeMode ? { ...stateWithDraft, ui: { ...(stateWithDraft.ui || {}), rollEdgeMode: "" } } : stateWithDraft;
-    updateState(addRoll(nextState, roll, actor));
-  }
-});
-
-app.addEventListener(
-  "wheel",
-  (event) => {
-    const stepper = event.target.closest("[data-number-stepper]");
-    if (!stepper) return;
-    event.preventDefault();
-    const delta = event.deltaY < 0 ? 1 : -1;
-    const { characterId, stepperType, stepperField } = stepper.dataset;
-    if (stepperType === "stat") updateState(adjustCharacterStat(state, characterId, stepperField, delta));
-    else if (stepperType === "attribute") updateState(adjustCharacterAttribute(state, characterId, stepperField, delta));
-    else if (stepperType === "money") updateState(adjustCharacterMoney(state, characterId, delta));
-    else if (stepperType === "gold") updateState(adjustCharacterGold(state, characterId, stepperField, delta));
-  },
-  { passive: false },
-);
+window.addEventListener("beforeunload", () => saveState(state));
 
 render();
-loadBuildInfo();
