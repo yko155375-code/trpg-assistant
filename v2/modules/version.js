@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "normalize-encounters-import-fix",
-  commit: "local",
-  sourceCommit: "local",
-  versionCommit: "local",
-  updatedAt: "2026-06-07T14:40:00+08:00",
-  note: "Fix normalizeEncounters import/export alignment for v2 startup.",
+  label: "monster-critical-damage-restore",
+  commit: "37d994a1d5463f1fd95fd7fda32894272d935e9e",
+  sourceCommit: "37d994a1d5463f1fd95fd7fda32894272d935e9e",
+  versionCommit: "37d994a1d5463f1fd95fd7fda32894272d935e9e",
+  updatedAt: "2026-06-07T15:10:00+08:00",
+  note: "Restore monster natural 20 critical damage pending and damage breakdown.",
 };
 
 function shortCommit(commit) {
