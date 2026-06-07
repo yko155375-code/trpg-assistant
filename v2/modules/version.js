@@ -1,12 +1,14 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
   label: "entry-rune-adventurer-nav",
-  commit: "c5b49e34c1299befdceab2e32332e4299817f9b6",
+  commit: "f3ec5ef3a0b0a3a026d3eee15ef680f7a0f0528d",
   sourceCommit: "c5b49e34c1299befdceab2e32332e4299817f9b6",
-  versionCommit: "c5b49e34c1299befdceab2e32332e4299817f9b6",
+  versionCommit: "e2e19d60a9768cc76ecf0aaa64453f46c562c2b1",
   updatedAt: "2026-06-07T00:00:00+08:00",
   note: "Set v2 default entry to player mode and add rune/adventurer navigation.",
 };
+
+export const VERSION_LABEL = DEFAULT_VERSION_INFO.label;
 
 function shortCommit(commit) {
   return commit ? String(commit).slice(0, 7) : "unknown";
@@ -14,6 +16,14 @@ function shortCommit(commit) {
 
 function buildLabel(info) {
   return `${info.version} · ${info.label} · ${shortCommit(info.commit)}`;
+}
+
+export function renderBuildLabel(info = DEFAULT_VERSION_INFO) {
+  return buildLabel(info);
+}
+
+export function logBuildInfo(info = DEFAULT_VERSION_INFO) {
+  console.log(`TRPG Assistant v2 build: ${info.label} / ${info.commit}`);
 }
 
 function ensureBadgeStyle() {
@@ -52,7 +62,7 @@ function renderBadge(info) {
   badge.className = "v2-version-badge";
   badge.textContent = buildLabel(info);
   if (!existing) document.body.appendChild(badge);
-  console.log(`TRPG Assistant v2 build: ${info.label} / ${info.commit}`);
+  logBuildInfo(info);
 }
 
 async function getVersionInfo() {
