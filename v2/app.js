@@ -25,20 +25,17 @@ import {
   addMonster,
   adjustMonsterValue,
   advanceMonsterRound,
-  deleteEncounter,
   deleteMonster,
   expandMonster,
-  loadEncounter,
   resetMonsterRound,
   rollMonsterAction,
-  saveCurrentEncounter,
   updateMonster,
 } from "./modules/monsters.js";
 import { renderPlayerPage } from "./modules/player-view.js";
 import { updatePublicInfoField } from "./modules/public-info.js";
 import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js";
 import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js";
-import { createDefaultState } from "./modules/state.js";
+import { createDefaultState, normalizeEncounters } from "./modules/state.js";
 import { loadState, saveState } from "./modules/storage.js";
 
 const app = document.querySelector("#app");
@@ -64,8 +61,104 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function normalizeEncounterMonster(monster = {}) {
+  const maxHp = Math.max(1, Number(monster.maxHp ?? monster.hp ?? 1) || 1);
+  const hp = Math.min(maxHp, Math.max(0, Number(monster.hp ?? maxHp) || 0));
+  const maxStress = Math.max(0, Number(monster.maxStress ?? monster.stress ?? 0) || 0);
+  const stress = Math.min(maxStress, Math.max(0, Number(monster.stress ?? 0) || 0));
+
+  return {
+    name: String(monster.name || "未命名怪物").trim() || "未命名怪物",
+    hp,
+    maxHp,
+    stress,
+    maxStress,
+    difficulty: Math.max(0, Number(monster.difficulty ?? 10) || 10),
+    attack: String(monster.attack || monster.attackFormula || "").trim(),
+    damage: String(monster.damage || monster.damageFormula || "").trim(),
+    threshold: String(monster.threshold || "").trim(),
+    notes: String(monster.notes || monster.note || "").trim(),
+    tag: String(monster.tag || "").trim(),
+  };
+}
+
+function withEncounterMessage(nextState, message) {
+  return {
+    ...nextState,
+    ui: {
+      ...(nextState.ui || {}),
+      encounterTemplateMessage: message,
+    },
+  };
+}
+
+function saveCurrentEncounter(nextState, name) {
+  const title = String(name || "").trim();
+  const monsters = Array.isArray(nextState.monsters) ? nextState.monsters : [];
+  if (!title) return withEncounterMessage(nextState, "請先輸入遭遇名稱。");
+  if (!monsters.length) return withEncounterMessage(nextState, "目前沒有怪物可儲存為遭遇。");
+
+  const encounter = {
+    id: `encounter-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: title,
+    monsters: monsters.map(normalizeEncounterMonster),
+    createdAt: new Date().toISOString(),
+  };
+
+  return withEncounterMessage(
+    {
+      ...nextState,
+      encounters: [...normalizeEncounters(nextState.encounters), encounter],
+    },
+    `已儲存遭遇：${title}`,
+  );
+}
+
+function loadEncounter(nextState, encounterId, mode = "replace") {
+  const encounters = normalizeEncounters(nextState.encounters);
+  const encounter = encounters.find((item) => item.id === encounterId);
+  if (!encounter) return withEncounterMessage(nextState, "找不到遭遇模板。");
+
+  let workingState = {
+    ...nextState,
+    encounters,
+    monsters: mode === "append" ? [...(nextState.monsters || [])] : [],
+    ui: {
+      ...(nextState.ui || {}),
+      expandedMonsterId: null,
+    },
+  };
+
+  encounter.monsters.forEach((monster) => {
+    workingState = addMonster(workingState, {
+      ...monster,
+      hp: monster.hp ?? monster.maxHp ?? 1,
+      stress: monster.stress ?? 0,
+      isDead: false,
+    });
+  });
+
+  return withEncounterMessage(
+    workingState,
+    mode === "append" ? `已追加遭遇：${encounter.name}` : `已載入遭遇：${encounter.name}`,
+  );
+}
+
+function deleteEncounter(nextState, encounterId) {
+  return withEncounterMessage(
+    {
+      ...nextState,
+      encounters: normalizeEncounters(nextState.encounters).filter((item) => item.id !== encounterId),
+    },
+    "已刪除遭遇模板。",
+  );
+}
+
 function actorKeyFromElement(element) {
-  const actor = element.closest("[data-roll-form]")?.dataset.rollActor || element.closest(".dice-panel")?.querySelector("[data-roll-form]")?.dataset.rollActor || "player";
+  const actor =
+    element.closest("[data-roll-form]")?.dataset.rollActor ||
+    element.closest(".dice-panel")?.querySelector("[data-roll-form]")?.dataset.rollActor ||
+    "player";
   return actor === "DM" ? "DM" : "player";
 }
 
@@ -83,7 +176,9 @@ function setFormulaDraft(nextState, actor, formula) {
 }
 
 function syncFormulaDraft(element, nextState = state) {
-  const input = element.closest?.(".dice-panel")?.querySelector("[data-roll-formula]") || element.querySelector?.("[data-roll-formula]");
+  const input =
+    element.closest?.(".dice-panel")?.querySelector("[data-roll-formula]") ||
+    element.querySelector?.("[data-roll-formula]");
   return input ? setFormulaDraft(nextState, actorKeyFromElement(input), input.value || "") : nextState;
 }
 
@@ -145,7 +240,15 @@ function applyEdge(roll, mode) {
   const die = rollD6();
   const baseTotal = Number(roll.total) || 0;
   const finalTotal = mode === "advantage" ? baseTotal + die : baseTotal - die;
-  return { ...roll, rollEdgeMode: mode, rollEdgeDie: die, baseTotal, total: finalTotal, edgeBreakdown: { mode, die, baseTotal, finalTotal }, note: mode === "advantage" ? "優勢骰 +1d6" : "劣勢骰 -1d6" };
+  return {
+    ...roll,
+    rollEdgeMode: mode,
+    rollEdgeDie: die,
+    baseTotal,
+    total: finalTotal,
+    edgeBreakdown: { mode, die, baseTotal, finalTotal },
+    note: mode === "advantage" ? "優勢骰 +1d6" : "劣勢骰 -1d6",
+  };
 }
 
 app.addEventListener("click", (event) => {
@@ -254,7 +357,7 @@ app.addEventListener("input", (event) => {
   const shopItemField = event.target.closest("[data-shop-item-field]");
   if (shopItemField) return saveStateOnly(updateShopItem(state, shopItemField.dataset.shopItemId, shopItemField.dataset.shopItemField, shopItemField.value));
   const monsterField = event.target.closest("[data-monster-field]");
-  if (monsterField) return saveStateOnly(updateMonster(state, monsterField.dataset.monsterId, monsterField.dataset.monsterField, monsterField.value));
+  if (monsterField) return saveStateOnly(updateMonster(state, monsterField.dataset.monsterId, monsterField.dataset.monsterField, event.target.value));
 });
 
 app.addEventListener("submit", (event) => {
@@ -297,7 +400,13 @@ app.addEventListener("submit", (event) => {
   const addShopItemForm = event.target.closest("[data-add-shop-item-form]");
   if (addShopItemForm) {
     event.preventDefault();
-    return updateState(addShopItem(state, { name: addShopItemForm.querySelector("[data-new-shop-name]")?.value.trim() || "", type: addShopItemForm.querySelector("[data-new-shop-type]")?.value || "", price: addShopItemForm.querySelector("[data-new-shop-price]")?.value || 0, stock: addShopItemForm.querySelector("[data-new-shop-stock]")?.value || 0, description: addShopItemForm.querySelector("[data-new-shop-description]")?.value || "" }));
+    return updateState(addShopItem(state, {
+      name: addShopItemForm.querySelector("[data-new-shop-name]")?.value.trim() || "",
+      type: addShopItemForm.querySelector("[data-new-shop-type]")?.value || "",
+      price: addShopItemForm.querySelector("[data-new-shop-price]")?.value || 0,
+      stock: addShopItemForm.querySelector("[data-new-shop-stock]")?.value || 0,
+      description: addShopItemForm.querySelector("[data-new-shop-description]")?.value || "",
+    }));
   }
   const addMonsterForm = event.target.closest("[data-add-monster-form]");
   if (addMonsterForm) {
