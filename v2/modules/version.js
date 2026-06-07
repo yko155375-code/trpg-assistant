@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "dice-formula-draft-source-fix",
-  commit: "baa62c7f39adf3991fd2a854018f2b673087eb98",
-  sourceCommit: "baa62c7f39adf3991fd2a854018f2b673087eb98",
-  versionCommit: "baa62c7f39adf3991fd2a854018f2b673087eb98",
+  label: "entry-rune-adventurer-nav",
+  commit: "c5b49e34c1299befdceab2e32332e4299817f9b6",
+  sourceCommit: "c5b49e34c1299befdceab2e32332e4299817f9b6",
+  versionCommit: "c5b49e34c1299befdceab2e32332e4299817f9b6",
   updatedAt: "2026-06-07T00:00:00+08:00",
-  note: "Use roll formula drafts as the direct render source for dice inputs.",
+  note: "Set v2 default entry to player mode and add rune/adventurer navigation.",
 };
 
 function shortCommit(commit) {
