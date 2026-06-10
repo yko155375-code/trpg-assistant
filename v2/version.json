@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-dm-entry-button-only",
-  "commit": "0f6504ca00341567a9c56837a913c7fc419952be",
-  "sourceCommit": "0f6504ca00341567a9c56837a913c7fc419952be",
-  "versionCommit": "0f6504ca00341567a9c56837a913c7fc419952be",
-  "updatedAt": "2026-06-07T15:24:00+08:00",
-  "note": "Style the existing player mode DM switch as a small hidden rune entry without changing the v2 startup chain."
+  "label": "shop-compact-cards",
+  "commit": "3650d19874b909f2ca908c3a5d3277e382baeb27",
+  "sourceCommit": "02899edc4b7045848affcd39381a547ec55d7266",
+  "versionCommit": "3650d19874b909f2ca908c3a5d3277e382baeb27",
+  "updatedAt": "2026-06-10T00:00:00+08:00",
+  "note": "Compact player shop cards and DM shop management rows."
 }
