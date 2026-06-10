@@ -164,16 +164,16 @@ export function renderPlayerShop(state) {
   const character = getCurrentCharacter(state);
 
   return `
-    <section class="shop-panel">
-      <div class="shop-summary">
+    <section class="shop-panel shop-panel-compact">
+      <div class="shop-summary shop-summary-compact">
         <h3>玩家商店</h3>
         <p>${character ? `目前角色：${escapeHtml(character.name)}｜金錢：${formatGold(character.assets.gold)}` : "尚未選擇角色"}</p>
       </div>
       ${state.ui.shopMessage ? `<p class="form-message">${escapeHtml(state.ui.shopMessage)}</p>` : ""}
       ${
         shop.items.length
-          ? `<div class="shop-grid">
-              ${shop.items.map((item) => renderPlayerShopItem(item, Boolean(character))).join("")}
+          ? `<div class="shop-grid shop-player-grid">
+              ${shop.items.map((item) => renderPlayerShopItem(item, character)).join("")}
             </div>`
           : `<p class="empty-hint">商店目前沒有商品。</p>`
       }
@@ -181,22 +181,26 @@ export function renderPlayerShop(state) {
   `;
 }
 
-function renderPlayerShopItem(item, hasCharacter) {
+function renderPlayerShopItem(item, character) {
   const soldOut = item.stock <= 0;
+  const hasCharacter = Boolean(character);
+  const canAfford = hasCharacter && character.assets.money >= item.price;
+  const disabled = !hasCharacter || soldOut || !canAfford;
+  const buttonText = soldOut ? "售完" : !hasCharacter ? "未選角色" : !canAfford ? "金錢不足" : "購買";
+  const description = item.description ? `<small class="shop-compact-description">${escapeHtml(item.description)}</small>` : "";
+
   return `
-    <article class="shop-item-card">
-      <div class="shop-item-heading">
+    <article class="shop-item-card shop-item-compact">
+      <div class="shop-compact-head">
         <h4>${escapeHtml(item.name)}</h4>
         <span>${escapeHtml(item.type)}</span>
       </div>
-      <p>${escapeHtml(item.description || "沒有描述")}</p>
-      <div class="shop-item-meta">
-        <span>價格：${formatGold(item.price)}</span>
-        <span>${soldOut ? "售完" : `庫存：${item.stock}`}</span>
+      <div class="shop-compact-meta">
+        <b>${formatGold(item.price)}</b>
+        <span>${soldOut ? "售完" : `庫存 ${item.stock}`}</span>
       </div>
-      <button class="primary-button full-width-button" type="button" data-action="purchase-shop-item" data-shop-item-id="${escapeHtml(item.id)}" ${!hasCharacter || soldOut ? "disabled" : ""}>
-        ${soldOut ? "售完" : "購買"}
-      </button>
+      ${description}
+      <button class="primary-button shop-buy-button" type="button" data-action="purchase-shop-item" data-shop-item-id="${escapeHtml(item.id)}" ${disabled ? "disabled" : ""}>${buttonText}</button>
     </article>
   `;
 }
@@ -205,14 +209,14 @@ export function renderDmShopManager(state) {
   const shop = normalizeShop(state.shop);
 
   return `
-    <section class="shop-panel">
+    <section class="shop-panel shop-panel-compact shop-manager-panel">
       <div class="editor-heading">
         <h3>商店管理</h3>
       </div>
       ${renderAddShopItemForm()}
       ${
         shop.items.length
-          ? `<div class="shop-grid">
+          ? `<div class="shop-manager-list">
               ${shop.items.map(renderDmShopItem).join("")}
             </div>`
           : `<p class="empty-hint">尚未建立商品。</p>`
@@ -224,11 +228,11 @@ export function renderDmShopManager(state) {
 
 function renderAddShopItemForm() {
   return `
-    <form class="editor-panel shop-add-form" data-add-shop-item-form>
-      <div class="form-grid">
+    <form class="editor-panel shop-add-form shop-add-form-compact" data-add-shop-item-form>
+      <div class="form-grid shop-add-grid-compact">
         <label class="form-field">
           <span>商品名稱</span>
-          <input data-new-shop-name type="text" placeholder="例如：治療藥水" autocomplete="off" />
+          <input data-new-shop-name type="text" placeholder="治療藥水" autocomplete="off" />
         </label>
         <label class="form-field">
           <span>類型</span>
@@ -256,22 +260,30 @@ function renderAddShopItemForm() {
 
 function renderDmShopItem(item) {
   return `
-    <article class="shop-item-card">
-      <label class="form-field">
-        <span>商品名稱</span>
-        <input data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="name" type="text" value="${escapeHtml(item.name)}" />
-      </label>
-      <label class="form-field">
-        <span>類型</span>
-        <select data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="type">
-          ${typeOptions
-            .map(
-              (option) => `<option value="${option.value}" ${item.type === option.value ? "selected" : ""}>${option.label}</option>`,
-            )
-            .join("")}
-        </select>
-      </label>
-      <div class="form-grid">
+    <details class="shop-manager-row">
+      <summary class="shop-manager-summary">
+        <strong>${escapeHtml(item.name)}</strong>
+        <span>${escapeHtml(item.type)}</span>
+        <b>${formatGold(item.price)}</b>
+        <span>${item.stock <= 0 ? "售完" : `庫存 ${item.stock}`}</span>
+        <em>編輯</em>
+        <button class="danger-button shop-row-delete" type="button" data-action="delete-shop-item" data-shop-item-id="${escapeHtml(item.id)}">刪除</button>
+      </summary>
+      <div class="shop-manager-editor">
+        <label class="form-field">
+          <span>商品名稱</span>
+          <input data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="name" type="text" value="${escapeHtml(item.name)}" />
+        </label>
+        <label class="form-field">
+          <span>類型</span>
+          <select data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="type">
+            ${typeOptions
+              .map(
+                (option) => `<option value="${option.value}" ${item.type === option.value ? "selected" : ""}>${option.label}</option>`,
+              )
+              .join("")}
+          </select>
+        </label>
         <label class="form-field">
           <span>價格（把）</span>
           <input data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="price" type="number" inputmode="numeric" min="0" value="${item.price}" />
@@ -280,19 +292,18 @@ function renderDmShopItem(item) {
           <span>庫存</span>
           <input data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="stock" type="number" inputmode="numeric" min="0" value="${item.stock}" />
         </label>
+        <label class="form-field form-field-full">
+          <span>描述</span>
+          <textarea data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="description" rows="2">${escapeHtml(item.description)}</textarea>
+        </label>
       </div>
-      <label class="form-field">
-        <span>描述</span>
-        <textarea data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="description" rows="2">${escapeHtml(item.description)}</textarea>
-      </label>
-      <button class="danger-button" type="button" data-action="delete-shop-item" data-shop-item-id="${escapeHtml(item.id)}">刪除商品</button>
-    </article>
+    </details>
   `;
 }
 
 function renderPurchaseLog(purchaseLog) {
   return `
-    <section class="editor-panel">
+    <section class="editor-panel shop-log-panel">
       <h4>購買紀錄</h4>
       ${
         purchaseLog.length
