@@ -183,3 +183,235 @@ body:has(.layout.is-player) .mode-switch [data-mode="dm"]:focus-visible {
   background: rgba(22, 34, 50, 0.72);
   opacity: 0.76;
 }
+
+.shop-panel-compact {
+  gap: 8px;
+}
+
+.shop-summary-compact {
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.shop-summary-compact h3,
+.shop-summary-compact p {
+  margin: 0;
+}
+
+.shop-summary-compact h3 {
+  font-size: 15px;
+}
+
+.shop-summary-compact p {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.shop-player-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+
+.shop-item-compact {
+  gap: 5px;
+  min-width: 0;
+  padding: 7px;
+  border-radius: 10px;
+}
+
+.shop-compact-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px;
+  align-items: start;
+  min-width: 0;
+}
+
+.shop-compact-head h4 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.18;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-compact-head span {
+  max-width: 52px;
+  overflow: hidden;
+  padding: 2px 5px;
+  border: 1px solid rgba(199, 164, 93, 0.25);
+  border-radius: 999px;
+  color: var(--gold);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-compact-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.shop-compact-meta b {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--gold);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-compact-description {
+  display: block;
+  min-height: 1.25em;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-buy-button {
+  width: 100%;
+  min-height: 30px;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.shop-manager-panel {
+  gap: 8px;
+}
+
+.shop-add-form-compact {
+  gap: 8px;
+  padding: 10px;
+  border-radius: 11px;
+}
+
+.shop-add-grid-compact {
+  gap: 7px;
+}
+
+.shop-manager-list {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.shop-manager-row {
+  min-width: 0;
+  border: 1px solid rgba(243, 234, 216, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.shop-manager-summary {
+  display: grid;
+  grid-template-columns: minmax(92px, 1fr) minmax(46px, auto) minmax(74px, auto) minmax(50px, auto) auto auto;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  padding: 6px 7px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.shop-manager-summary::-webkit-details-marker {
+  display: none;
+}
+
+.shop-manager-summary strong,
+.shop-manager-summary span,
+.shop-manager-summary b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-manager-summary strong {
+  font-size: 13px;
+}
+
+.shop-manager-summary span,
+.shop-manager-summary b,
+.shop-manager-summary em {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.shop-manager-summary b {
+  color: var(--gold);
+}
+
+.shop-row-delete {
+  min-height: 28px;
+  padding: 0 7px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.shop-manager-editor {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  padding: 0 7px 7px;
+}
+
+.shop-manager-editor .form-field-full {
+  grid-column: 1 / -1;
+}
+
+.shop-log-panel {
+  gap: 7px;
+  padding: 10px;
+  border-radius: 11px;
+}
+
+@media (min-width: 760px) {
+  .shop-player-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .shop-player-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .shop-manager-summary {
+    grid-template-columns: minmax(70px, 1fr) minmax(38px, auto) minmax(56px, auto) minmax(42px, auto) 34px;
+    gap: 4px;
+    padding: 5px;
+  }
+
+  .shop-manager-summary em {
+    display: none;
+  }
+
+  .shop-row-delete {
+    min-height: 30px;
+    padding: 0 6px;
+  }
+
+  .shop-manager-editor {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 0 6px 6px;
+  }
+}
