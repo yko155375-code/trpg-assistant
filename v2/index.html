@@ -8,13 +8,64 @@
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./team-card.css" />
     <link rel="stylesheet" href="./team-status-lookup.css" />
-    <link rel="stylesheet" href="./dice.css?v=normalize-encounters-import-fix" />
+    <link rel="stylesheet" href="./dice.css?v=p0-localstorage-boot-guard" />
   </head>
   <body>
     <noscript>本工具需要啟用 JavaScript。</noscript>
     <div id="app" class="app-shell" aria-live="polite"></div>
-    <script type="module" src="./app.js?v=normalize-encounters-import-fix"></script>
+    <script>
+      (() => {
+        const storageKey = "trpg-assistant-v2-state";
+        const versionLabel = "p0-localstorage-boot-guard";
+        function safeUrl() { return new URL("./?safe=1", window.location.href).href; }
+        function backupRaw(raw) {
+          if (!raw) return "";
+          const key = `trpg-assistant-v2-corrupt-backup-${Date.now()}`;
+          localStorage.setItem(key, raw);
+          return key;
+        }
+        function showFallback(phase, reason) {
+          if (window.__TRPG_V2_BOOT_OK__) return;
+          const app = document.querySelector("#app");
+          if (!app || app.querySelector(".boot-guard-panel")) return;
+          let raw = "";
+          try { raw = localStorage.getItem(storageKey) || ""; }
+          catch (error) { console.error("[TRPG v2 boot fallback] storage read failed", error); }
+          let backupKey = "";
+          try { backupKey = backupRaw(raw); }
+          catch (error) { console.error("[TRPG v2 boot fallback] backup failed", error); }
+          const message = reason instanceof Error ? reason.message : String(reason || "啟動逾時");
+          console.error("[TRPG v2 boot fallback]", { phase, storageKey, backupKey, reason });
+          app.innerHTML = `<section class="boot-guard-panel" role="alert"><p class="eyebrow">TRPG Assistant v2 啟動保護</p><h1>頁面沒有成功啟動</h1><p>錯誤階段：${phase}</p><p>錯誤訊息：${message}</p><p>版本：${versionLabel}</p>${backupKey ? `<p>備份 key：${backupKey}</p>` : ""}<div class="boot-guard-actions"><button type="button" data-fallback-safe>安全模式開啟</button><button type="button" data-fallback-backup>備份目前本機資料</button><button type="button" data-fallback-clear>清除 v2 本機資料並重開</button></div><p data-fallback-status>不會自動刪除任何資料。</p></section>`;
+          const status = app.querySelector("[data-fallback-status]");
+          app.querySelector("[data-fallback-safe]")?.addEventListener("click", () => { location.href = safeUrl(); });
+          app.querySelector("[data-fallback-backup]")?.addEventListener("click", async () => {
+            if (!raw) { status.textContent = "目前沒有可備份的 v2 主資料。"; return; }
+            try { await navigator.clipboard.writeText(raw); status.textContent = "已複製 v2 本機資料。"; }
+            catch {
+              const blob = new Blob([raw], { type: "application/json;charset=utf-8" });
+              const link = document.createElement("a");
+              link.href = URL.createObjectURL(blob);
+              link.download = `trpg-assistant-v2-backup-${Date.now()}.json`;
+              link.click();
+              URL.revokeObjectURL(link.href);
+              status.textContent = "已下載 v2 本機資料備份。";
+            }
+          });
+          app.querySelector("[data-fallback-clear]")?.addEventListener("click", () => {
+            try { localStorage.removeItem(storageKey); }
+            catch (error) { console.error("[TRPG v2 boot fallback] clear storage failed", error); }
+            finally { location.href = safeUrl(); }
+          });
+        }
+        window.__TRPG_V2_SHOW_BOOT_ERROR__ = showFallback;
+        window.addEventListener("error", (event) => showFallback("moduleLoad", event.error || event.message));
+        window.addEventListener("unhandledrejection", (event) => showFallback("moduleLoad", event.reason));
+        window.__TRPG_V2_BOOT_TIMER__ = window.setTimeout(() => showFallback("moduleLoad", "啟動逾時"), 4000);
+      })();
+    </script>
+    <script type="module" src="./app.js?v=p0-localstorage-boot-guard"></script>
     <script type="module" src="./modules/team-status-lookup.js"></script>
-    <script type="module" src="./modules/version.js?v=normalize-encounters-import-fix"></script>
+    <script type="module" src="./modules/version.js?v=p0-localstorage-boot-guard"></script>
   </body>
 </html>
