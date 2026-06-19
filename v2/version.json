@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "p0-localstorage-boot-guard",
-  "commit": "6e6fccf0288b232585c8811f0906a6d0d0297e36",
-  "sourceCommit": "3e6e40fda1fb6b2f51014b2bda94bcf6d2f0f98b",
-  "versionCommit": "6e6fccf0288b232585c8811f0906a6d0d0297e36",
-  "updatedAt": "2026-06-20T02:33:29+08:00",
-  "note": "Add localStorage boot protection, safe mode, corrupt-data backup, and stronger state normalization."
+  "label": "player-current-character-entry-select",
+  "commit": "bffb838065b41b373bb8fb2a12403991101e737e",
+  "sourceCommit": "4e906ce647705dd1215e5220813170f9c6aa4d1b",
+  "versionCommit": "bffb838065b41b373bb8fb2a12403991101e737e",
+  "updatedAt": "2026-06-20T03:15:31+08:00",
+  "note": "Show a compact current-character selector across all player pages."
 }
