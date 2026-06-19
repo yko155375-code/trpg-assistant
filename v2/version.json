@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-current-character-single-entry",
-  "commit": "5c96f6948bab92e402ec9b8210cfae97c42b041c",
-  "sourceCommit": "58831b1570791eec5c534215ae1789621567e99a",
-  "versionCommit": "5c96f6948bab92e402ec9b8210cfae97c42b041c",
-  "updatedAt": "2026-06-20T04:13:04+08:00",
-  "note": "Keep the current-character selector only on the player team page and hide the legacy asset selector."
+  "label": "v2-shop-state-normalize",
+  "commit": "eecbcd36785d116c39da674220056d1a72ff1be0",
+  "sourceCommit": "c39c93ee433166f480baa2619c90fba100b7552a",
+  "versionCommit": "eecbcd36785d116c39da674220056d1a72ff1be0",
+  "updatedAt": "2026-06-20T04:46:19+08:00",
+  "note": "Additive shop, inventory, transaction, and schema normalization foundations."
 }
