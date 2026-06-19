@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "player-current-character-single-entry",
-  "commit": "2ae47adb989d5219b713a100fb8dcfb7f22593a7",
+  "commit": "5c96f6948bab92e402ec9b8210cfae97c42b041c",
   "sourceCommit": "58831b1570791eec5c534215ae1789621567e99a",
-  "versionCommit": "2ae47adb989d5219b713a100fb8dcfb7f22593a7",
-  "updatedAt": "2026-06-20T03:34:30+08:00",
-  "note": "Keep the current-character selector only on the player team page."
+  "versionCommit": "5c96f6948bab92e402ec9b8210cfae97c42b041c",
+  "updatedAt": "2026-06-20T04:13:04+08:00",
+  "note": "Keep the current-character selector only on the player team page and hide the legacy asset selector."
 }
