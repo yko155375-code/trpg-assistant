@@ -1,5 +1,5 @@
 import { formatGold, goldToHandfuls, normalizeGoldFromHandfuls } from "./assets.js";
-import { getCurrentCharacter, updateCharacter } from "./characters.js";
+import { getCurrentCharacter } from "./characters.js";
 
 const typeOptions = [
   { value: "物品", label: "物品", assetKey: "items" },
@@ -14,6 +14,18 @@ function makeShopItemId() {
 function toNumber(value, fallback = 0) {
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
+}
+
+function toNonNegativeInteger(value, fallback = 0) {
+  return Math.max(0, Math.trunc(toNumber(value, fallback)));
+}
+
+function makeInventoryItemId() {
+  return `inventory-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function makeTransactionId() {
+  return `purchase-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function escapeHtml(value) {
@@ -31,19 +43,28 @@ function getAssetKey(type) {
 
 export function normalizeShopItem(item = {}) {
   return {
+    ...item,
     id: item.id || makeShopItemId(),
     name: item.name || "未命名商品",
     type: typeOptions.some((option) => option.value === item.type) ? item.type : "物品",
-    price: Math.max(0, toNumber(item.price)),
-    stock: Math.max(0, toNumber(item.stock, 1)),
+    price: toNonNegativeInteger(item.price),
+    stock: item.stock == null ? null : toNonNegativeInteger(item.stock, 1),
     description: item.description || "",
+    category: item.category || "misc",
+    tier: toNonNegativeInteger(item.tier, 1),
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    available: item.available === undefined ? true : Boolean(item.available),
   };
 }
 
 export function normalizeShop(shop = {}) {
   return {
+    ...shop,
     items: Array.isArray(shop.items) ? shop.items.map(normalizeShopItem) : [],
     purchaseLog: Array.isArray(shop.purchaseLog) ? shop.purchaseLog : [],
+    itemDefinitions: Array.isArray(shop.itemDefinitions) ? shop.itemDefinitions : [],
+    listings: Array.isArray(shop.listings) ? shop.listings : [],
+    transactions: Array.isArray(shop.transactions) ? shop.transactions : [],
   };
 }
 
@@ -103,10 +124,62 @@ export function setShopMessage(state, message) {
   };
 }
 
+function resolvePurchaseCharacter(state) {
+  const characters = Array.isArray(state.characters) ? state.characters : [];
+  const selectedId = state.ui?.selectedCharacterId || state.ui?.currentCharacterId || null;
+  return characters.find((character) => character.id === selectedId) || characters[0] || null;
+}
+
+function resolveListing(shop, item) {
+  return shop.listings.find((listing) => listing.id === item.id || listing.itemId === item.itemId) || null;
+}
+
+function resolveItemDefinition(shop, item, listing) {
+  const itemId = listing?.itemId || item.itemId || `legacy-item-${item.id}`;
+  return shop.itemDefinitions.find((definition) => definition.id === itemId) || null;
+}
+
+function normalizeInventoryEntry(entry, fallbackIndex = 0) {
+  const source = entry && typeof entry === "object" && !Array.isArray(entry)
+    ? entry
+    : { nameSnapshot: String(entry || "未命名物品") };
+  const nameSnapshot = String(source.nameSnapshot || source.name || "未命名物品");
+  return {
+    ...source,
+    id: String(source.id || `legacy-inventory-${fallbackIndex}`),
+    itemId: String(source.itemId || `legacy-item-${fallbackIndex}`),
+    nameSnapshot,
+    quantity: Math.max(1, toNonNegativeInteger(source.quantity, 1)),
+    acquiredFrom: String(source.acquiredFrom || "legacy"),
+    acquiredAt: String(source.acquiredAt || ""),
+    equipped: Boolean(source.equipped),
+    slot: source.slot == null ? null : String(source.slot),
+    notes: String(source.notes || ""),
+    customData: source.customData && typeof source.customData === "object" && !Array.isArray(source.customData)
+      ? source.customData
+      : {},
+  };
+}
+
+function addPurchasedInventoryItem(inventory, purchaseItem, stackable) {
+  const normalized = Array.isArray(inventory)
+    ? inventory.map((entry, index) => normalizeInventoryEntry(entry, index))
+    : [];
+  if (stackable) {
+    const existingIndex = normalized.findIndex((entry) => entry.itemId === purchaseItem.itemId);
+    if (existingIndex >= 0) {
+      return normalized.map((entry, index) =>
+        index === existingIndex ? { ...entry, quantity: entry.quantity + purchaseItem.quantity } : entry,
+      );
+    }
+  }
+  return [...normalized, purchaseItem];
+}
+
 export function purchaseShopItem(state, itemId) {
   const shop = normalizeShop(state.shop);
   const item = shop.items.find((entry) => entry.id === itemId);
-  const character = getCurrentCharacter(state);
+  const character = resolvePurchaseCharacter(state);
 
   if (!character) {
     return setShopMessage(state, "請先選擇角色後再購買。");
@@ -116,47 +189,99 @@ export function purchaseShopItem(state, itemId) {
     return setShopMessage(state, "找不到商品。");
   }
 
-  if (item.stock <= 0) {
+  const listing = resolveListing(shop, item);
+  const definition = resolveItemDefinition(shop, item, listing);
+  const available = listing?.available ?? item.available ?? true;
+  const price = toNonNegativeInteger(listing?.price ?? item.price);
+  const stockValue = listing ? listing.stock : item.stock;
+  const stock = stockValue == null ? null : toNonNegativeInteger(stockValue);
+  const money = toNonNegativeInteger(
+    character.assets?.money ?? goldToHandfuls(character.assets?.gold),
+  );
+
+  if (!available) {
+    return setShopMessage(state, "此商品目前未開放購買。");
+  }
+
+  if (stock !== null && stock < 1) {
     return setShopMessage(state, "此商品已售完。");
   }
 
-  if (character.assets.money < item.price) {
+  if (money < price) {
     return setShopMessage(state, "金錢不足，無法購買。");
   }
 
   const assetKey = getAssetKey(item.type);
+  const purchasedAt = new Date().toISOString();
+  const resolvedItemId = String(listing?.itemId || item.itemId || definition?.id || `legacy-item-${item.id}`);
+  const itemName = String(listing?.nameSnapshot || item.name || definition?.name || "未命名商品");
+  const inventoryItem = {
+    id: makeInventoryItemId(),
+    itemId: resolvedItemId,
+    nameSnapshot: itemName,
+    quantity: 1,
+    acquiredFrom: `shop:${listing?.id || item.id}`,
+    acquiredAt: purchasedAt,
+    equipped: false,
+    slot: definition?.slot ?? item.slot ?? null,
+    notes: "",
+    customData: {},
+  };
+  const transactionId = makeTransactionId();
   const nextLog = {
-    id: `purchase-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: transactionId,
+    type: "purchase",
+    characterId: character.id,
+    shopListingId: listing?.id || item.id,
+    itemId: resolvedItemId,
+    itemNameSnapshot: itemName,
+    quantity: 1,
+    createdAt: purchasedAt,
+    notes: "",
     characterName: character.name,
-    itemName: item.name,
-    price: item.price,
-    time: new Date().toISOString(),
+    itemName,
+    price,
+    time: purchasedAt,
   };
 
-  const stateWithCharacter = updateCharacter(state, character.id, (current) => {
-    const gold = normalizeGoldFromHandfuls(current.assets.money - item.price);
-
-    return {
-      ...current,
-      assets: {
-        ...current.assets,
-        money: goldToHandfuls(gold),
-        gold,
-        [assetKey]: [...(current.assets[assetKey] || []), item.name],
-      },
-    };
-  });
+  const nextMoney = money - price;
+  const gold = normalizeGoldFromHandfuls(nextMoney);
+  const characters = state.characters.map((current) =>
+    current.id === character.id
+      ? {
+          ...current,
+          assets: {
+            ...(current.assets || {}),
+            characterId: current.id,
+            money: goldToHandfuls(gold),
+            gold,
+            inventory: addPurchasedInventoryItem(
+              current.assets?.inventory,
+              inventoryItem,
+              Boolean(definition?.stackable ?? item.stackable ?? item.type === "消耗品"),
+            ),
+            [assetKey]: [...(Array.isArray(current.assets?.[assetKey]) ? current.assets[assetKey] : []), itemName],
+          },
+        }
+      : current,
+  );
+  const nextStock = stock === null ? null : stock - 1;
 
   return setShopMessage({
-    ...stateWithCharacter,
+    ...state,
+    characters,
     shop: {
       ...shop,
       items: shop.items.map((entry) =>
-        entry.id === item.id ? normalizeShopItem({ ...entry, stock: entry.stock - 1 }) : entry,
+        entry.id === item.id ? normalizeShopItem({ ...entry, stock: nextStock }) : entry,
+      ),
+      listings: shop.listings.map((entry) =>
+        listing && entry.id === listing.id ? { ...entry, stock: nextStock } : entry,
       ),
       purchaseLog: [nextLog, ...shop.purchaseLog].slice(0, 100),
+      transactions: [nextLog, ...shop.transactions],
     },
-  }, `已購買：${item.name}`);
+  }, `已購買：${itemName}`);
 }
 
 export function renderPlayerShop(state) {
@@ -182,11 +307,11 @@ export function renderPlayerShop(state) {
 }
 
 function renderPlayerShopItem(item, character) {
-  const soldOut = item.stock <= 0;
+  const soldOut = item.stock !== null && item.stock <= 0;
   const hasCharacter = Boolean(character);
-  const canAfford = hasCharacter && character.assets.money >= item.price;
-  const disabled = !hasCharacter || soldOut || !canAfford;
-  const buttonText = soldOut ? "售完" : !hasCharacter ? "未選角色" : !canAfford ? "金錢不足" : "購買";
+  const canAfford = hasCharacter && toNonNegativeInteger(character.assets?.money) >= item.price;
+  const disabled = !hasCharacter || !item.available || soldOut || !canAfford;
+  const buttonText = !item.available ? "未開放" : soldOut ? "售完" : !hasCharacter ? "未選角色" : !canAfford ? "金錢不足" : "購買";
   const description = item.description ? `<small class="shop-compact-description">${escapeHtml(item.description)}</small>` : "";
 
   return `
@@ -197,7 +322,7 @@ function renderPlayerShopItem(item, character) {
       </div>
       <div class="shop-compact-meta">
         <b>${formatGold(item.price)}</b>
-        <span>${soldOut ? "售完" : `庫存 ${item.stock}`}</span>
+        <span>${soldOut ? "售完" : item.stock === null ? "庫存不限" : `庫存 ${item.stock}`}</span>
       </div>
       ${description}
       <button class="primary-button shop-buy-button" type="button" data-action="purchase-shop-item" data-shop-item-id="${escapeHtml(item.id)}" ${disabled ? "disabled" : ""}>${buttonText}</button>
