@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-current-character-entry-select",
-  "commit": "bffb838065b41b373bb8fb2a12403991101e737e",
-  "sourceCommit": "4e906ce647705dd1215e5220813170f9c6aa4d1b",
-  "versionCommit": "bffb838065b41b373bb8fb2a12403991101e737e",
-  "updatedAt": "2026-06-20T03:15:31+08:00",
-  "note": "Show a compact current-character selector across all player pages."
+  "label": "player-current-character-single-entry",
+  "commit": "2ae47adb989d5219b713a100fb8dcfb7f22593a7",
+  "sourceCommit": "58831b1570791eec5c534215ae1789621567e99a",
+  "versionCommit": "2ae47adb989d5219b713a100fb8dcfb7f22593a7",
+  "updatedAt": "2026-06-20T03:34:30+08:00",
+  "note": "Keep the current-character selector only on the player team page."
 }
