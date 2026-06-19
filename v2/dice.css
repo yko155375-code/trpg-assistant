@@ -108,6 +108,8 @@ body:has(.layout.is-player) .mode-switch [data-mode="dm"]:hover, body:has(.layou
 .team-summary-card.is-current { position: relative; }
 .team-summary-card.is-current::after { content: "目前"; position: absolute; top: 5px; right: 38px; padding: 2px 6px; border: 1px solid color-mix(in srgb, var(--character-color) 58%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--character-color) 16%, rgba(7, 17, 31, 0.92)); color: var(--character-color); font-size: 9px; font-weight: 800; line-height: 1.2; pointer-events: none; }
 
+body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-field.form-field-full:has(> select[data-character-select]) { display: none; }
+
 @media (min-width: 760px) { .shop-player-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } }
 @media (min-width: 1024px) { .shop-player-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 520px) {
