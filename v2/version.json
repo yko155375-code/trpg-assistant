@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "v2-shop-state-normalize",
-  "commit": "eecbcd36785d116c39da674220056d1a72ff1be0",
-  "sourceCommit": "c39c93ee433166f480baa2619c90fba100b7552a",
-  "versionCommit": "eecbcd36785d116c39da674220056d1a72ff1be0",
-  "updatedAt": "2026-06-20T04:46:19+08:00",
-  "note": "Additive shop, inventory, transaction, and schema normalization foundations."
+  "label": "v2-shop-purchase-flow-align",
+  "commit": "eee922326a63a15fd7320f684910316b17720059",
+  "sourceCommit": "b047f6e60aebc06b275640f1e640c2db5336d75d",
+  "versionCommit": "eee922326a63a15fd7320f684910316b17720059",
+  "updatedAt": "2026-06-20T05:00:56+08:00",
+  "note": "Align purchases with the selected character, normalized money, inventory, listings, stock, and transactions."
 }
