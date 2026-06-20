@@ -32,6 +32,12 @@ function nonNegativeWholeNumber(value, fallback = 0) {
   return Math.max(0, wholeNumber(value, fallback));
 }
 
+function normalizeStock(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.trunc(number)) : 0;
+}
+
 function moneyToHandfuls(value, fallback = 0) {
   if (!isRecord(value)) return nonNegativeWholeNumber(value, fallback);
   return nonNegativeWholeNumber(
@@ -139,7 +145,7 @@ function normalizeCompatibleShopItem(item, index) {
     name,
     type,
     price: moneyToHandfuls(source.price),
-    stock: source.stock === null ? null : nonNegativeWholeNumber(source.stock, 1),
+    stock: normalizeStock(source.stock),
     description: String(source.description || ""),
     category: normalizeCategory(source.category, source.type),
     tier: Math.min(4, nonNegativeWholeNumber(source.tier, 1)),
@@ -175,8 +181,8 @@ function normalizeShopListing(listing, index, fallbackItem) {
     itemId: String(source.itemId || legacyItemId(fallback.name, `item-${fallback.id}`)),
     nameSnapshot: String(source.nameSnapshot || fallback.name || "未命名商品"),
     price: moneyToHandfuls(source.price ?? fallback.price),
-    stock: source.stock === null ? null : nonNegativeWholeNumber(source.stock ?? fallback.stock, 1),
-    maxStock: source.maxStock == null ? null : nonNegativeWholeNumber(source.maxStock),
+    stock: normalizeStock(Object.prototype.hasOwnProperty.call(source, "stock") ? source.stock : fallback.stock),
+    maxStock: normalizeStock(source.maxStock),
     available: source.available === undefined ? fallback.available : Boolean(source.available),
     rarity: String(source.rarity || "common"),
     tags: textArray(source.tags),
