@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-current-character-global-shell",
-  "commit": "cb1e407cedb9ecf845ad902cda211f2ea59c9f8b",
-  "sourceCommit": "58360aec98733c6b9480cc93d9ac802559e183b5",
-  "versionCommit": "cb1e407cedb9ecf845ad902cda211f2ea59c9f8b",
-  "updatedAt": "2026-06-20T12:34:54+08:00",
-  "note": "Render the current character bar once in the global player shell across all player pages."
+  "label": "v2-shop-infinite-stock",
+  "commit": "9a1a1389f4a90956bb7e2202e69485126561e249",
+  "sourceCommit": "2245bb1ba0ddb64215da7d11788d9459ccf56734",
+  "versionCommit": "9a1a1389f4a90956bb7e2202e69485126561e249",
+  "updatedAt": "2026-06-20T13:25:35+08:00",
+  "note": "Add explicit finite and infinite stock controls for DM shop items."
 }
