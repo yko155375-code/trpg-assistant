@@ -63,6 +63,10 @@ body:has(.layout.is-player) .mode-switch [data-mode="dm"]:hover, body:has(.layou
 .shop-manager-panel { gap: 8px; }
 .shop-add-form-compact { gap: 8px; padding: 10px; border-radius: 11px; }
 .shop-add-grid-compact { gap: 7px; }
+.shop-stock-control { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: end; min-width: 0; }
+.shop-stock-unlimited { display: inline-flex; gap: 5px; align-items: center; min-height: 34px; padding: 4px 7px; border: 1px solid rgba(243, 234, 216, 0.12); border-radius: 8px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.shop-stock-unlimited input { width: 16px; height: 16px; margin: 0; }
+.shop-stock-control input:disabled { opacity: 0.5; }
 .shop-manager-list { display: grid; gap: 6px; min-width: 0; }
 .shop-manager-row { min-width: 0; border: 1px solid rgba(243, 234, 216, 0.1); border-radius: 10px; background: rgba(255, 255, 255, 0.035); }
 .shop-manager-summary { display: grid; grid-template-columns: minmax(92px, 1fr) minmax(46px, auto) minmax(74px, auto) minmax(50px, auto) auto auto; gap: 6px; align-items: center; min-width: 0; padding: 6px 7px; cursor: pointer; list-style: none; }
@@ -117,6 +121,7 @@ body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-fi
   .shop-manager-summary em { display: none; }
   .shop-row-delete { min-height: 30px; padding: 0 6px; }
   .shop-manager-editor { grid-template-columns: 1fr; gap: 6px; padding: 0 6px 6px; }
+  .shop-stock-control { grid-template-columns: minmax(0, 1fr) auto; }
   .boot-guard-panel { margin-top: 3vh; padding: 14px; }
   .boot-guard-actions { grid-template-columns: 1fr; }
   .player-current-character-bar { grid-template-columns: 1fr; gap: 6px; padding: 7px 8px; }
