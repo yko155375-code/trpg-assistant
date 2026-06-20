@@ -60,13 +60,19 @@ body:has(.layout.is-player) .mode-switch [data-mode="dm"]:hover, body:has(.layou
 .shop-compact-meta b { min-width: 0; overflow: hidden; color: var(--gold); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .shop-compact-description { display: block; min-height: 1.25em; overflow: hidden; color: var(--muted); font-size: 10px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
 .shop-buy-button { width: 100%; min-height: 30px; padding: 0 6px; border-radius: 8px; font-size: 12px; }
-.shop-manager-panel { gap: 8px; }
-.shop-add-form-compact { gap: 8px; padding: 10px; border-radius: 11px; }
-.shop-add-grid-compact { gap: 7px; }
-.shop-stock-control { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: end; min-width: 0; }
-.shop-stock-unlimited { display: inline-flex; gap: 5px; align-items: center; min-height: 34px; padding: 4px 7px; border: 1px solid rgba(243, 234, 216, 0.12); border-radius: 8px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.shop-manager-panel { gap: 6px; }
+.shop-add-form-compact { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: end; padding: 7px 8px; border-radius: 9px; }
+.shop-add-grid-compact { display: grid; grid-template-columns: minmax(150px, 2fr) minmax(78px, 0.8fr) minmax(78px, 0.7fr) minmax(178px, 1.4fr); gap: 5px 6px; align-items: end; min-width: 0; }
+.shop-manager-panel .form-field { gap: 2px; min-width: 0; }
+.shop-manager-panel .form-field > span { font-size: 10px; line-height: 1.2; }
+.shop-manager-panel .form-field :is(input, select, textarea) { box-sizing: border-box; width: 100%; min-width: 0; min-height: 31px; padding: 4px 7px; font-size: 12px; }
+.shop-manager-panel .form-field textarea { min-height: 34px; line-height: 1.35; resize: vertical; }
+.shop-field-description { grid-column: 1 / -1; }
+.shop-stock-control { display: grid; grid-template-columns: minmax(72px, 1fr) auto; gap: 5px; align-items: end; min-width: 0; }
+.shop-stock-unlimited { display: inline-flex; gap: 4px; align-items: center; min-height: 31px; padding: 3px 6px; border: 1px solid rgba(243, 234, 216, 0.12); border-radius: 7px; color: var(--muted); font-size: 10px; white-space: nowrap; }
 .shop-stock-unlimited input { width: 16px; height: 16px; margin: 0; }
 .shop-stock-control input:disabled { opacity: 0.5; }
+.shop-add-submit { min-height: 32px; padding: 0 12px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
 .shop-manager-list { display: grid; gap: 6px; min-width: 0; }
 .shop-manager-row { min-width: 0; border: 1px solid rgba(243, 234, 216, 0.1); border-radius: 10px; background: rgba(255, 255, 255, 0.035); }
 .shop-manager-summary { display: grid; grid-template-columns: minmax(92px, 1fr) minmax(46px, auto) minmax(74px, auto) minmax(50px, auto) auto auto; gap: 6px; align-items: center; min-width: 0; padding: 6px 7px; cursor: pointer; list-style: none; }
@@ -76,7 +82,7 @@ body:has(.layout.is-player) .mode-switch [data-mode="dm"]:hover, body:has(.layou
 .shop-manager-summary span, .shop-manager-summary b, .shop-manager-summary em { color: var(--muted); font-size: 11px; font-style: normal; }
 .shop-manager-summary b { color: var(--gold); }
 .shop-row-delete { min-height: 28px; padding: 0 7px; border-radius: 8px; font-size: 11px; }
-.shop-manager-editor { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 0 7px 7px; }
+.shop-manager-editor { display: grid; grid-template-columns: minmax(140px, 1.6fr) minmax(78px, 0.7fr) minmax(78px, 0.7fr) minmax(178px, 1.3fr); gap: 5px 6px; align-items: end; padding: 5px 6px 6px; border-top: 1px solid rgba(243, 234, 216, 0.07); }
 .shop-manager-editor .form-field-full { grid-column: 1 / -1; }
 .shop-log-panel { gap: 7px; padding: 10px; border-radius: 11px; }
 
@@ -102,29 +108,109 @@ body:has(.layout.is-player) .mode-switch [data-mode="dm"]:hover, body:has(.layou
   border-radius: 10px;
   background: rgba(16, 26, 39, 0.86);
 }
-.player-current-character-bar.is-empty { grid-template-columns: 1fr; }
-.player-current-character-bar.is-empty div { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
-.player-current-character-bar small, .player-current-character-select span { color: var(--muted, #b9ad9a); font-size: 11px; }
-.player-current-character-select { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 7px; align-items: center; min-width: 0; }
-.player-current-character-select select { min-width: 0; min-height: 34px; padding: 4px 28px 4px 8px; }
-.player-current-character-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; min-width: 0; }
-.player-current-character-stats span { min-width: 0; padding: 4px 5px; border-radius: 7px; background: rgba(255, 255, 255, 0.045); font-size: 12px; text-align: center; white-space: nowrap; }
-.team-summary-card.is-current { position: relative; }
-.team-summary-card.is-current::after { content: "目前"; position: absolute; top: 5px; right: 38px; padding: 2px 6px; border: 1px solid color-mix(in srgb, var(--character-color) 58%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--character-color) 16%, rgba(7, 17, 31, 0.92)); color: var(--character-color); font-size: 9px; font-weight: 800; line-height: 1.2; pointer-events: none; }
 
-body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-field.form-field-full:has(> select[data-character-select]) { display: none; }
+.player-current-character-bar.is-empty {
+  grid-template-columns: 1fr;
+}
+
+.player-current-character-bar.is-empty div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+}
+
+.player-current-character-bar small,
+.player-current-character-select span {
+  color: var(--muted, #b9ad9a);
+  font-size: 11px;
+}
+
+.player-current-character-select {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 7px;
+  align-items: center;
+  min-width: 0;
+}
+
+.player-current-character-select select {
+  min-width: 0;
+  min-height: 34px;
+  padding: 4px 28px 4px 8px;
+}
+
+.player-current-character-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  min-width: 0;
+}
+
+.player-current-character-stats span {
+  min-width: 0;
+  padding: 4px 5px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 12px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.team-summary-card.is-current {
+  position: relative;
+}
+
+.team-summary-card.is-current::after {
+  content: "目前";
+  position: absolute;
+  top: 5px;
+  right: 38px;
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, var(--character-color) 58%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--character-color) 16%, rgba(7, 17, 31, 0.92));
+  color: var(--character-color);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.2;
+  pointer-events: none;
+}
+
+body:has(.tab-button.is-active[data-page="assets"])
+  .mobile-page-card > .form-field.form-field-full:has(> select[data-character-select]) {
+  display: none;
+}
 
 @media (min-width: 760px) { .shop-player-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } }
 @media (min-width: 1024px) { .shop-player-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 900px) {
+  .shop-add-form-compact { grid-template-columns: 1fr; }
+  .shop-add-grid-compact, .shop-manager-editor { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shop-add-submit { justify-self: end; }
+  .shop-field-name, .shop-stock-field, .shop-field-description { grid-column: 1 / -1; }
+}
 @media (max-width: 520px) {
   .shop-manager-summary { grid-template-columns: minmax(70px, 1fr) minmax(38px, auto) minmax(56px, auto) minmax(42px, auto) 34px; gap: 4px; padding: 5px; }
   .shop-manager-summary em { display: none; }
   .shop-row-delete { min-height: 30px; padding: 0 6px; }
-  .shop-manager-editor { grid-template-columns: 1fr; gap: 6px; padding: 0 6px 6px; }
+  .shop-add-form-compact { gap: 5px; padding: 6px; }
+  .shop-add-grid-compact, .shop-manager-editor { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+  .shop-manager-editor { padding: 5px; }
   .shop-stock-control { grid-template-columns: minmax(0, 1fr) auto; }
+  .shop-add-submit { width: 100%; }
   .boot-guard-panel { margin-top: 3vh; padding: 14px; }
   .boot-guard-actions { grid-template-columns: 1fr; }
-  .player-current-character-bar { grid-template-columns: 1fr; gap: 6px; padding: 7px 8px; }
-  .player-current-character-stats { gap: 4px; }
-  .player-current-character-stats span { padding: 3px 2px; font-size: 11px; }
+  .player-current-character-bar {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 7px 8px;
+  }
+  .player-current-character-stats {
+    gap: 4px;
+  }
+  .player-current-character-stats span {
+    padding: 3px 2px;
+    font-size: 11px;
+  }
 }
