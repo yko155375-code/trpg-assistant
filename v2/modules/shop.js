@@ -20,6 +20,13 @@ function toNonNegativeInteger(value, fallback = 0) {
   return Math.max(0, Math.trunc(toNumber(value, fallback)));
 }
 
+function normalizeStock(value) {
+  if (String(value).trim().toLowerCase() === "infinite") return null;
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.trunc(number)) : 0;
+}
+
 function makeInventoryItemId() {
   return `inventory-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -48,7 +55,7 @@ export function normalizeShopItem(item = {}) {
     name: item.name || "未命名商品",
     type: typeOptions.some((option) => option.value === item.type) ? item.type : "物品",
     price: toNonNegativeInteger(item.price),
-    stock: item.stock == null ? null : toNonNegativeInteger(item.stock, 1),
+    stock: normalizeStock(item.stock),
     description: item.description || "",
     category: item.category || "misc",
     tier: toNonNegativeInteger(item.tier, 1),
@@ -96,7 +103,7 @@ export function updateShopItem(state, itemId, field, value) {
         item.id === itemId
           ? normalizeShopItem({
               ...item,
-              [field]: field === "price" || field === "stock" ? toNumber(value) : value,
+              [field]: field === "price" ? toNumber(value) : field === "stock" ? normalizeStock(value) : value,
             })
           : item,
       ),
@@ -322,7 +329,7 @@ function renderPlayerShopItem(item, character) {
       </div>
       <div class="shop-compact-meta">
         <b>${formatGold(item.price)}</b>
-        <span>${soldOut ? "售完" : item.stock === null ? "庫存不限" : `庫存 ${item.stock}`}</span>
+        <span>${soldOut ? "售完" : item.stock === null ? "庫存：∞" : `庫存：${item.stock}`}</span>
       </div>
       ${description}
       <button class="primary-button shop-buy-button" type="button" data-action="purchase-shop-item" data-shop-item-id="${escapeHtml(item.id)}" ${disabled ? "disabled" : ""}>${buttonText}</button>
@@ -369,10 +376,17 @@ function renderAddShopItemForm() {
           <span>價格（把）</span>
           <input data-new-shop-price type="number" inputmode="numeric" min="0" value="0" />
         </label>
-        <label class="form-field">
-          <span>庫存</span>
-          <input data-new-shop-stock type="number" inputmode="numeric" min="0" value="1" />
-        </label>
+        <div class="shop-stock-control" data-shop-stock-control>
+          <input data-new-shop-stock type="hidden" value="1" />
+          <label class="form-field">
+            <span>庫存</span>
+            <input data-shop-stock-input type="number" inputmode="numeric" min="0" value="1" />
+          </label>
+          <label class="shop-stock-unlimited">
+            <input data-shop-unlimited-toggle type="checkbox" />
+            <span>無限數量</span>
+          </label>
+        </div>
         <label class="form-field form-field-full">
           <span>描述</span>
           <textarea data-new-shop-description rows="2" placeholder="商品效果或備註"></textarea>
@@ -384,13 +398,14 @@ function renderAddShopItemForm() {
 }
 
 function renderDmShopItem(item) {
+  const isUnlimited = item.stock === null;
   return `
     <details class="shop-manager-row">
       <summary class="shop-manager-summary">
         <strong>${escapeHtml(item.name)}</strong>
         <span>${escapeHtml(item.type)}</span>
         <b>${formatGold(item.price)}</b>
-        <span>${item.stock <= 0 ? "售完" : `庫存 ${item.stock}`}</span>
+        <span>${isUnlimited ? "庫存 ∞" : item.stock <= 0 ? "售完" : `庫存 ${item.stock}`}</span>
         <em>編輯</em>
         <button class="danger-button shop-row-delete" type="button" data-action="delete-shop-item" data-shop-item-id="${escapeHtml(item.id)}">刪除</button>
       </summary>
@@ -413,10 +428,16 @@ function renderDmShopItem(item) {
           <span>價格（把）</span>
           <input data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="price" type="number" inputmode="numeric" min="0" value="${item.price}" />
         </label>
-        <label class="form-field">
-          <span>庫存</span>
-          <input data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="stock" type="number" inputmode="numeric" min="0" value="${item.stock}" />
-        </label>
+        <div class="shop-stock-control" data-shop-stock-control>
+          <label class="form-field">
+            <span>庫存</span>
+            <input data-shop-stock-input data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="stock" type="number" inputmode="numeric" min="0" value="${isUnlimited ? "" : item.stock}" ${isUnlimited ? "disabled" : ""} />
+          </label>
+          <label class="shop-stock-unlimited">
+            <input data-shop-unlimited-toggle type="checkbox" ${isUnlimited ? "checked" : ""} />
+            <span>無限數量</span>
+          </label>
+        </div>
         <label class="form-field form-field-full">
           <span>描述</span>
           <textarea data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="description" rows="2">${escapeHtml(item.description)}</textarea>
@@ -448,4 +469,36 @@ function renderPurchaseLog(purchaseLog) {
       }
     </section>
   `;
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("change", (event) => {
+    const toggle = event.target.closest("[data-shop-unlimited-toggle]");
+    if (!toggle) return;
+    const control = toggle.closest("[data-shop-stock-control]");
+    const stockInput = control?.querySelector("[data-shop-stock-input]");
+    const stockValueInput = control?.querySelector("[data-new-shop-stock]");
+    if (!stockInput) return;
+
+    if (toggle.checked) {
+      const currentStock = normalizeStock(stockInput.value);
+      if (currentStock !== null) stockInput.dataset.finiteStock = String(currentStock);
+      stockInput.value = "";
+      stockInput.disabled = true;
+      if (stockValueInput) stockValueInput.value = "infinite";
+    } else {
+      stockInput.disabled = false;
+      stockInput.value = String(normalizeStock(stockInput.dataset.finiteStock) ?? 1);
+      if (stockValueInput) stockValueInput.value = stockInput.value;
+    }
+
+    if (!stockValueInput) stockInput.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+
+  document.addEventListener("input", (event) => {
+    const stockInput = event.target.closest("[data-shop-stock-input]");
+    if (!stockInput || stockInput.disabled) return;
+    const stockValueInput = stockInput.closest("[data-shop-stock-control]")?.querySelector("[data-new-shop-stock]");
+    if (stockValueInput) stockValueInput.value = String(normalizeStock(stockInput.value) ?? 0);
+  });
 }
