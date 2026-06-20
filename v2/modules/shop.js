@@ -362,21 +362,21 @@ function renderAddShopItemForm() {
   return `
     <form class="editor-panel shop-add-form shop-add-form-compact" data-add-shop-item-form>
       <div class="form-grid shop-add-grid-compact">
-        <label class="form-field">
-          <span>商品名稱</span>
+        <label class="form-field shop-field-name">
+          <span>名稱</span>
           <input data-new-shop-name type="text" placeholder="治療藥水" autocomplete="off" />
         </label>
-        <label class="form-field">
-          <span>類型</span>
+        <label class="form-field shop-field-type">
+          <span>分類</span>
           <select data-new-shop-type>
             ${typeOptions.map((option) => `<option value="${option.value}">${option.label}</option>`).join("")}
           </select>
         </label>
-        <label class="form-field">
-          <span>價格（把）</span>
+        <label class="form-field shop-field-price">
+          <span>價格</span>
           <input data-new-shop-price type="number" inputmode="numeric" min="0" value="0" />
         </label>
-        <div class="shop-stock-control" data-shop-stock-control>
+        <div class="shop-stock-control shop-stock-field" data-shop-stock-control>
           <input data-new-shop-stock type="hidden" value="1" />
           <label class="form-field">
             <span>庫存</span>
@@ -387,12 +387,12 @@ function renderAddShopItemForm() {
             <span>無限數量</span>
           </label>
         </div>
-        <label class="form-field form-field-full">
+        <label class="form-field form-field-full shop-field-description">
           <span>描述</span>
-          <textarea data-new-shop-description rows="2" placeholder="商品效果或備註"></textarea>
+          <textarea data-new-shop-description rows="1" placeholder="商品效果或備註"></textarea>
         </label>
       </div>
-      <button class="primary-button full-width-button" type="submit">新增商品</button>
+      <button class="primary-button shop-add-submit" type="submit">新增商品</button>
     </form>
   `;
 }
@@ -410,12 +410,12 @@ function renderDmShopItem(item) {
         <button class="danger-button shop-row-delete" type="button" data-action="delete-shop-item" data-shop-item-id="${escapeHtml(item.id)}">刪除</button>
       </summary>
       <div class="shop-manager-editor">
-        <label class="form-field">
-          <span>商品名稱</span>
+        <label class="form-field shop-field-name">
+          <span>名稱</span>
           <input data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="name" type="text" value="${escapeHtml(item.name)}" />
         </label>
-        <label class="form-field">
-          <span>類型</span>
+        <label class="form-field shop-field-type">
+          <span>分類</span>
           <select data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="type">
             ${typeOptions
               .map(
@@ -424,11 +424,11 @@ function renderDmShopItem(item) {
               .join("")}
           </select>
         </label>
-        <label class="form-field">
-          <span>價格（把）</span>
+        <label class="form-field shop-field-price">
+          <span>價格</span>
           <input data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="price" type="number" inputmode="numeric" min="0" value="${item.price}" />
         </label>
-        <div class="shop-stock-control" data-shop-stock-control>
+        <div class="shop-stock-control shop-stock-field" data-shop-stock-control>
           <label class="form-field">
             <span>庫存</span>
             <input data-shop-stock-input data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="stock" type="number" inputmode="numeric" min="0" value="${isUnlimited ? "" : item.stock}" ${isUnlimited ? "disabled" : ""} />
@@ -438,9 +438,9 @@ function renderDmShopItem(item) {
             <span>無限數量</span>
           </label>
         </div>
-        <label class="form-field form-field-full">
+        <label class="form-field form-field-full shop-field-description">
           <span>描述</span>
-          <textarea data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="description" rows="2">${escapeHtml(item.description)}</textarea>
+          <textarea data-shop-item-id="${escapeHtml(item.id)}" data-shop-item-field="description" rows="1">${escapeHtml(item.description)}</textarea>
         </label>
       </div>
     </details>
