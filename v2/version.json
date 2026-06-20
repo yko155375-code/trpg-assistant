@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "v2-shop-infinite-stock",
-  "commit": "9a1a1389f4a90956bb7e2202e69485126561e249",
-  "sourceCommit": "2245bb1ba0ddb64215da7d11788d9459ccf56734",
-  "versionCommit": "9a1a1389f4a90956bb7e2202e69485126561e249",
-  "updatedAt": "2026-06-20T13:25:35+08:00",
-  "note": "Add explicit finite and infinite stock controls for DM shop items."
+  "label": "v2-dm-shop-editor-compact",
+  "commit": "d0438d567f588018a05880e78900482b576f0a05",
+  "sourceCommit": "2956fdfdb47e9737054d26c5bc7d2721e241be00",
+  "versionCommit": "d0438d567f588018a05880e78900482b576f0a05",
+  "updatedAt": "2026-06-20T20:57:27+08:00",
+  "note": "Compact the DM shop add and edit forms without changing shop data or purchase behavior."
 }
