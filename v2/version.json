@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "v2-dm-shop-editor-compact",
-  "commit": "d0438d567f588018a05880e78900482b576f0a05",
+  "commit": "b1cd2960edbf92859d854aef93a31f57f414711d",
   "sourceCommit": "2956fdfdb47e9737054d26c5bc7d2721e241be00",
-  "versionCommit": "d0438d567f588018a05880e78900482b576f0a05",
+  "versionCommit": "b1cd2960edbf92859d854aef93a31f57f414711d",
   "updatedAt": "2026-06-20T20:57:27+08:00",
   "note": "Compact the DM shop add and edit forms without changing shop data or purchase behavior."
 }
