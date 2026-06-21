@@ -74,6 +74,10 @@ function normalizeCharacterColor(value, index = 0) {
   return characterColorOptions.some((option) => option.value === value) ? value : getDefaultCharacterColor(index);
 }
 
+function normalizeAvatarUrl(value) {
+  return typeof value === "string" ? value.trim().slice(0, 2048) : "";
+}
+
 function normalizeStats(stats = {}) {
   const maxHp = clamp(toNumber(stats.maxHp, 6), 1);
   const maxStress = clamp(toNumber(stats.maxStress, 6), 1);
@@ -102,12 +106,13 @@ function normalizeAttributes(attributes = {}) {
   };
 }
 
-export function createCharacter(name = "新角色", color, index = 0) {
+export function createCharacter(name = "新角色", color, index = 0, avatarUrl = "") {
   return normalizeCharacter(
     {
       id: makeId(),
       name,
       color: normalizeCharacterColor(color, index),
+      avatarUrl: normalizeAvatarUrl(avatarUrl),
     },
     index,
   );
@@ -118,6 +123,7 @@ export function normalizeCharacter(character = {}, index = 0) {
     id: character.id || makeId(),
     name: character.name || "未命名角色",
     color: normalizeCharacterColor(character.color, index),
+    avatarUrl: normalizeAvatarUrl(character.avatarUrl),
     notes: character.notes || "",
     stats: normalizeStats(character.stats),
     attributes: normalizeAttributes(character.attributes),
@@ -146,9 +152,9 @@ export function ensureCurrentCharacterId(state) {
   };
 }
 
-export function addCharacter(state, name, color) {
+export function addCharacter(state, name, color, avatarUrl = "") {
   const characterCount = normalizeCharacters(state.characters).length;
-  const nextCharacter = createCharacter(name || `角色 ${characterCount + 1}`, color, characterCount);
+  const nextCharacter = createCharacter(name || `角色 ${characterCount + 1}`, color, characterCount, avatarUrl);
   return {
     ...state,
     characters: [...normalizeCharacters(state.characters), nextCharacter],
@@ -196,7 +202,12 @@ export function updateCharacter(state, characterId, updater) {
 export function updateCharacterField(state, characterId, field, value) {
   return updateCharacter(state, characterId, (character) => ({
     ...character,
-    [field]: field === "color" ? normalizeCharacterColor(value) : value,
+    [field]:
+      field === "color"
+        ? normalizeCharacterColor(value)
+        : field === "avatarUrl"
+          ? normalizeAvatarUrl(value)
+          : value,
   }));
 }
 
@@ -330,6 +341,10 @@ export function renderAddCharacterForm() {
           <option value="">自動</option>
           ${characterColorOptions.map((option) => `<option value="${option.value}">${option.label}</option>`).join("")}
         </select>
+      </label>
+      <label class="form-field character-avatar-url-field">
+        <span>頭像網址</span>
+        <input data-new-character-avatar type="url" inputmode="url" placeholder="https://…" autocomplete="url" />
       </label>
       <button class="primary-button" type="submit">新增</button>
     </form>
@@ -474,6 +489,7 @@ function renderTeamCharacterDetails(character, title = "角色詳細") {
       <div class="editor-heading"><h3>${title}</h3><button class="danger-button" type="button" data-action="delete-character" data-character-id="${escapeHtml(character.id)}">刪除角色</button></div>
       <label class="form-field form-field-full"><span>角色名稱</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="name" type="text" value="${escapeHtml(character.name)}" /></label>
       <label class="form-field form-field-full character-color-editor"><span>角色顏色</span><select data-character-id="${escapeHtml(character.id)}" data-character-field="color">${characterColorOptions.map((option) => `<option value="${option.value}" ${character.color === option.value ? "selected" : ""}>${option.label}</option>`).join("")}</select></label>
+      <label class="form-field form-field-full character-avatar-editor"><span>頭像網址</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="avatarUrl" type="url" inputmode="url" value="${escapeHtml(character.avatarUrl)}" placeholder="https://…" autocomplete="url" /></label>
       <div class="stepper-grid">${statFields.map((field) => renderStepper({ characterId: character.id, type: "stat", field: field.key, label: field.label, value: character.stats[field.key] })).join("")}${renderGoldStepper(character)}</div>
       <h4>六屬性</h4>
       <div class="stepper-grid attribute-stepper-grid">${attributeFields.map((field) => renderStepper({ characterId: character.id, type: "attribute", field: field.key, label: field.label, value: character.attributes[field.key] })).join("")}</div>
@@ -534,6 +550,7 @@ export function renderCharacterEditor(state, options = {}) {
       <div class="editor-heading"><h3>${title}</h3>${allowDelete ? `<button class="danger-button" type="button" data-action="delete-character" data-character-id="${escapeHtml(character.id)}">刪除角色</button>` : ""}</div>
       <label class="form-field form-field-full"><span>角色名稱</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="name" type="text" value="${escapeHtml(character.name)}" /></label>
       <label class="form-field form-field-full character-color-editor"><span>角色顏色</span><select data-character-id="${escapeHtml(character.id)}" data-character-field="color">${characterColorOptions.map((option) => `<option value="${option.value}" ${character.color === option.value ? "selected" : ""}>${option.label}</option>`).join("")}</select></label>
+      <label class="form-field form-field-full character-avatar-editor"><span>頭像網址</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="avatarUrl" type="url" inputmode="url" value="${escapeHtml(character.avatarUrl)}" placeholder="https://…" autocomplete="url" /></label>
       <div class="stepper-grid">${statFields.map((field) => renderStepper({ characterId: character.id, type: "stat", field: field.key, label: field.label, value: character.stats[field.key] })).join("")}</div>
       <h4>六屬性</h4>
       <div class="stepper-grid attribute-stepper-grid">${attributeFields.map((field) => renderStepper({ characterId: character.id, type: "attribute", field: field.key, label: field.label, value: character.attributes[field.key] })).join("")}</div>

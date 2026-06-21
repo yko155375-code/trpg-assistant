@@ -40,7 +40,7 @@ import { saveState, STORAGE_KEY } from "./modules/storage.js";
 
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
-const VERSION_LABEL = "player-current-character-global-shell";
+const VERSION_LABEL = "player-character-avatar-import";
 const isSafeMode = new URLSearchParams(window.location.search).get("safe") === "1";
 let state = null;
 let isDmMenuOpen = false;
@@ -176,11 +176,14 @@ function enhanceDiceHtml(html, actor) {
 function renderPanel() { const pages = getActivePages(state.ui.mode); const page = pages.find((item) => item.id === getActivePageId(state)) || pages[0]; if (state.ui.mode === "player") { const html = renderPlayerPage(page.id, state); return page.id === "dice" ? enhanceDiceHtml(html, "player") : html; } const html = renderDmPage(page.id, state); return page.id === "dice" ? enhanceDiceHtml(html, "DM") : html; }
 function renderPageButton(page, className) { const active = page.id === getActivePageId(state); return `<button class="${className} ${active ? "is-active" : ""}" type="button" data-page="${page.id}" aria-pressed="${active}">${page.label}</button>`; }
 function renderModeButton(mode, label) { const active = state.ui.mode === mode; return `<button class="mode-button ${active ? "is-active" : ""}" type="button" data-mode="${mode}" aria-pressed="${active}">${label}</button>`; }
+function isRenderableAvatarUrl(value) { return typeof value === "string" && /^https?:\/\//i.test(value.trim()); }
+function getCharacterInitial(name) { return Array.from(String(name || "?").trim() || "?")[0].toUpperCase(); }
 function renderCurrentCharacterBar() {
   const characters = Array.isArray(state.characters) ? state.characters : [];
   const current = characters.find((character) => character.id === state.ui?.selectedCharacterId) || characters[0] || null;
   if (!current) return `<section class="player-current-character-bar is-empty" aria-label="目前角色"><div><strong>尚無目前角色</strong><small>請先新增角色</small></div></section>`;
-  return `<section class="player-current-character-bar" aria-label="目前角色"><label class="player-current-character-select"><span>目前角色</span><select data-character-select aria-label="切換目前角色">${characters.map((character) => `<option value="${escapeHtml(character.id)}" ${character.id === current.id ? "selected" : ""}>${escapeHtml(character.name)}</option>`).join("")}</select></label><div class="player-current-character-stats" aria-label="${escapeHtml(current.name)}目前狀態"><span><b>HP</b> ${current.stats.hp}/${current.stats.maxHp}</span><span><b>壓</b> ${current.stats.stress}/${current.stats.maxStress}</span><span><b>希</b> ${current.stats.hope}/6</span><span><b>盾</b> ${current.stats.shield}/${current.stats.maxShield}</span></div></section>`;
+  const avatarUrl = isRenderableAvatarUrl(current.avatarUrl) ? current.avatarUrl.trim() : "";
+  return `<section class="player-current-character-bar" aria-label="目前角色"><div class="player-current-character-avatar ${avatarUrl ? "has-image" : ""}" aria-label="${escapeHtml(current.name)}頭像"><span aria-hidden="true">${escapeHtml(getCharacterInitial(current.name))}</span>${avatarUrl ? `<img data-character-avatar src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(current.name)}頭像" />` : ""}</div><div class="player-current-character-main"><label class="player-current-character-select"><span>目前角色</span><select data-character-select aria-label="切換目前角色">${characters.map((character) => `<option value="${escapeHtml(character.id)}" ${character.id === current.id ? "selected" : ""}>${escapeHtml(character.name)}</option>`).join("")}</select></label><div class="player-current-character-stats" aria-label="${escapeHtml(current.name)}目前狀態"><span><b>HP</b> ${current.stats.hp}/${current.stats.maxHp}</span><span><b>壓</b> ${current.stats.stress}/${current.stats.maxStress}</span><span><b>希</b> ${current.stats.hope}/6</span><span><b>盾</b> ${current.stats.shield}/${current.stats.maxShield}</span></div></div></section>`;
 }
 function renderDmMobileNav(pages) { const active = pages.find((page) => page.id === getActivePageId(state)) || pages[0]; return `<div class="dm-mobile-nav"><button class="dm-menu-button" type="button" data-dm-menu-toggle aria-expanded="${isDmMenuOpen}"><span aria-hidden="true">☰</span><span>DM 選單</span></button><strong>${escapeHtml(active.label)}</strong></div><nav id="dm-mobile-menu" class="dm-mobile-menu ${isDmMenuOpen ? "is-open" : ""}" aria-label="DM 手機選單">${pages.map((page) => renderPageButton(page, "dm-mobile-menu-button")).join("")}</nav>`; }
 function render() { const pages = getActivePages(state.ui.mode); const isPlayer = state.ui.mode === "player"; app.innerHTML = `${isSafeMode ? `<aside class="safe-mode-banner">安全模式：目前未讀取舊本機資料</aside>` : ""}<header class="app-header"><div class="brand-block"><p class="eyebrow">TRPG Assistant</p><h1 class="app-title">v2</h1><p class="app-subtitle">HTML / CSS / 原生 JS / ES Modules / localStorage</p></div><nav class="mode-switch" aria-label="模式切換">${renderModeButton("player", "玩家")}${renderModeButton("dm", "DM")}</nav></header><main class="layout ${isPlayer ? "is-player" : "is-dm"}">${isPlayer ? `<nav class="tab-list player-bottom-tabs" aria-label="玩家分頁">${pages.map((page) => renderPageButton(page, "tab-button")).join("")}</nav>` : renderDmMobileNav(pages)}<nav class="sidebar-list" aria-label="DM 分頁">${pages.map((page) => renderPageButton(page, "sidebar-button")).join("")}</nav>${isPlayer ? renderCurrentCharacterBar() : ""}${renderPanel()}</main>`; }
@@ -261,6 +264,13 @@ app.addEventListener("input", (event) => {
   const monsterField = event.target.closest("[data-monster-field]"); if (monsterField) return saveStateOnly(updateMonster(state, monsterField.dataset.monsterId, monsterField.dataset.monsterField, event.target.value));
 });
 
+app.addEventListener("error", (event) => {
+  const avatar = event.target.closest?.("[data-character-avatar]");
+  if (!avatar) return;
+  avatar.hidden = true;
+  avatar.closest(".player-current-character-avatar")?.classList.remove("has-image");
+}, true);
+
 app.addEventListener("submit", (event) => {
   const rollForm = event.target.closest("[data-roll-form]");
   if (rollForm) {
@@ -271,7 +281,7 @@ app.addEventListener("submit", (event) => {
     const mode = EDGE_MODES.has(synced.ui?.rollEdgeMode) ? synced.ui.rollEdgeMode : ""; const roll = mode ? applyEdge(result, mode) : result; const nextState = mode ? { ...synced, ui: { ...synced.ui, rollEdgeMode: "" } } : synced;
     return updateState(addRoll(nextState, roll, actor));
   }
-  const addCharacterForm = event.target.closest("[data-add-character-form]"); if (addCharacterForm) { event.preventDefault(); return updateState(addCharacter(state, addCharacterForm.querySelector("[data-new-character-name]")?.value.trim() || "", addCharacterForm.querySelector("[data-new-character-color]")?.value)); }
+  const addCharacterForm = event.target.closest("[data-add-character-form]"); if (addCharacterForm) { event.preventDefault(); return updateState(addCharacter(state, addCharacterForm.querySelector("[data-new-character-name]")?.value.trim() || "", addCharacterForm.querySelector("[data-new-character-color]")?.value, addCharacterForm.querySelector("[data-new-character-avatar]")?.value || "")); }
   const addCharacterEffectForm = event.target.closest("[data-add-character-effect-form]"); if (addCharacterEffectForm) { event.preventDefault(); return updateState(addCharacterEffect(state, addCharacterEffectForm.dataset.characterId, addCharacterEffectForm.dataset.effectType, addCharacterEffectForm.querySelector("[data-character-effect-input]")?.value || "")); }
   const addAssetForm = event.target.closest("[data-add-asset-form]"); if (addAssetForm) { event.preventDefault(); return updateState(addAssetEntry(state, addAssetForm.dataset.characterId, addAssetForm.dataset.listKey, addAssetForm.querySelector("[data-asset-entry-input]")?.value || "")); }
   const addShopItemForm = event.target.closest("[data-add-shop-item-form]"); if (addShopItemForm) { event.preventDefault(); return updateState(addShopItem(state, { name: addShopItemForm.querySelector("[data-new-shop-name]")?.value.trim() || "", type: addShopItemForm.querySelector("[data-new-shop-type]")?.value || "", price: addShopItemForm.querySelector("[data-new-shop-price]")?.value || 0, stock: addShopItemForm.querySelector("[data-new-shop-stock]")?.value || 0, description: addShopItemForm.querySelector("[data-new-shop-description]")?.value || "" })); }
