@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "player-character-avatar-import",
-  "commit": "5a51d2c60dab16aea0dc466021dc96e203c4ad71",
+  "commit": "477528f2aca351add78d1c958e5a078548c14d76",
   "sourceCommit": "5a51d2c60dab16aea0dc466021dc96e203c4ad71",
-  "versionCommit": "5a51d2c60dab16aea0dc466021dc96e203c4ad71",
-  "updatedAt": "2026-06-21T12:28:28+08:00",
+  "versionCommit": "477528f2aca351add78d1c958e5a078548c14d76",
+  "updatedAt": "2026-06-21T12:38:59+08:00",
   "note": "Add character avatar URL support and show the current character avatar in the player shell."
 }
