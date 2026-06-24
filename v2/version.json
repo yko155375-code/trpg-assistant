@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "dm-music-url-import",
-  "commit": "824d6a94debfdc53ddd3e76f1ca8373ebe11a329",
+  "commit": "238cc12e9f777a549aa51926011769d2c28e2ceb",
   "sourceCommit": "824d6a94debfdc53ddd3e76f1ca8373ebe11a329",
-  "versionCommit": "824d6a94debfdc53ddd3e76f1ca8373ebe11a329",
-  "updatedAt": "2026-06-24T00:00:00+08:00",
+  "versionCommit": "238cc12e9f777a549aa51926011769d2c28e2ceb",
+  "updatedAt": "2026-06-24T20:34:26+08:00",
   "note": "Add DM music URL import and playback support."
 }
