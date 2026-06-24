@@ -60,6 +60,150 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function normalizeUrl(value) {
+  return String(value || "").trim();
+}
+
+function getAudioTracks(state) {
+  return Array.isArray(state.audio?.tracks) ? state.audio.tracks : [];
+}
+
+function getAudioSourceType(url) {
+  const value = normalizeUrl(url).toLowerCase();
+  if (!value) return "unknown";
+  if (value.includes("youtube.com/") || value.includes("youtu.be/")) return "youtube";
+  if (/\.(mp3|ogg|wav)(\?|#|$)/i.test(value)) return "audio";
+  return "url";
+}
+
+function getYoutubeEmbedUrl(url) {
+  try {
+    const parsed = new URL(url);
+    let videoId = "";
+    if (parsed.hostname.includes("youtu.be")) videoId = parsed.pathname.replace("/", "");
+    else if (parsed.hostname.includes("youtube.com")) videoId = parsed.searchParams.get("v") || "";
+    if (!videoId && parsed.pathname.includes("/embed/")) videoId = parsed.pathname.split("/embed/")[1] || "";
+    return videoId ? `https://www.youtube.com/embed/${encodeURIComponent(videoId)}` : "";
+  } catch {
+    return "";
+  }
+}
+
+function renderMusicPlayer(track) {
+  if (!track) {
+    return `
+      <section class="music-player-panel is-empty">
+        <strong>尚未播放音樂</strong>
+        <span>從下方清單選一首音樂開始播放。</span>
+      </section>
+    `;
+  }
+
+  const type = track.sourceType || getAudioSourceType(track.url);
+  const url = normalizeUrl(track.url);
+  const title = escapeHtml(track.title || "未命名音樂");
+
+  if (type === "youtube") {
+    const embedUrl = getYoutubeEmbedUrl(url);
+    return `
+      <section class="music-player-panel">
+        <div class="music-player-heading">
+          <strong>${title}</strong>
+          <span>YouTube</span>
+        </div>
+        ${
+          embedUrl
+            ? `<iframe class="music-youtube-player" title="${title}" src="${escapeHtml(embedUrl)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`
+            : `<p class="music-warning">此 YouTube 網址無法轉成可嵌入播放器。</p>`
+        }
+      </section>
+    `;
+  }
+
+  if (type === "audio") {
+    return `
+      <section class="music-player-panel">
+        <div class="music-player-heading">
+          <strong>${title}</strong>
+          <span>Audio URL</span>
+        </div>
+        <audio class="music-audio-player" controls src="${escapeHtml(url)}"></audio>
+      </section>
+    `;
+  }
+
+  return `
+    <section class="music-player-panel">
+      <div class="music-player-heading">
+        <strong>${title}</strong>
+        <span>URL</span>
+      </div>
+      <p class="music-warning">此網址可能無法直接播放，但已保存於清單。</p>
+      <a class="music-external-link" href="${escapeHtml(url)}" target="_blank" rel="noreferrer">開啟原始連結</a>
+    </section>
+  `;
+}
+
+function renderMusicTrackRow(track, currentTrackId) {
+  const type = track.sourceType || getAudioSourceType(track.url);
+  const tag = track.scene || track.tags?.[0] || "未分類";
+  const isCurrent = track.id === currentTrackId;
+
+  return `
+    <article class="music-track-row ${isCurrent ? "is-current" : ""}">
+      <div class="music-track-main">
+        <strong>${escapeHtml(track.title || "未命名音樂")}</strong>
+        <span>${escapeHtml(track.url)}</span>
+      </div>
+      <span class="music-source-badge">${type === "youtube" ? "YouTube" : type === "audio" ? "Audio" : "URL"}</span>
+      <span class="music-scene-chip">${escapeHtml(tag)}</span>
+      <div class="music-track-actions">
+        <button type="button" data-action="play-music-track" data-track-id="${escapeHtml(track.id)}">播放</button>
+        <button type="button" data-action="stop-music-track" data-track-id="${escapeHtml(track.id)}">停止</button>
+        <button class="danger-button" type="button" data-action="delete-music-track" data-track-id="${escapeHtml(track.id)}">刪除</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderDmAudioManager(state) {
+  const tracks = getAudioTracks(state);
+  const currentTrack = tracks.find((track) => track.id === state.audio?.currentTrackId && state.audio?.isPlaying);
+
+  return `
+    <div class="music-manager">
+      <form class="music-add-form" data-add-music-form>
+        <label class="form-field">
+          <span>名稱</span>
+          <input data-new-music-title type="text" placeholder="酒館夜曲" autocomplete="off" />
+        </label>
+        <label class="form-field music-url-field">
+          <span>URL</span>
+          <input data-new-music-url type="url" placeholder="YouTube 或 mp3 / ogg / wav URL" autocomplete="off" />
+        </label>
+        <label class="form-field">
+          <span>場景 / 標籤</span>
+          <input data-new-music-scene type="text" placeholder="酒館、戰鬥、探索" autocomplete="off" />
+        </label>
+        <label class="form-field music-notes-field">
+          <span>備註</span>
+          <input data-new-music-notes type="text" placeholder="可留空" autocomplete="off" />
+        </label>
+        <button class="music-add-button" type="submit">新增</button>
+      </form>
+      ${state.ui?.musicMessage ? `<p class="music-form-message">${escapeHtml(state.ui.musicMessage)}</p>` : ""}
+      ${renderMusicPlayer(currentTrack)}
+      <section class="music-track-list" aria-label="音樂清單">
+        ${
+          tracks.length
+            ? tracks.map((track) => renderMusicTrackRow(track, state.audio?.currentTrackId)).join("")
+            : `<p class="empty-hint">尚未加入音樂。貼上 YouTube 或音訊 URL 後即可保存。</p>`
+        }
+      </section>
+    </div>
+  `;
+}
+
 function renderDmEffectSummary(entries, effectType, maxVisible = 2) {
   const normalized = sortStatusLabels(effectType, entries);
   if (!normalized.length) return "無";
@@ -440,6 +584,19 @@ export function renderDmPage(pageId, state) {
           <p class="placeholder">新增、編輯、刪除怪物，並快速調整 HP 與壓力。</p>
         </div>
         ${renderMonsterManager(state)}
+      </section>
+    `;
+  }
+
+  if (pageId === "audio") {
+    return `
+      <section class="dm-page-card" aria-labelledby="active-page-title">
+        <div class="dm-page-heading">
+          <p class="eyebrow">DM 端 · 音樂</p>
+          <h2 id="active-page-title">音樂</h2>
+          <p class="placeholder">貼上 YouTube 或直接音訊 URL，建立跑團場景音樂清單。</p>
+        </div>
+        ${renderDmAudioManager(state)}
       </section>
     `;
   }

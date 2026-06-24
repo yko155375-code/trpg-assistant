@@ -210,6 +210,59 @@ function normalizeTransaction(record, index) {
   };
 }
 
+function inferMusicSourceType(url) {
+  const value = String(url || "").trim().toLowerCase();
+  if (!value) return "unknown";
+  if (value.includes("youtube.com/") || value.includes("youtu.be/")) return "youtube";
+  if (/\.(mp3|ogg|wav)(\?|#|$)/i.test(value)) return "audio";
+  return "url";
+}
+
+function normalizeMusicTrack(track, index) {
+  const source = recordOrEmpty(track);
+  const url = String(source.url || "").trim();
+  const title = String(source.title || source.name || "").trim() || url || "未命名音樂";
+  const scene = String(source.scene || "").trim();
+  const tags = Array.isArray(source.tags)
+    ? textArray(source.tags)
+    : String(source.tags || scene || "")
+        .split(/[,\s]+/)
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+  const sourceType = ["youtube", "audio", "url", "unknown"].includes(source.sourceType)
+    ? source.sourceType
+    : inferMusicSourceType(url);
+
+  return {
+    ...source,
+    id: String(source.id || `music-track-${index}`),
+    title,
+    url,
+    sourceType,
+    tags,
+    scene,
+    notes: String(source.notes || ""),
+    createdAt: String(source.createdAt || ""),
+  };
+}
+
+function normalizeAudio(audio, fallbackAudio) {
+  const source = recordOrEmpty(audio);
+  const tracks = recordArray(source.tracks).map(normalizeMusicTrack).filter((track) => track.url);
+  const currentTrackId = tracks.some((track) => track.id === source.currentTrackId)
+    ? source.currentTrackId
+    : null;
+
+  return {
+    ...fallbackAudio,
+    ...source,
+    tracks,
+    currentTrackId,
+    isPlaying: currentTrackId ? Boolean(source.isPlaying) : false,
+    volume: Number.isFinite(Number(source.volume)) ? Number(source.volume) : fallbackAudio.volume,
+  };
+}
+
 function normalizeCompatibleShop(shop, fallbackShop) {
   const source = recordOrEmpty(shop);
   const legacy = normalizeShop({
@@ -320,6 +373,7 @@ export function createDefaultState() {
       currentTrackId: null,
       isPlaying: false,
       volume: 0.7,
+      tracks: [],
     },
     ui: {
       mode: "player",
@@ -371,10 +425,7 @@ export function normalizeState(input) {
     encounters,
     shop: normalizeCompatibleShop(sourceShop, fallback.shop),
     rolls: recordArray(source.rolls),
-    audio: {
-      ...fallback.audio,
-      ...sourceAudio,
-    },
+    audio: normalizeAudio(sourceAudio, fallback.audio),
     ui: {
       ...fallback.ui,
       ...sourceUi,

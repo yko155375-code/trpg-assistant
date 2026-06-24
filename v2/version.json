@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-character-avatar-import",
-  "commit": "477528f2aca351add78d1c958e5a078548c14d76",
-  "sourceCommit": "5a51d2c60dab16aea0dc466021dc96e203c4ad71",
-  "versionCommit": "477528f2aca351add78d1c958e5a078548c14d76",
-  "updatedAt": "2026-06-21T12:38:59+08:00",
-  "note": "Add character avatar URL support and show the current character avatar in the player shell."
+  "label": "dm-music-url-import",
+  "commit": "824d6a94debfdc53ddd3e76f1ca8373ebe11a329",
+  "sourceCommit": "824d6a94debfdc53ddd3e76f1ca8373ebe11a329",
+  "versionCommit": "824d6a94debfdc53ddd3e76f1ca8373ebe11a329",
+  "updatedAt": "2026-06-24T00:00:00+08:00",
+  "note": "Add DM music URL import and playback support."
 }

@@ -40,7 +40,7 @@ import { saveState, STORAGE_KEY } from "./modules/storage.js";
 
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
-const VERSION_LABEL = "player-character-avatar-import";
+const VERSION_LABEL = "dm-music-url-import";
 const isSafeMode = new URLSearchParams(window.location.search).get("safe") === "1";
 let state = null;
 let isDmMenuOpen = false;
@@ -195,6 +195,14 @@ function blurNear(element) { const input = element.closest?.(".dice-panel")?.que
 function rollD6() { return Math.floor(Math.random() * 6) + 1; }
 function applyEdge(roll, mode) { if (!EDGE_MODES.has(mode)) return roll; const die = rollD6(); const baseTotal = Number(roll.total) || 0; const finalTotal = mode === "advantage" ? baseTotal + die : baseTotal - die; return { ...roll, rollEdgeMode: mode, rollEdgeDie: die, baseTotal, total: finalTotal, edgeBreakdown: { mode, die, baseTotal, finalTotal }, note: mode === "advantage" ? "優勢骰 +1d6" : "劣勢骰 -1d6" }; }
 
+function inferMusicSourceType(url) { const value = String(url || "").trim().toLowerCase(); if (!value) return "unknown"; if (value.includes("youtube.com/") || value.includes("youtu.be/")) return "youtube"; if (/\.(mp3|ogg|wav)(\?|#|$)/i.test(value)) return "audio"; return "url"; }
+function splitMusicTags(value) { return String(value || "").split(/[,\s]+/).map((entry) => entry.trim()).filter(Boolean); }
+function withMusicMessage(nextState, message) { return { ...nextState, ui: { ...(nextState.ui || {}), musicMessage: message } }; }
+function addMusicTrack(nextState, values) { const url = String(values.url || "").trim(); if (!url) return withMusicMessage(nextState, "請先輸入音樂 URL。"); const title = String(values.title || "").trim() || url || "未命名音樂"; const scene = String(values.scene || "").trim(); const track = { id: `music-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, title, url, sourceType: inferMusicSourceType(url), tags: splitMusicTags(scene), scene, notes: String(values.notes || "").trim(), createdAt: new Date().toISOString() }; return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), tracks: [...(Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : []), track] } }, `已新增音樂：${title}`); }
+function playMusicTrack(nextState, trackId) { const tracks = Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : []; const track = tracks.find((item) => item.id === trackId); if (!track) return withMusicMessage(nextState, "找不到這首音樂。"); return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), tracks, currentTrackId: track.id, isPlaying: true } }, `正在播放：${track.title}`); }
+function stopMusicTrack(nextState, trackId) { const shouldStop = !trackId || nextState.audio?.currentTrackId === trackId; return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), currentTrackId: shouldStop ? null : nextState.audio?.currentTrackId || null, isPlaying: shouldStop ? false : Boolean(nextState.audio?.isPlaying) } }, "已停止播放。"); }
+function deleteMusicTrack(nextState, trackId) { const tracks = Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : []; const nextTracks = tracks.filter((track) => track.id !== trackId); const isCurrent = nextState.audio?.currentTrackId === trackId; return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), tracks: nextTracks, currentTrackId: isCurrent ? null : nextState.audio?.currentTrackId || null, isPlaying: isCurrent ? false : Boolean(nextState.audio?.isPlaying) } }, "已刪除音樂。"); }
+
 if (!bootFailed) {
 try {
 app.addEventListener("click", (event) => {
@@ -233,6 +241,9 @@ app.addEventListener("click", (event) => {
   if (actionButton.dataset.action === "reset-monster-round" && confirm("確定要重設怪物回合？")) return updateState(resetMonsterRound(state));
   if (actionButton.dataset.action === "load-encounter-replace" && confirm("載入後會清空目前怪物，確定嗎？")) return updateState(loadEncounter(state, actionButton.dataset.encounterId, "replace"));
   if (actionButton.dataset.action === "load-encounter-append") return updateState(loadEncounter(state, actionButton.dataset.encounterId, "append"));
+  if (actionButton.dataset.action === "play-music-track") return updateState(playMusicTrack(state, actionButton.dataset.trackId));
+  if (actionButton.dataset.action === "stop-music-track") return updateState(stopMusicTrack(state, actionButton.dataset.trackId));
+  if (actionButton.dataset.action === "delete-music-track" && confirm("確定刪除這首音樂？")) return updateState(deleteMusicTrack(state, actionButton.dataset.trackId));
   if (actionButton.dataset.action === "delete-encounter" && confirm("確定要刪除這個遭遇模板？")) return updateState(deleteEncounter(state, actionButton.dataset.encounterId));
   if (actionButton.dataset.action === "reset-v2-state" && confirm("確定要重設 v2 測試資料？")) return updateState(createDefaultState());
 });
@@ -287,6 +298,7 @@ app.addEventListener("submit", (event) => {
   const addShopItemForm = event.target.closest("[data-add-shop-item-form]"); if (addShopItemForm) { event.preventDefault(); return updateState(addShopItem(state, { name: addShopItemForm.querySelector("[data-new-shop-name]")?.value.trim() || "", type: addShopItemForm.querySelector("[data-new-shop-type]")?.value || "", price: addShopItemForm.querySelector("[data-new-shop-price]")?.value || 0, stock: addShopItemForm.querySelector("[data-new-shop-stock]")?.value || 0, description: addShopItemForm.querySelector("[data-new-shop-description]")?.value || "" })); }
   const addMonsterForm = event.target.closest("[data-add-monster-form]"); if (addMonsterForm) { event.preventDefault(); const values = Object.fromEntries(Array.from(addMonsterForm.querySelectorAll("[data-new-monster-field]")).map((input) => [input.dataset.newMonsterField, input.value])); return updateState(addMonster(state, values)); }
   const saveEncounterForm = event.target.closest("[data-save-encounter-form]"); if (saveEncounterForm) { event.preventDefault(); return updateState(saveCurrentEncounter(state, saveEncounterForm.querySelector("[data-encounter-name]")?.value || "")); }
+  const addMusicForm = event.target.closest("[data-add-music-form]"); if (addMusicForm) { event.preventDefault(); return updateState(addMusicTrack(state, { title: addMusicForm.querySelector("[data-new-music-title]")?.value || "", url: addMusicForm.querySelector("[data-new-music-url]")?.value || "", scene: addMusicForm.querySelector("[data-new-music-scene]")?.value || "", notes: addMusicForm.querySelector("[data-new-music-notes]")?.value || "" })); }
 });
 
 app.addEventListener("wheel", (event) => {
