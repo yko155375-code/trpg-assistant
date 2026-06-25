@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "player-avatar-url-preview-drive",
-  "commit": "5b22e69be3487e3d46d1bcf08759b3bd3f993d8d",
+  "commit": "6a71665ca5e0700549290bc7a8ba4d87c2e015e4",
   "sourceCommit": "5b22e69be3487e3d46d1bcf08759b3bd3f993d8d",
-  "versionCommit": "5b22e69be3487e3d46d1bcf08759b3bd3f993d8d",
+  "versionCommit": "6a71665ca5e0700549290bc7a8ba4d87c2e015e4",
   "updatedAt": "2026-06-25T15:42:35+08:00",
   "note": "Add avatar URL preview and Google Drive link conversion."
 }
