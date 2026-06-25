@@ -45,6 +45,7 @@ const VERSION_LABEL = "p0-module-cache-bust";
 const isSafeMode = new URLSearchParams(window.location.search).get("safe") === "1";
 let state = null;
 let isDmMenuOpen = false;
+let pendingDeleteCharacterId = "";
 let bootFailed = false;
 let bootPhase = "start";
 let bootRawState = null;
@@ -174,7 +175,8 @@ function enhanceDiceHtml(html, actor) {
   if (key === "player" && !output.includes("data-roll-edge-mode")) { const mode = state.ui?.rollEdgeMode || ""; const edge = `<div class="roll-edge-controls" data-roll-edge-controls><button class="roll-edge-button ${mode === "advantage" ? "is-active" : ""}" type="button" data-roll-edge-mode="advantage" aria-pressed="${mode === "advantage"}">優勢</button><button class="roll-edge-button ${mode === "disadvantage" ? "is-active" : ""}" type="button" data-roll-edge-mode="disadvantage" aria-pressed="${mode === "disadvantage"}">劣勢</button></div>`; output = output.replace("</form>", `</form>${edge}`); }
   return output;
 }
-function renderPanel() { const pages = getActivePages(state.ui.mode); const page = pages.find((item) => item.id === getActivePageId(state)) || pages[0]; if (state.ui.mode === "player") { const html = renderPlayerPage(page.id, state); return page.id === "dice" ? enhanceDiceHtml(html, "player") : html; } const html = renderDmPage(page.id, state); return page.id === "dice" ? enhanceDiceHtml(html, "DM") : html; }
+function renderState() { return pendingDeleteCharacterId ? { ...state, ui: { ...state.ui, pendingDeleteCharacterId } } : state; }
+function renderPanel() { const pages = getActivePages(state.ui.mode); const page = pages.find((item) => item.id === getActivePageId(state)) || pages[0]; const viewState = renderState(); if (state.ui.mode === "player") { const html = renderPlayerPage(page.id, viewState); return page.id === "dice" ? enhanceDiceHtml(html, "player") : html; } const html = renderDmPage(page.id, state); return page.id === "dice" ? enhanceDiceHtml(html, "DM") : html; }
 function renderPageButton(page, className) { const active = page.id === getActivePageId(state); return `<button class="${className} ${active ? "is-active" : ""}" type="button" data-page="${page.id}" aria-pressed="${active}">${page.label}</button>`; }
 function renderModeButton(mode, label) { const active = state.ui.mode === mode; return `<button class="mode-button ${active ? "is-active" : ""}" type="button" data-mode="${mode}" aria-pressed="${active}">${label}</button>`; }
 function isRenderableAvatarUrl(value) { return typeof value === "string" && /^https?:\/\//i.test(value.trim()); }
@@ -232,11 +234,11 @@ if (!bootFailed) {
 try {
 app.addEventListener("click", (event) => {
   const modeButton = event.target.closest("[data-mode]");
-  if (modeButton) { event.preventDefault(); isDmMenuOpen = false; updateState(setMode(syncFormulaDraft(app), modeButton.dataset.mode)); return; }
+  if (modeButton) { event.preventDefault(); isDmMenuOpen = false; pendingDeleteCharacterId = ""; updateState(setMode(syncFormulaDraft(app), modeButton.dataset.mode)); return; }
   const dmMenuButton = event.target.closest("[data-dm-menu-toggle]");
   if (dmMenuButton) { event.preventDefault(); isDmMenuOpen = !isDmMenuOpen; safeRender(); return; }
   const pageButton = event.target.closest("[data-page]");
-  if (pageButton) { event.preventDefault(); isDmMenuOpen = false; updateState(setActivePage(syncFormulaDraft(app), pageButton.dataset.page)); return; }
+  if (pageButton) { event.preventDefault(); isDmMenuOpen = false; pendingDeleteCharacterId = ""; updateState(setActivePage(syncFormulaDraft(app), pageButton.dataset.page)); return; }
   const edgeButton = event.target.closest("[data-roll-edge-mode]");
   if (edgeButton) { event.preventDefault(); blurNear(edgeButton); const synced = syncFormulaDraft(edgeButton); const selected = edgeButton.dataset.rollEdgeMode; const current = synced.ui?.rollEdgeMode; updateState({ ...synced, ui: { ...(synced.ui || {}), rollEdgeMode: current === selected ? "" : selected } }); return; }
   const actionButton = event.target.closest("[data-action]");
@@ -246,8 +248,8 @@ app.addEventListener("click", (event) => {
   if (actionButton.dataset.action === "roll-duality") return updateState(addRoll(syncFormulaDraft(actionButton), rollDuality({}), actionButton.dataset.rollActor || "玩家"));
   if (actionButton.dataset.action === "clear-rolls") return updateState(clearRolls(syncFormulaDraft(actionButton)));
   if (actionButton.dataset.action === "toggle-team-status") return updateState({ ...state, ui: { ...state.ui, isTeamStatusOpen: !state.ui.isTeamStatusOpen } });
-  if (actionButton.dataset.action === "delete-character") return updateState(deleteCharacter(state, actionButton.dataset.characterId));
-  if (actionButton.dataset.action === "expand-character") return updateState(expandCharacter(state, actionButton.dataset.characterId));
+  if (actionButton.dataset.action === "delete-character") { const characterId = actionButton.dataset.characterId; if (pendingDeleteCharacterId === characterId) { pendingDeleteCharacterId = ""; return updateState(deleteCharacter(state, characterId)); } pendingDeleteCharacterId = characterId; safeRender(); return; }
+  if (actionButton.dataset.action === "expand-character") { pendingDeleteCharacterId = ""; return updateState(expandCharacter(state, actionButton.dataset.characterId)); }
   if (actionButton.dataset.action === "adjust-character-stat") return updateState(adjustCharacterStat(state, actionButton.dataset.characterId, actionButton.dataset.statField, Number(actionButton.dataset.delta)));
   if (actionButton.dataset.action === "adjust-character-attribute") return updateState(adjustCharacterAttribute(state, actionButton.dataset.characterId, actionButton.dataset.attributeField, Number(actionButton.dataset.delta)));
   if (actionButton.dataset.action === "adjust-character-money") return updateState(adjustCharacterMoney(state, actionButton.dataset.characterId, Number(actionButton.dataset.delta)));
@@ -274,7 +276,7 @@ app.addEventListener("click", (event) => {
 });
 
 app.addEventListener("change", (event) => {
-  const characterSelect = event.target.closest("[data-character-select]"); if (characterSelect) return updateState(selectCharacter(state, characterSelect.value));
+  const characterSelect = event.target.closest("[data-character-select]"); if (characterSelect) { pendingDeleteCharacterId = ""; return updateState(selectCharacter(state, characterSelect.value)); }
   const shopItemField = event.target.closest("[data-shop-item-field]"); if (shopItemField) return updateState(updateShopItem(state, shopItemField.dataset.shopItemId, shopItemField.dataset.shopItemField, shopItemField.value));
   const characterId = event.target.dataset.characterId; if (!characterId) return;
   if (event.target.dataset.characterField) return updateState(updateCharacterField(state, characterId, event.target.dataset.characterField, event.target.value));

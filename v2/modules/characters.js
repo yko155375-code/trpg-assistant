@@ -539,6 +539,58 @@ function renderTeamCharacterDetails(character, title = "角色詳細") {
   `;
 }
 
+function renderPriorityStatEditor(character) {
+  return `
+    <section class="character-quick-section" aria-label="常用狀態">
+      <div class="character-quick-title">
+        <h4>常用狀態</h4>
+        <small>跑團中常調整的數值</small>
+      </div>
+      <div class="stepper-grid character-priority-stepper-grid">
+        ${statFields.map((field) => renderStepper({ characterId: character.id, type: "stat", field: field.key, label: field.label, value: character.stats[field.key] })).join("")}
+      </div>
+      ${renderGoldStepper(character)}
+    </section>
+  `;
+}
+
+function renderCharacterAdvancedEditor(character) {
+  return `
+    <div class="character-advanced-content">
+      <label class="form-field form-field-full"><span>角色名稱</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="name" type="text" value="${escapeHtml(character.name)}" /></label>
+      <label class="form-field form-field-full character-color-editor"><span>角色顏色</span><select data-character-id="${escapeHtml(character.id)}" data-character-field="color">${characterColorOptions.map((option) => `<option value="${option.value}" ${character.color === option.value ? "selected" : ""}>${option.label}</option>`).join("")}</select></label>
+      <label class="form-field form-field-full character-avatar-editor" data-avatar-preview-field><span>頭像圖片網址</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="avatarUrl" data-avatar-url-input type="url" inputmode="url" value="${escapeHtml(character.avatarUrl)}" placeholder="https://…" autocomplete="url" /><small class="character-avatar-help">可貼一般圖片網址或 Google Drive 分享連結。</small>${renderAvatarPreview(character.avatarUrl, character.name)}</label>
+      <h4>屬性</h4>
+      <div class="stepper-grid attribute-stepper-grid">${attributeFields.map((field) => renderStepper({ characterId: character.id, type: "attribute", field: field.key, label: field.label, value: character.attributes[field.key] })).join("")}</div>
+      <div class="effect-grid">${renderEffectEditor(character, "buffs", "增益")}${renderEffectEditor(character, "debuffs", "負面")}</div>
+      <label class="form-field form-field-full"><span>角色備註</span><textarea data-character-id="${escapeHtml(character.id)}" data-character-field="notes" rows="4">${escapeHtml(character.notes)}</textarea></label>
+    </div>
+  `;
+}
+
+function renderTeamCharacterDetailsCompact(character, title = "角色詳細編輯", pendingDeleteId = character.pendingDeleteId || "") {
+  const isDeleteConfirming = pendingDeleteId === character.id;
+  return `
+    <section class="editor-panel team-detail-panel character-detail-compact" data-character-id="${escapeHtml(character.id)}">
+      <div class="editor-heading character-detail-heading">
+        <div>
+          <h3>${title}</h3>
+          <small>${escapeHtml(character.name)}</small>
+        </div>
+        <button class="danger-button character-delete-button ${isDeleteConfirming ? "is-confirming" : ""}" type="button" data-action="delete-character" data-character-id="${escapeHtml(character.id)}" aria-live="polite">${isDeleteConfirming ? "再按一次確認刪除" : "刪除角色"}</button>
+      </div>
+      ${isDeleteConfirming ? `<p class="character-delete-warning">第一次點擊只進入確認狀態。切換角色或收合詳細區會取消。</p>` : ""}
+      ${renderPriorityStatEditor(character)}
+      <details class="character-advanced-details">
+        <summary><span>進階設定</span><b aria-hidden="true">⋯</b></summary>
+        ${renderCharacterAdvancedEditor(character)}
+      </details>
+    </section>
+  `;
+}
+
+renderTeamCharacterDetails = renderTeamCharacterDetailsCompact;
+
 function renderRpgAvatar(character) {
   const avatarUrl = normalizeAvatarUrl(character.avatarUrl);
   const hasAvatar = isRenderableAvatarUrl(avatarUrl);
@@ -605,6 +657,7 @@ export function renderTeamStatusPage(state) {
   const current = getCurrentCharacter({ ...state, characters });
   const expandedId = getExpandedCharacterId(state, characters);
   const expandedCharacter = characters.find((character) => character.id === expandedId);
+  if (expandedCharacter) expandedCharacter.pendingDeleteId = state.ui?.pendingDeleteCharacterId || "";
   if (!characters.length) {
     return `${renderAddCharacterForm()}<section class="empty-panel"><strong>尚未建立角色</strong><p>新增角色後，隊伍頁會以緊湊卡片顯示每位角色的 HP、壓力、希望、閃避、金錢與狀態。</p></section>`;
   }
