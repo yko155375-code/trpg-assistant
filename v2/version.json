@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-character-detail-compact-actions",
-  "commit": "a08cc4b84b3f8fc10022f9db74fb716bc153614b",
+  "label": "player-character-delete-advanced-reset",
+  "commit": "c832dee27e315baf0cab82674552be346d54afe0",
   "sourceCommit": "f5ac917e908cbe738a1e40cb193cfdf581788a8e",
-  "versionCommit": "a08cc4b84b3f8fc10022f9db74fb716bc153614b",
-  "updatedAt": "2026-06-26T02:41:56+08:00",
-  "note": "Compact player character detail actions and require delete confirmation."
+  "versionCommit": "c832dee27e315baf0cab82674552be346d54afe0",
+  "updatedAt": "2026-06-26T06:58:41+08:00",
+  "note": "Move character delete confirmation into advanced settings."
 }
