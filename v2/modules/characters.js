@@ -539,6 +539,67 @@ function renderTeamCharacterDetails(character, title = "角色詳細") {
   `;
 }
 
+function renderRpgAvatar(character) {
+  const avatarUrl = normalizeAvatarUrl(character.avatarUrl);
+  const hasAvatar = isRenderableAvatarUrl(avatarUrl);
+  return `
+    <span class="team-rpg-avatar ${hasAvatar ? "has-image" : ""}" aria-hidden="true">
+      <span class="team-rpg-avatar-initial">${escapeHtml(getCharacterInitial(character.name))}</span>
+      ${hasAvatar ? `<img data-character-avatar src="${escapeHtml(avatarUrl)}" alt="" />` : ""}
+    </span>
+  `;
+}
+
+function statRatio(value, max) {
+  const safeMax = Math.max(1, toNumber(max, 1));
+  return Math.round(clamp(toNumber(value), 0, safeMax) / safeMax * 100);
+}
+
+function renderRpgMeter(label, value, max, type) {
+  const percent = statRatio(value, max);
+  return `
+    <span class="team-rpg-meter team-rpg-meter-${type}" style="--meter-value: ${percent}%">
+      <span class="team-rpg-meter-top"><b>${label}</b><em>${value}/${max}</em></span>
+      <span class="team-rpg-meter-track" aria-hidden="true"><i></i></span>
+    </span>
+  `;
+}
+
+function renderRpgStatusTags(character) {
+  const buffs = sortStatusLabels("buffs", character.buffs).slice(0, 2).map((entry) => `<span class="team-rpg-tag is-buff">${escapeHtml(entry)}</span>`);
+  const debuffs = sortStatusLabels("debuffs", character.debuffs).slice(0, 2).map((entry) => `<span class="team-rpg-tag is-debuff">${escapeHtml(entry)}</span>`);
+  const tags = [...buffs, ...debuffs];
+  return tags.length ? tags.join("") : `<span class="team-rpg-tag">狀態穩定</span>`;
+}
+
+function renderRpgTeamCard(character, current, expandedId) {
+  const isCurrent = character.id === current?.id;
+  return `
+    <article class="team-summary-card team-rpg-card ${isCurrent ? "is-current" : ""} ${character.id === expandedId ? "is-expanded" : ""}" style="--character-color: ${escapeHtml(character.color)}">
+      <button class="team-rpg-card-main" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}" aria-pressed="${isCurrent}">
+        ${renderRpgAvatar(character)}
+        <span class="team-rpg-body">
+          <span class="team-rpg-header">
+            <strong>${escapeHtml(character.name)}</strong>
+            ${isCurrent ? `<span class="team-rpg-current-badge">目前</span>` : ""}
+          </span>
+          <span class="team-rpg-meters">
+            ${renderRpgMeter("HP", character.stats.hp, character.stats.maxHp, "hp")}
+            ${renderRpgMeter("壓力", character.stats.stress, character.stats.maxStress, "stress")}
+          </span>
+          <span class="team-rpg-vitals">
+            <span><b>希望</b>${character.stats.hope}/6</span>
+            <span><b>護盾</b>${character.stats.shield}/${character.stats.maxShield}</span>
+            <span><b>閃避</b>${character.stats.evasion}</span>
+          </span>
+          <span class="team-rpg-tags">${renderRpgStatusTags(character)}</span>
+        </span>
+      </button>
+      <button class="team-edit-button team-rpg-edit-button" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}" aria-label="編輯 ${escapeHtml(character.name)}">⋯</button>
+    </article>
+  `;
+}
+
 export function renderTeamStatusPage(state) {
   const characters = normalizeCharacters(state.characters);
   const current = getCurrentCharacter({ ...state, characters });
@@ -551,25 +612,7 @@ export function renderTeamStatusPage(state) {
     <div class="team-page-grid">
       <div class="team-main-column">
         <section class="team-roster" aria-label="隊伍角色摘要">
-          ${characters.map((character) => `
-            <article class="team-summary-card ${character.id === current?.id ? "is-current" : ""} ${character.id === expandedId ? "is-expanded" : ""}" style="--character-color: ${escapeHtml(character.color)}">
-              <div class="team-summary-head">
-                <button class="team-summary-name-button" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}">
-                  <span class="team-summary-name"><span class="team-summary-color-dot" aria-hidden="true"></span>${escapeHtml(character.name)}</span>
-                  <small>閃避 ${character.stats.evasion} · 金錢 ${formatGold(character.assets.gold)}</small>
-                </button>
-                <button class="team-edit-button" type="button" data-action="expand-character" data-character-id="${escapeHtml(character.id)}" aria-label="編輯 ${escapeHtml(character.name)}">⋯</button>
-              </div>
-              <div class="compact-stat-grid" aria-label="${escapeHtml(character.name)}主要數值">
-                ${renderCompactStatControl(character, "hp", "HP", `${character.stats.hp}/${character.stats.maxHp}`)}
-                ${renderCompactStatControl(character, "stress", "壓力", `${character.stats.stress}/${character.stats.maxStress}`)}
-                ${renderCompactStatControl(character, "hope", "希望", `${character.stats.hope}/6`)}
-                ${renderCompactStatControl(character, "shield", "護盾", `${character.stats.shield}/${character.stats.maxShield}`)}
-              </div>
-              ${renderCompactAttributeBadges(character)}
-              <div class="compact-effect-summary"><span>增益：${renderEffectSummary(character.buffs, "buffs", 2)}</span><span>負面：${renderEffectSummary(character.debuffs, "debuffs", 2)}</span></div>
-              ${renderCompactDebuffChips(character)}
-            </article>`).join("")}
+          ${characters.map((character) => renderRpgTeamCard(character, current, expandedId)).join("")}
         </section>
         ${expandedCharacter ? renderTeamCharacterDetails(expandedCharacter, "角色詳細編輯") : ""}
         <section class="team-add-panel">${renderAddCharacterForm()}</section>

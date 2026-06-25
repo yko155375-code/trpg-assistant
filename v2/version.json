@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "p0-module-cache-bust",
-  "commit": "27ffb211128e969266a1b50a5720670c4124a1f2",
-  "sourceCommit": "27ffb211128e969266a1b50a5720670c4124a1f2",
-  "versionCommit": "27ffb211128e969266a1b50a5720670c4124a1f2",
-  "updatedAt": "2026-06-25T16:18:00+08:00",
-  "note": "Refresh v2 module cache bust for mobile browsers."
+  "label": "player-team-rpg-status-cards",
+  "commit": "ab1e550e3d6a624695739283595ed2b8aa05021f",
+  "sourceCommit": "ab1e550e3d6a624695739283595ed2b8aa05021f",
+  "versionCommit": "ab1e550e3d6a624695739283595ed2b8aa05021f",
+  "updatedAt": "2026-06-26T00:46:51+08:00",
+  "note": "Render player team status as RPG party status cards."
 }
