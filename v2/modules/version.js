@@ -1,11 +1,11 @@
 const DEFAULT_VERSION_INFO = {
   version: "v2",
-  label: "monster-critical-damage-restore",
-  commit: "37d994a1d5463f1fd95fd7fda32894272d935e9e",
-  sourceCommit: "37d994a1d5463f1fd95fd7fda32894272d935e9e",
-  versionCommit: "37d994a1d5463f1fd95fd7fda32894272d935e9e",
-  updatedAt: "2026-06-07T15:10:00+08:00",
-  note: "Restore monster natural 20 critical damage pending and damage breakdown.",
+  label: "p0-module-cache-bust",
+  commit: "27ffb211128e969266a1b50a5720670c4124a1f2",
+  sourceCommit: "27ffb211128e969266a1b50a5720670c4124a1f2",
+  versionCommit: "27ffb211128e969266a1b50a5720670c4124a1f2",
+  updatedAt: "2026-06-25T16:18:00+08:00",
+  note: "Refresh v2 module cache bust for mobile browsers.",
 };
 
 function shortCommit(commit) {

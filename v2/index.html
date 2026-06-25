@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./team-card.css" />
     <link rel="stylesheet" href="./team-status-lookup.css" />
-    <link rel="stylesheet" href="./dice.css?v=p0-localstorage-boot-guard" />
+    <link rel="stylesheet" href="./dice.css?v=p0-module-cache-bust" />
   </head>
   <body>
     <noscript>本工具需要啟用 JavaScript。</noscript>
@@ -16,7 +16,7 @@
     <script>
       (() => {
         const storageKey = "trpg-assistant-v2-state";
-        const versionLabel = "p0-localstorage-boot-guard";
+        const versionLabel = "p0-module-cache-bust";
         function safeUrl() { return new URL("./?safe=1", window.location.href).href; }
         function backupRaw(raw) {
           if (!raw) return "";
@@ -64,8 +64,8 @@
         window.__TRPG_V2_BOOT_TIMER__ = window.setTimeout(() => showFallback("moduleLoad", "啟動逾時"), 4000);
       })();
     </script>
-    <script type="module" src="./app.js?v=p0-localstorage-boot-guard"></script>
-    <script type="module" src="./modules/team-status-lookup.js"></script>
-    <script type="module" src="./modules/version.js?v=p0-localstorage-boot-guard"></script>
+    <script type="module" src="./app.js?v=p0-module-cache-bust"></script>
+    <script type="module" src="./modules/team-status-lookup.js?v=p0-module-cache-bust"></script>
+    <script type="module" src="./modules/version.js?v=p0-module-cache-bust"></script>
   </body>
 </html>

@@ -19,9 +19,9 @@ import {
   updateCharacterGold,
   updateCharacterMoney,
   updateCharacterStat,
-} from "./modules/characters.js";
-import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js";
-import { renderDmPage } from "./modules/dm-view.js";
+} from "./modules/characters.js?v=p0-module-cache-bust";
+import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=p0-module-cache-bust";
+import { renderDmPage } from "./modules/dm-view.js?v=p0-module-cache-bust";
 import {
   addMonster,
   adjustMonsterValue,
@@ -31,17 +31,17 @@ import {
   resetMonsterRound,
   rollMonsterAction,
   updateMonster,
-} from "./modules/monsters.js";
-import { renderPlayerPage } from "./modules/player-view.js";
-import { updatePublicInfoField } from "./modules/public-info.js";
-import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js";
-import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js";
-import { createDefaultState, normalizeEncounters, normalizeState } from "./modules/state.js";
-import { saveState, STORAGE_KEY } from "./modules/storage.js";
+} from "./modules/monsters.js?v=p0-module-cache-bust";
+import { renderPlayerPage } from "./modules/player-view.js?v=p0-module-cache-bust";
+import { updatePublicInfoField } from "./modules/public-info.js?v=p0-module-cache-bust";
+import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=p0-module-cache-bust";
+import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=p0-module-cache-bust";
+import { createDefaultState, normalizeEncounters, normalizeState } from "./modules/state.js?v=p0-module-cache-bust";
+import { saveState, STORAGE_KEY } from "./modules/storage.js?v=p0-module-cache-bust";
 
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
-const VERSION_LABEL = "dm-music-url-import";
+const VERSION_LABEL = "p0-module-cache-bust";
 const isSafeMode = new URLSearchParams(window.location.search).get("safe") === "1";
 let state = null;
 let isDmMenuOpen = false;

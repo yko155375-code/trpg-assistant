@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-avatar-url-preview-drive",
-  "commit": "6a71665ca5e0700549290bc7a8ba4d87c2e015e4",
-  "sourceCommit": "5b22e69be3487e3d46d1bcf08759b3bd3f993d8d",
-  "versionCommit": "6a71665ca5e0700549290bc7a8ba4d87c2e015e4",
-  "updatedAt": "2026-06-25T15:42:35+08:00",
-  "note": "Add avatar URL preview and Google Drive link conversion."
+  "label": "p0-module-cache-bust",
+  "commit": "27ffb211128e969266a1b50a5720670c4124a1f2",
+  "sourceCommit": "27ffb211128e969266a1b50a5720670c4124a1f2",
+  "versionCommit": "27ffb211128e969266a1b50a5720670c4124a1f2",
+  "updatedAt": "2026-06-25T16:18:00+08:00",
+  "note": "Refresh v2 module cache bust for mobile browsers."
 }
