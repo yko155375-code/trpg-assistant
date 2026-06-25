@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "dm-music-url-import",
-  "commit": "238cc12e9f777a549aa51926011769d2c28e2ceb",
-  "sourceCommit": "824d6a94debfdc53ddd3e76f1ca8373ebe11a329",
-  "versionCommit": "238cc12e9f777a549aa51926011769d2c28e2ceb",
-  "updatedAt": "2026-06-24T20:34:26+08:00",
-  "note": "Add DM music URL import and playback support."
+  "label": "player-avatar-url-preview-drive",
+  "commit": "5b22e69be3487e3d46d1bcf08759b3bd3f993d8d",
+  "sourceCommit": "5b22e69be3487e3d46d1bcf08759b3bd3f993d8d",
+  "versionCommit": "5b22e69be3487e3d46d1bcf08759b3bd3f993d8d",
+  "updatedAt": "2026-06-25T15:42:35+08:00",
+  "note": "Add avatar URL preview and Google Drive link conversion."
 }

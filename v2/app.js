@@ -10,6 +10,7 @@ import {
   deleteCharacter,
   deleteCharacterEffect,
   expandCharacter,
+  normalizeAvatarUrl,
   selectCharacter,
   toggleCharacterEffect,
   updateAssetEntry,
@@ -178,6 +179,30 @@ function renderPageButton(page, className) { const active = page.id === getActiv
 function renderModeButton(mode, label) { const active = state.ui.mode === mode; return `<button class="mode-button ${active ? "is-active" : ""}" type="button" data-mode="${mode}" aria-pressed="${active}">${label}</button>`; }
 function isRenderableAvatarUrl(value) { return typeof value === "string" && /^https?:\/\//i.test(value.trim()); }
 function getCharacterInitial(name) { return Array.from(String(name || "?").trim() || "?")[0].toUpperCase(); }
+
+function updateAvatarPreview(input) {
+  const preview = input.closest("[data-avatar-preview-field]")?.querySelector("[data-avatar-preview]");
+  if (!preview) return;
+  const imageUrl = normalizeAvatarUrl(input.value);
+  const hasImage = isRenderableAvatarUrl(imageUrl);
+  const frame = preview.querySelector(".character-avatar-preview-frame");
+  let image = preview.querySelector("[data-avatar-preview-img]");
+  preview.classList.toggle("has-image", hasImage);
+  if (hasImage && frame) {
+    if (!image) {
+      image = document.createElement("img");
+      image.dataset.avatarPreviewImg = "";
+      image.alt = "頭像預覽";
+      frame.append(image);
+    }
+    image.hidden = false;
+    image.src = imageUrl;
+  } else if (image) {
+    image.remove();
+  }
+  const message = preview.querySelector("[data-avatar-preview-message]");
+  if (message) message.textContent = hasImage ? "頭像預覽" : "尚未設定頭像";
+}
 function renderCurrentCharacterBar() {
   const characters = Array.isArray(state.characters) ? state.characters : [];
   const current = characters.find((character) => character.id === state.ui?.selectedCharacterId) || characters[0] || null;
@@ -260,6 +285,7 @@ app.addEventListener("change", (event) => {
 });
 
 app.addEventListener("input", (event) => {
+  if (event.target.matches("[data-avatar-url-input]")) updateAvatarPreview(event.target);
   if (event.target.matches("[data-roll-formula]")) return saveStateOnly(setFormulaDraft(state, actorKeyFromElement(event.target), event.target.value));
   const characterId = event.target.dataset.characterId;
   if (characterId) {
@@ -276,6 +302,15 @@ app.addEventListener("input", (event) => {
 });
 
 app.addEventListener("error", (event) => {
+  const previewImage = event.target.closest?.("[data-avatar-preview-img]");
+  if (previewImage) {
+    previewImage.hidden = true;
+    const preview = previewImage.closest("[data-avatar-preview]");
+    preview?.classList.remove("has-image");
+    const message = preview?.querySelector("[data-avatar-preview-message]");
+    if (message) message.textContent = "無法載入頭像";
+    return;
+  }
   const avatar = event.target.closest?.("[data-character-avatar]");
   if (!avatar) return;
   avatar.hidden = true;

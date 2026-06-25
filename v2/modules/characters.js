@@ -74,8 +74,46 @@ function normalizeCharacterColor(value, index = 0) {
   return characterColorOptions.some((option) => option.value === value) ? value : getDefaultCharacterColor(index);
 }
 
-function normalizeAvatarUrl(value) {
-  return typeof value === "string" ? value.trim().slice(0, 2048) : "";
+function getDriveFileId(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    if (!/drive\.google\.com$/i.test(url.hostname)) return "";
+    const pathMatch = url.pathname.match(/\/file\/d\/([^/]+)/i);
+    const id = pathMatch?.[1] || url.searchParams.get("id") || "";
+    return /^[A-Za-z0-9_-]+$/.test(id) ? id : "";
+  } catch {
+    return "";
+  }
+}
+
+export function normalizeAvatarUrl(value) {
+  const trimmed = typeof value === "string" ? value.trim().slice(0, 2048) : "";
+  const driveId = getDriveFileId(trimmed);
+  return driveId ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(driveId)}&sz=w256` : trimmed;
+}
+
+function getCharacterInitial(name) {
+  return Array.from(String(name || "?").trim() || "?")[0].toUpperCase();
+}
+
+function isRenderableAvatarUrl(value) {
+  return /^https?:\/\//i.test(String(value || "").trim());
+}
+
+function renderAvatarPreview(avatarUrl = "", name = "") {
+  const imageUrl = normalizeAvatarUrl(avatarUrl);
+  const hasImage = isRenderableAvatarUrl(imageUrl);
+  return `
+    <div class="character-avatar-preview ${hasImage ? "has-image" : ""}" data-avatar-preview>
+      <div class="character-avatar-preview-frame" aria-label="頭像預覽">
+        <span data-avatar-preview-initial>${escapeHtml(getCharacterInitial(name))}</span>
+        ${hasImage ? `<img data-avatar-preview-img src="${escapeHtml(imageUrl)}" alt="頭像預覽" />` : ""}
+      </div>
+      <small data-avatar-preview-message>${hasImage ? "頭像預覽" : "尚未設定頭像"}</small>
+    </div>
+  `;
 }
 
 function normalizeStats(stats = {}) {
@@ -342,9 +380,11 @@ export function renderAddCharacterForm() {
           ${characterColorOptions.map((option) => `<option value="${option.value}">${option.label}</option>`).join("")}
         </select>
       </label>
-      <label class="form-field character-avatar-url-field">
-        <span>頭像網址</span>
-        <input data-new-character-avatar type="url" inputmode="url" placeholder="https://…" autocomplete="url" />
+      <label class="form-field character-avatar-url-field" data-avatar-preview-field>
+        <span>頭像圖片網址</span>
+        <input data-new-character-avatar data-avatar-url-input type="url" inputmode="url" placeholder="https://…" autocomplete="url" />
+        <small class="character-avatar-help">可貼一般圖片網址或 Google Drive 分享連結。</small>
+        ${renderAvatarPreview("", "新角色")}
       </label>
       <button class="primary-button" type="submit">新增</button>
     </form>
@@ -489,7 +529,7 @@ function renderTeamCharacterDetails(character, title = "角色詳細") {
       <div class="editor-heading"><h3>${title}</h3><button class="danger-button" type="button" data-action="delete-character" data-character-id="${escapeHtml(character.id)}">刪除角色</button></div>
       <label class="form-field form-field-full"><span>角色名稱</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="name" type="text" value="${escapeHtml(character.name)}" /></label>
       <label class="form-field form-field-full character-color-editor"><span>角色顏色</span><select data-character-id="${escapeHtml(character.id)}" data-character-field="color">${characterColorOptions.map((option) => `<option value="${option.value}" ${character.color === option.value ? "selected" : ""}>${option.label}</option>`).join("")}</select></label>
-      <label class="form-field form-field-full character-avatar-editor"><span>頭像網址</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="avatarUrl" type="url" inputmode="url" value="${escapeHtml(character.avatarUrl)}" placeholder="https://…" autocomplete="url" /></label>
+      <label class="form-field form-field-full character-avatar-editor" data-avatar-preview-field><span>頭像圖片網址</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="avatarUrl" data-avatar-url-input type="url" inputmode="url" value="${escapeHtml(character.avatarUrl)}" placeholder="https://…" autocomplete="url" /><small class="character-avatar-help">可貼一般圖片網址或 Google Drive 分享連結。</small>${renderAvatarPreview(character.avatarUrl, character.name)}</label>
       <div class="stepper-grid">${statFields.map((field) => renderStepper({ characterId: character.id, type: "stat", field: field.key, label: field.label, value: character.stats[field.key] })).join("")}${renderGoldStepper(character)}</div>
       <h4>六屬性</h4>
       <div class="stepper-grid attribute-stepper-grid">${attributeFields.map((field) => renderStepper({ characterId: character.id, type: "attribute", field: field.key, label: field.label, value: character.attributes[field.key] })).join("")}</div>
@@ -550,7 +590,7 @@ export function renderCharacterEditor(state, options = {}) {
       <div class="editor-heading"><h3>${title}</h3>${allowDelete ? `<button class="danger-button" type="button" data-action="delete-character" data-character-id="${escapeHtml(character.id)}">刪除角色</button>` : ""}</div>
       <label class="form-field form-field-full"><span>角色名稱</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="name" type="text" value="${escapeHtml(character.name)}" /></label>
       <label class="form-field form-field-full character-color-editor"><span>角色顏色</span><select data-character-id="${escapeHtml(character.id)}" data-character-field="color">${characterColorOptions.map((option) => `<option value="${option.value}" ${character.color === option.value ? "selected" : ""}>${option.label}</option>`).join("")}</select></label>
-      <label class="form-field form-field-full character-avatar-editor"><span>頭像網址</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="avatarUrl" type="url" inputmode="url" value="${escapeHtml(character.avatarUrl)}" placeholder="https://…" autocomplete="url" /></label>
+      <label class="form-field form-field-full character-avatar-editor" data-avatar-preview-field><span>頭像圖片網址</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="avatarUrl" data-avatar-url-input type="url" inputmode="url" value="${escapeHtml(character.avatarUrl)}" placeholder="https://…" autocomplete="url" /><small class="character-avatar-help">可貼一般圖片網址或 Google Drive 分享連結。</small>${renderAvatarPreview(character.avatarUrl, character.name)}</label>
       <div class="stepper-grid">${statFields.map((field) => renderStepper({ characterId: character.id, type: "stat", field: field.key, label: field.label, value: character.stats[field.key] })).join("")}</div>
       <h4>六屬性</h4>
       <div class="stepper-grid attribute-stepper-grid">${attributeFields.map((field) => renderStepper({ characterId: character.id, type: "attribute", field: field.key, label: field.label, value: character.attributes[field.key] })).join("")}</div>
