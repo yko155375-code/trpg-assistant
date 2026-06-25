@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "player-team-rpg-status-cards",
-  "commit": "ab1e550e3d6a624695739283595ed2b8aa05021f",
+  "commit": "c9764e2b4fece3428438f3903bb6a68757ce43cd",
   "sourceCommit": "ab1e550e3d6a624695739283595ed2b8aa05021f",
-  "versionCommit": "ab1e550e3d6a624695739283595ed2b8aa05021f",
+  "versionCommit": "c9764e2b4fece3428438f3903bb6a68757ce43cd",
   "updatedAt": "2026-06-26T00:46:51+08:00",
   "note": "Render player team status as RPG party status cards."
 }
