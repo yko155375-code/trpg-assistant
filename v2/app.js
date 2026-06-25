@@ -220,6 +220,7 @@ function safeRender() {
 }
 function blurNear(element) { const input = element.closest?.(".dice-panel")?.querySelector("[data-roll-formula]"); if (input && document.activeElement === input) input.blur(); }
 function rollD6() { return Math.floor(Math.random() * 6) + 1; }
+function cancelPendingDeleteCharacter() { const hadPending = Boolean(pendingDeleteCharacterId); pendingDeleteCharacterId = ""; return hadPending; }
 function applyEdge(roll, mode) { if (!EDGE_MODES.has(mode)) return roll; const die = rollD6(); const baseTotal = Number(roll.total) || 0; const finalTotal = mode === "advantage" ? baseTotal + die : baseTotal - die; return { ...roll, rollEdgeMode: mode, rollEdgeDie: die, baseTotal, total: finalTotal, edgeBreakdown: { mode, die, baseTotal, finalTotal }, note: mode === "advantage" ? "優勢骰 +1d6" : "劣勢骰 -1d6" }; }
 
 function inferMusicSourceType(url) { const value = String(url || "").trim().toLowerCase(); if (!value) return "unknown"; if (value.includes("youtube.com/") || value.includes("youtu.be/")) return "youtube"; if (/\.(mp3|ogg|wav)(\?|#|$)/i.test(value)) return "audio"; return "url"; }
@@ -242,8 +243,9 @@ app.addEventListener("click", (event) => {
   const edgeButton = event.target.closest("[data-roll-edge-mode]");
   if (edgeButton) { event.preventDefault(); blurNear(edgeButton); const synced = syncFormulaDraft(edgeButton); const selected = edgeButton.dataset.rollEdgeMode; const current = synced.ui?.rollEdgeMode; updateState({ ...synced, ui: { ...(synced.ui || {}), rollEdgeMode: current === selected ? "" : selected } }); return; }
   const actionButton = event.target.closest("[data-action]");
-  if (!actionButton) return;
+  if (!actionButton) { if (cancelPendingDeleteCharacter()) safeRender(); return; }
   event.preventDefault();
+  if (pendingDeleteCharacterId && actionButton.dataset.action !== "delete-character") pendingDeleteCharacterId = "";
   if (actionButton.dataset.action === "append-roll-token") { const input = actionButton.closest(".dice-panel")?.querySelector("[data-roll-formula]"); if (!input) return; input.value = appendFormulaToken(input.value, actionButton.dataset.rollToken); blurNear(actionButton); saveStateOnly(setFormulaDraft(state, actorKeyFromElement(input), input.value)); return; }
   if (actionButton.dataset.action === "roll-duality") return updateState(addRoll(syncFormulaDraft(actionButton), rollDuality({}), actionButton.dataset.rollActor || "玩家"));
   if (actionButton.dataset.action === "clear-rolls") return updateState(clearRolls(syncFormulaDraft(actionButton)));

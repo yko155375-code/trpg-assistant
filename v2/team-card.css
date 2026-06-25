@@ -570,6 +570,36 @@
   white-space: nowrap;
 }
 
+.character-danger-zone {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.24);
+  border-radius: 10px;
+  background: rgba(159, 52, 63, 0.1);
+}
+
+.character-danger-zone div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.character-danger-zone strong {
+  color: #ffe9e9;
+  font-size: 13px;
+}
+
+.character-danger-zone small {
+  min-width: 0;
+  color: #ffd8d8;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .character-delete-button.is-confirming {
   border-color: rgba(239, 68, 68, 0.84);
   background: rgba(159, 52, 63, 0.34);
@@ -867,6 +897,11 @@
   .character-delete-button {
     width: 100%;
     min-height: 34px;
+  }
+
+  .character-danger-zone {
+    grid-template-columns: 1fr;
+    gap: 7px;
   }
 
   .character-quick-section,
