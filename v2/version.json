@@ -1,9 +1,9 @@
 {
   "version": "v2",
   "label": "player-character-editor-mobile-polish",
-  "commit": "43ab46c8d0002a643b9cc9a89224ea550bd3d0cb",
+  "commit": "b3621c7e95e175ab8d732d8cafdb8f04053c1148",
   "sourceCommit": "16cd12909b2d974a75e4688638d2bd4e531928bb",
-  "versionCommit": "43ab46c8d0002a643b9cc9a89224ea550bd3d0cb",
-  "updatedAt": "2026-06-27T07:55:24+08:00",
+  "versionCommit": "b3621c7e95e175ab8d732d8cafdb8f04053c1148",
+  "updatedAt": "2026-06-27T07:57:40+08:00",
   "note": "Polish mobile character editor status controls."
 }
