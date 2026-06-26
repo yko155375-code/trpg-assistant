@@ -750,7 +750,7 @@
   position: fixed;
   right: 12px;
   bottom: max(84px, calc(84px + env(safe-area-inset-bottom)));
-  z-index: 42;
+  z-index: 44;
   min-width: 42px;
   min-height: 42px;
   padding: 8px 9px;
