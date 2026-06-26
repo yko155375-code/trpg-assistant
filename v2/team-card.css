@@ -654,6 +654,55 @@
   min-width: 0;
 }
 
+.character-limit-stepper-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.character-quick-money {
+  min-width: 0;
+}
+
+.character-quick-money .gold-stepper-group {
+  gap: 0;
+}
+
+.character-quick-money .gold-stepper-title {
+  display: none;
+}
+
+.character-quick-money .gold-stepper-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.character-quick-money .gold-stepper {
+  grid-template-columns: minmax(14px, 1fr) 24px minmax(28px, 40px) 24px;
+  gap: 2px;
+  padding: 4px;
+}
+
+.character-quick-money .gold-stepper span {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.character-quick-money .gold-stepper button {
+  width: 24px;
+  min-width: 24px;
+  height: 28px;
+}
+
+.character-quick-money .gold-stepper input {
+  height: 28px;
+  min-width: 0;
+  padding: 0 2px;
+  text-align: center;
+}
+
 .character-advanced-details {
   min-width: 0;
 }
@@ -700,7 +749,7 @@
 .team-status-float-button {
   position: fixed;
   right: 12px;
-  top: 42vh;
+  bottom: max(84px, calc(84px + env(safe-area-inset-bottom)));
   z-index: 42;
   min-width: 42px;
   min-height: 42px;
@@ -713,6 +762,12 @@
   font-weight: 800;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.34);
   touch-action: manipulation;
+}
+
+.team-status-float-button.is-open {
+  border-color: rgba(199, 164, 93, 0.58);
+  background: rgba(36, 31, 22, 0.96);
+  color: #fff8e8;
 }
 
 .team-status-drawer {
@@ -752,6 +807,15 @@
   font-size: 14px;
 }
 
+.team-status-drawer-head small {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .team-status-drawer-head button {
   min-height: 30px;
   padding: 4px 9px;
@@ -788,10 +852,34 @@
   background: rgba(255, 255, 255, 0.045);
 }
 
+.team-status-effect-toggle {
+  display: grid;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.team-status-effect-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.team-status-effect-toggle.is-active .team-status-effect-main {
+  border-color: rgba(199, 164, 93, 0.64);
+  background: rgba(199, 164, 93, 0.16);
+}
+
 .team-status-effect-main {
   display: grid;
   gap: 2px;
   min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
 }
 
 .team-status-effect-main strong {
@@ -934,6 +1022,11 @@
     height: 30px;
   }
 
+  .character-limit-stepper-grid {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
   .character-advanced-details > summary {
     width: 100%;
     justify-content: center;
@@ -979,6 +1072,10 @@
     grid-template-columns: 1fr;
   }
 
+  .character-quick-money .gold-stepper-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .gold-stepper {
     grid-template-columns: minmax(58px, 1fr) 36px minmax(48px, 60px) 36px;
     gap: 5px;
@@ -991,8 +1088,19 @@
     height: 36px;
   }
 
+  .character-quick-money .gold-stepper {
+    grid-template-columns: minmax(12px, 1fr) 24px minmax(26px, 36px) 24px;
+    gap: 2px;
+    padding: 4px 3px;
+  }
+
+  .character-quick-money .gold-stepper button {
+    width: 24px;
+    min-width: 24px;
+    height: 28px;
+  }
+
   .team-status-float-button {
-    top: auto;
     right: 12px;
     bottom: max(84px, calc(84px + env(safe-area-inset-bottom)));
   }

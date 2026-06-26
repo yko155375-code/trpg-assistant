@@ -386,7 +386,7 @@ export function renderAddCharacterForm() {
         <small class="character-avatar-help">可貼一般圖片網址或 Google Drive 分享連結。</small>
         ${renderAvatarPreview("", "新角色")}
       </label>
-      <button class="primary-button" type="submit">新增</button>
+      <button class="primary-button" type="submit">喚醒</button>
     </form>
   `;
 }
@@ -495,30 +495,31 @@ function getCustomStatusLabels(characters, effectType) {
   return [...customLabels].sort((left, right) => left.localeCompare(right, "zh-Hant"));
 }
 
-function renderStatusLookupItems(characters, effectType) {
+function renderStatusLookupItems(characters, effectType, currentCharacter) {
   const presetItems = statusEffectGroups[effectType] || [];
   const customItems = getCustomStatusLabels(characters, effectType).map((label) => ({ id: `custom-${label}`, label, description: "自訂狀態，尚未設定說明。" }));
   const items = [...presetItems, ...customItems];
   if (!items.length) return `<p class="team-status-empty">尚無狀態。</p>`;
   return items.map((effect) => {
     const holders = getStatusHolders(characters, effectType, effect.label);
+    const isCurrentActive = currentCharacter ? sortStatusLabels(effectType, currentCharacter[effectType]).includes(effect.label) : false;
     const holderText = holders.length
       ? holders.map((holder) => `<span class="team-status-holder" style="--character-color: ${escapeHtml(holder.color)}"><span class="team-status-holder-dot" aria-hidden="true"></span>${escapeHtml(holder.name)}</span>`).join("")
       : "無角色";
-    return `<article class="team-status-effect-row"><div class="team-status-effect-main"><strong>${escapeHtml(effect.label)}</strong><small>${escapeHtml(effect.description || getStatusDescription(effectType, effect.label) || "尚未設定說明。")}</small></div><span class="team-status-holders">${holderText}</span></article>`;
+    return `<article class="team-status-effect-row"><button class="team-status-effect-toggle ${isCurrentActive ? "is-active" : ""}" type="button" data-action="toggle-character-effect" data-character-id="${escapeHtml(currentCharacter?.id || "")}" data-effect-type="${effectType}" data-effect-label="${escapeHtml(effect.label)}" aria-pressed="${isCurrentActive}" ${currentCharacter ? "" : "disabled"}><span class="team-status-effect-main"><strong>${escapeHtml(effect.label)}</strong><small>${escapeHtml(effect.description || getStatusDescription(effectType, effect.label) || "尚未設定說明。")}</small></span></button><span class="team-status-holders">${holderText}</span></article>`;
   }).join("");
 }
 
-function renderStatusLookupSection(characters, effectType, title) {
-  return `<section class="team-status-section"><h4>${title}</h4><div class="team-status-effect-list">${renderStatusLookupItems(characters, effectType)}</div></section>`;
+function renderStatusLookupSection(characters, currentCharacter, effectType, title) {
+  return `<section class="team-status-section"><h4>${title}</h4><div class="team-status-effect-list">${renderStatusLookupItems(characters, effectType, currentCharacter)}</div></section>`;
 }
 
-function renderTeamStatusDrawer(characters, isOpen) {
+function renderTeamStatusDrawer(characters, currentCharacter, isOpen) {
   return `
-    <button class="team-status-float-button" type="button" data-action="toggle-team-status" aria-expanded="${Boolean(isOpen)}" aria-controls="team-status-drawer">狀態</button>
+    <button class="team-status-float-button ${isOpen ? "is-open" : ""}" type="button" data-action="toggle-team-status" aria-expanded="${Boolean(isOpen)}" aria-controls="team-status-drawer">${isOpen ? "關閉狀態列" : "狀態"}</button>
     <aside id="team-status-drawer" class="team-status-drawer ${isOpen ? "is-open" : ""}" aria-label="狀態效果查詢" aria-hidden="${isOpen ? "false" : "true"}">
-      <div class="team-status-drawer-head"><h3>狀態效果</h3><button type="button" data-action="toggle-team-status" aria-label="關閉狀態效果查詢">關閉</button></div>
-      <div class="team-status-list">${renderStatusLookupSection(characters, "buffs", "增益")}${renderStatusLookupSection(characters, "debuffs", "負面")}</div>
+      <div class="team-status-drawer-head"><h3>狀態效果</h3><small>${currentCharacter ? `點選套用到 ${escapeHtml(currentCharacter.name)}` : "尚無目前角色"}</small></div>
+      <div class="team-status-list">${renderStatusLookupSection(characters, currentCharacter, "buffs", "增益")}${renderStatusLookupSection(characters, currentCharacter, "debuffs", "負面")}</div>
     </aside>
   `;
 }
@@ -540,6 +541,7 @@ function renderTeamCharacterDetails(character, title = "角色詳細") {
 }
 
 function renderPriorityStatEditor(character) {
+  const priorityStatFields = statFields.filter((field) => !["maxHp", "maxStress", "maxShield"].includes(field.key));
   return `
     <section class="character-quick-section" aria-label="常用狀態">
       <div class="character-quick-title">
@@ -547,20 +549,23 @@ function renderPriorityStatEditor(character) {
         <small>跑團中常調整的數值</small>
       </div>
       <div class="stepper-grid character-priority-stepper-grid">
-        ${statFields.map((field) => renderStepper({ characterId: character.id, type: "stat", field: field.key, label: field.label, value: character.stats[field.key] })).join("")}
+        ${priorityStatFields.map((field) => renderStepper({ characterId: character.id, type: "stat", field: field.key, label: field.label, value: character.stats[field.key] })).join("")}
       </div>
-      ${renderGoldStepper(character)}
+      <div class="character-quick-money">${renderGoldStepper(character)}</div>
     </section>
   `;
 }
 
 function renderCharacterAdvancedEditor(character) {
   const isDeleteConfirming = character.pendingDeleteId === character.id;
+  const limitStatFields = statFields.filter((field) => ["maxHp", "maxStress", "maxShield"].includes(field.key));
   return `
     <div class="character-advanced-content">
       <label class="form-field form-field-full"><span>角色名稱</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="name" type="text" value="${escapeHtml(character.name)}" /></label>
       <label class="form-field form-field-full character-color-editor"><span>角色顏色</span><select data-character-id="${escapeHtml(character.id)}" data-character-field="color">${characterColorOptions.map((option) => `<option value="${option.value}" ${character.color === option.value ? "selected" : ""}>${option.label}</option>`).join("")}</select></label>
       <label class="form-field form-field-full character-avatar-editor" data-avatar-preview-field><span>頭像圖片網址</span><input data-character-id="${escapeHtml(character.id)}" data-character-field="avatarUrl" data-avatar-url-input type="url" inputmode="url" value="${escapeHtml(character.avatarUrl)}" placeholder="https://…" autocomplete="url" /><small class="character-avatar-help">可貼一般圖片網址或 Google Drive 分享連結。</small>${renderAvatarPreview(character.avatarUrl, character.name)}</label>
+      <h4>上限設定</h4>
+      <div class="stepper-grid character-limit-stepper-grid">${limitStatFields.map((field) => renderStepper({ characterId: character.id, type: "stat", field: field.key, label: field.label, value: character.stats[field.key] })).join("")}</div>
       <h4>屬性</h4>
       <div class="stepper-grid attribute-stepper-grid">${attributeFields.map((field) => renderStepper({ characterId: character.id, type: "attribute", field: field.key, label: field.label, value: character.attributes[field.key] })).join("")}</div>
       <div class="effect-grid">${renderEffectEditor(character, "buffs", "增益")}${renderEffectEditor(character, "debuffs", "負面")}</div>
@@ -677,7 +682,7 @@ export function renderTeamStatusPage(state) {
         ${expandedCharacter ? renderTeamCharacterDetails(expandedCharacter, "角色詳細編輯") : ""}
         <section class="team-add-panel">${renderAddCharacterForm()}</section>
       </div>
-      ${renderTeamStatusDrawer(characters, state.ui.isTeamStatusOpen)}
+      ${renderTeamStatusDrawer(characters, current, state.ui.isTeamStatusOpen)}
     </div>
   `;
 }
