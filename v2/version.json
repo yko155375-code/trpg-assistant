@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-character-delete-advanced-reset",
-  "commit": "c832dee27e315baf0cab82674552be346d54afe0",
-  "sourceCommit": "f5ac917e908cbe738a1e40cb193cfdf581788a8e",
-  "versionCommit": "c832dee27e315baf0cab82674552be346d54afe0",
-  "updatedAt": "2026-06-26T06:58:41+08:00",
-  "note": "Move character delete confirmation into advanced settings."
+  "label": "player-character-editor-mobile-polish",
+  "commit": "45a02d481a2e418470184ac4ce707d7b361459c4",
+  "sourceCommit": "16cd12909b2d974a75e4688638d2bd4e531928bb",
+  "versionCommit": "45a02d481a2e418470184ac4ce707d7b361459c4",
+  "updatedAt": "2026-06-27T07:53:58+08:00",
+  "note": "Polish mobile character editor status controls."
 }
