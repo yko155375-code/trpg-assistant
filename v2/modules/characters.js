@@ -517,7 +517,7 @@ function renderStatusLookupSection(characters, currentCharacter, effectType, tit
 function renderTeamStatusDrawer(characters, currentCharacter, isOpen) {
   return `
     <button class="team-status-float-button ${isOpen ? "is-open" : ""}" type="button" data-action="toggle-team-status" aria-expanded="${Boolean(isOpen)}" aria-controls="team-status-drawer">${isOpen ? "關閉" : "狀態"}</button>
-    <aside id="team-status-drawer" class="team-status-drawer ${isOpen ? "is-open" : ""}" aria-label="狀態效果查詢" aria-hidden="${isOpen ? "false" : "true"}">
+    <aside id="team-status-drawer" class="team-status-drawer ${isOpen ? "is-open" : ""}" aria-label="狀態效果查詢" aria-hidden="${isOpen ? "false" : "true"}" data-lookup-ready="true">
       <div class="team-status-drawer-head"><h3>狀態效果</h3><small>${currentCharacter ? `點選套用到 ${escapeHtml(currentCharacter.name)}` : "尚無目前角色"}</small></div>
       <div class="team-status-list">${renderStatusLookupSection(characters, currentCharacter, "buffs", "增益")}${renderStatusLookupSection(characters, currentCharacter, "debuffs", "負面")}</div>
     </aside>
