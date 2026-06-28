@@ -216,7 +216,7 @@ function renderCurrentCharacterBar() {
   return `<section class="player-current-character-bar" aria-label="目前角色"><div class="player-current-character-avatar ${avatarUrl ? "has-image" : ""}" aria-label="${escapeHtml(current.name)}頭像"><span aria-hidden="true">${escapeHtml(getCharacterInitial(current.name))}</span>${avatarUrl ? `<img data-character-avatar src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(current.name)}頭像" />` : ""}</div><div class="player-current-character-main"><label class="player-current-character-select"><span>目前角色</span><select data-character-select aria-label="切換目前角色">${characters.map((character) => `<option value="${escapeHtml(character.id)}" ${character.id === current.id ? "selected" : ""}>${escapeHtml(character.name)}</option>`).join("")}</select></label><div class="player-current-character-stats" aria-label="${escapeHtml(current.name)}目前狀態"><span><b>HP</b> ${current.stats.hp}/${current.stats.maxHp}</span><span><b>壓</b> ${current.stats.stress}/${current.stats.maxStress}</span><span><b>希</b> ${current.stats.hope}/6</span><span><b>盾</b> ${current.stats.shield}/${current.stats.maxShield}</span></div></div></section>`;
 }
 function renderOpeningEntry() {
-  return `<section class="opening-entry-overlay"><video class="opening-entry-video" data-opening-video src="${OPENING_VIDEO_URL}" autoplay muted playsinline preload="auto"></video></section>`;
+  return `<section class="opening-entry-overlay"><video class="opening-entry-video" data-opening-video src="${OPENING_VIDEO_URL}" autoplay muted playsinline preload="auto"></video><button class="opening-entry-play" type="button" data-opening-play hidden>播放開場</button></section>`;
 }
 function finishOpeningEntry(reason = "") {
   if (!isOpeningVisible) return;
@@ -235,6 +235,7 @@ function bindOpeningVideo() {
   const video = app.querySelector("[data-opening-video]");
   if (!video || video.dataset.openingBound === "true") return;
   video.dataset.openingBound = "true";
+  const playButton = app.querySelector("[data-opening-play]");
   let failed = false;
   const clearFallback = () => {
     if (openingFallbackTimer) {
@@ -242,19 +243,37 @@ function bindOpeningVideo() {
       openingFallbackTimer = null;
     }
   };
+  const showManualStart = (reason) => {
+    if (reason) console.warn(`[TRPG v2 opening] ${reason}`);
+    clearFallback();
+    video.controls = true;
+    if (playButton) playButton.hidden = false;
+  };
   const failOpen = (reason) => {
     if (failed) return;
     failed = true;
     finishOpeningEntry(reason);
   };
-  openingFallbackTimer = window.setTimeout(() => failOpen("opening video did not start within 3 seconds"), 3000);
-  video.addEventListener("playing", clearFallback, { once: true });
+  const startVideo = () => {
+    video.muted = true;
+    const playResult = video.play();
+    if (playResult && typeof playResult.catch === "function") {
+      playResult.catch(() => showManualStart("opening video autoplay was blocked"));
+    }
+  };
+  openingFallbackTimer = window.setTimeout(() => showManualStart("opening video did not start within 10 seconds"), 10000);
+  video.addEventListener("playing", () => {
+    clearFallback();
+    video.controls = false;
+    if (playButton) playButton.hidden = true;
+  });
   video.addEventListener("ended", () => finishOpeningEntry(), { once: true });
   video.addEventListener("error", () => failOpen("opening video failed to load"), { once: true });
-  const playResult = video.play();
-  if (playResult && typeof playResult.catch === "function") {
-    playResult.catch(() => failOpen("opening video autoplay was blocked"));
-  }
+  playButton?.addEventListener("click", (event) => {
+    event.preventDefault();
+    startVideo();
+  });
+  startVideo();
 }
 function renderDmMobileNav(pages) { const active = pages.find((page) => page.id === getActivePageId(state)) || pages[0]; return `<div class="dm-mobile-nav"><button class="dm-menu-button" type="button" data-dm-menu-toggle aria-expanded="${isDmMenuOpen}"><span aria-hidden="true">☰</span><span>DM 選單</span></button><strong>${escapeHtml(active.label)}</strong></div><nav id="dm-mobile-menu" class="dm-mobile-menu ${isDmMenuOpen ? "is-open" : ""}" aria-label="DM 手機選單">${pages.map((page) => renderPageButton(page, "dm-mobile-menu-button")).join("")}</nav>`; }
 function render() {
