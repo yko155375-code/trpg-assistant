@@ -307,6 +307,36 @@ function normalizeIntroImages(introImages, fallbackIntroImages) {
   };
 }
 
+export function normalizePlayerBackgroundImageUrl(value) {
+  const trimmed = typeof value === "string" ? value.trim().slice(0, 2048) : "";
+  const driveId = getDriveFileId(trimmed);
+  return driveId ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(driveId)}&sz=w1600` : trimmed;
+}
+
+function normalizePlayerBackgroundImage(image, index) {
+  const source = recordOrEmpty(image);
+  const originalUrl = String(source.originalUrl || source.url || "").trim().slice(0, 2048);
+  const url = normalizePlayerBackgroundImageUrl(source.url || originalUrl);
+  return {
+    ...source,
+    id: String(source.id || `player-background-image-${index}`),
+    title: String(source.title || source.name || "").trim() || "未命名背景圖片",
+    url,
+    originalUrl,
+    notes: String(source.notes || "").trim(),
+    createdAt: String(source.createdAt || ""),
+  };
+}
+
+function normalizePlayerBackgroundImages(playerBackgroundImages, fallbackPlayerBackgroundImages) {
+  const source = recordOrEmpty(playerBackgroundImages);
+  return {
+    ...fallbackPlayerBackgroundImages,
+    ...source,
+    images: recordArray(source.images).map(normalizePlayerBackgroundImage).filter((image) => image.url),
+  };
+}
+
 function normalizeCompatibleShop(shop, fallbackShop) {
   const source = recordOrEmpty(shop);
   const legacy = normalizeShop({
@@ -422,6 +452,9 @@ export function createDefaultState() {
     introImages: {
       images: [],
     },
+    playerBackgroundImages: {
+      images: [],
+    },
     ui: {
       mode: "player",
       currentCharacterId: null,
@@ -444,6 +477,7 @@ export function normalizeState(input) {
   const sourceSession = recordOrEmpty(source.session);
   const sourceAudio = recordOrEmpty(source.audio);
   const sourceIntroImages = recordOrEmpty(source.introImages);
+  const sourcePlayerBackgroundImages = recordOrEmpty(source.playerBackgroundImages);
   const sourceUi = recordOrEmpty(source.ui);
   const sourceShop = recordOrEmpty(source.shop);
   const sourceCharacters = recordArray(source.characters);
@@ -475,6 +509,7 @@ export function normalizeState(input) {
     rolls: recordArray(source.rolls),
     audio: normalizeAudio(sourceAudio, fallback.audio),
     introImages: normalizeIntroImages(sourceIntroImages, fallback.introImages),
+    playerBackgroundImages: normalizePlayerBackgroundImages(sourcePlayerBackgroundImages, fallback.playerBackgroundImages),
     ui: {
       ...fallback.ui,
       ...sourceUi,

@@ -161,6 +161,78 @@ function renderDmIntroImagesManager(state) {
   `;
 }
 
+function getPlayerBackgroundImages(state) {
+  return Array.isArray(state.playerBackgroundImages?.images) ? state.playerBackgroundImages.images : [];
+}
+
+function getPlayerBackgroundImageSourceLabel(image) {
+  const source = normalizeUrl(image.originalUrl || image.url).toLowerCase();
+  if (source.includes("drive.google.com")) return "Google Drive";
+  if (/\.(jpg|jpeg|png|webp|gif)(\?|#|$)/i.test(source)) return "圖片 URL";
+  return "URL";
+}
+
+function renderPlayerBackgroundImageCard(image) {
+  const title = escapeHtml(image.title || "未命名玩家背景圖片");
+  const sourceLabel = getPlayerBackgroundImageSourceLabel(image);
+  const displayUrl = normalizeUrl(image.originalUrl || image.url);
+  return `
+    <article class="player-background-card">
+      <div class="player-background-preview" data-player-background-preview>
+        <span data-player-background-message>圖片預覽</span>
+        <img data-player-background-img src="${escapeHtml(image.url)}" alt="${title}" loading="lazy" />
+      </div>
+      <div class="player-background-body">
+        <div class="player-background-title-row">
+          <strong>${title}</strong>
+          <span class="player-background-source-badge">${escapeHtml(sourceLabel)}</span>
+        </div>
+        <span class="player-background-url">${escapeHtml(displayUrl)}</span>
+        ${image.notes ? `<p class="player-background-notes">${escapeHtml(image.notes)}</p>` : ""}
+      </div>
+      <button class="danger-button player-background-delete-button" type="button" data-action="delete-player-background-image" data-player-background-image-id="${escapeHtml(image.id)}">刪除</button>
+    </article>
+  `;
+}
+
+function renderDmPlayerBackgroundImagesManager(state) {
+  const images = getPlayerBackgroundImages(state);
+  return `
+    <section class="player-background-manager" aria-label="玩家背景圖片">
+      <div class="player-background-heading">
+        <div>
+          <p class="eyebrow">玩家背景</p>
+          <h3>玩家背景圖片</h3>
+        </div>
+        <p>支援 Google Drive 圖片分享連結，會嘗試轉成較大的 thumbnail URL。</p>
+      </div>
+      <form class="player-background-add-form" data-add-player-background-image-form>
+        <label class="form-field">
+          <span>圖片名稱</span>
+          <input data-new-player-background-title type="text" placeholder="懸賞單或任務名稱" autocomplete="off" />
+        </label>
+        <label class="form-field player-background-url-field">
+          <span>圖片網址</span>
+          <input data-new-player-background-url type="url" placeholder="圖片 URL 或 Google Drive 分享連結" autocomplete="off" />
+        </label>
+        <label class="form-field player-background-notes-field">
+          <span>備註 optional</span>
+          <input data-new-player-background-notes type="text" placeholder="簡短備註" autocomplete="off" />
+        </label>
+        <button class="player-background-add-button" type="button" data-action="add-player-background-image">新增</button>
+      </form>
+      ${state.ui?.playerBackgroundImageMessage ? `<p class="player-background-message">${escapeHtml(state.ui.playerBackgroundImageMessage)}</p>` : ""}
+      <div class="player-background-grid" aria-label="玩家背景圖片清單">
+        ${
+          images.length
+            ? images.map(renderPlayerBackgroundImageCard).join("")
+            : `<p class="empty-hint">尚未新增玩家背景圖片。</p>`
+        }
+      </div>
+    </section>
+  `;
+}
+
 function renderMusicPlayer(track) {
   if (!track) {
     return `
@@ -668,7 +740,7 @@ export function renderDmPage(pageId, state) {
           <h2 id="active-page-title">音樂</h2>
           <p class="placeholder">貼上 YouTube 或直接音訊 URL，建立跑團場景音樂清單。</p>
         </div>
-        ${renderDmIntroImagesManager(state)}
+        ${renderDmPlayerBackgroundImagesManager(state)}
         ${renderDmAudioManager(state)}
       </section>
     `;

@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-opening-hardcoded-video",
+  "label": "player-background-wanted-posters",
   "commit": "315db88b95db8bd14e9ff17522082b5193acf108",
   "sourceCommit": "315db88b95db8bd14e9ff17522082b5193acf108",
   "versionCommit": "315db88b95db8bd14e9ff17522082b5193acf108",
-  "updatedAt": "2026-06-28T17:06:29+08:00",
-  "note": "Use the built-in opening video before entering the player view."
+  "updatedAt": "2026-06-28T18:17:50+08:00",
+  "note": "Add DM-managed player background wanted posters."
 }

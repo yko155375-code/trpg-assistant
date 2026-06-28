@@ -36,7 +36,7 @@ import { renderPlayerPage } from "./modules/player-view.js?v=p0-module-cache-bus
 import { updatePublicInfoField } from "./modules/public-info.js?v=p0-module-cache-bust";
 import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=p0-module-cache-bust";
 import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=p0-module-cache-bust";
-import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizeState } from "./modules/state.js?v=p0-module-cache-bust";
+import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=p0-module-cache-bust";
 import { saveState, STORAGE_KEY } from "./modules/storage.js?v=p0-module-cache-bust";
 
 const app = document.querySelector("#app");
@@ -300,6 +300,49 @@ function deleteIntroImage(nextState, imageId) {
   return withIntroImageMessage({ ...nextState, introImages: { ...(nextState.introImages || {}), images: images.filter((image) => image.id !== imageId) } }, "已刪除開頭圖片。");
 }
 
+function getPlayerBackgroundImages(nextState) {
+  return Array.isArray(nextState.playerBackgroundImages?.images) ? nextState.playerBackgroundImages.images : [];
+}
+function withPlayerBackgroundImageMessage(nextState, message) {
+  return { ...nextState, ui: { ...(nextState.ui || {}), playerBackgroundImageMessage: message } };
+}
+function addPlayerBackgroundImage(nextState, values) {
+  const originalUrl = String(values.url || "").trim();
+  if (!originalUrl) return withPlayerBackgroundImageMessage(nextState, "請先輸入玩家背景圖片網址。");
+  const title = String(values.title || "").trim() || "未命名玩家背景圖片";
+  const image = {
+    id: `player-background-image-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title,
+    url: normalizePlayerBackgroundImageUrl(originalUrl),
+    originalUrl,
+    notes: String(values.notes || "").trim(),
+    createdAt: new Date().toISOString(),
+  };
+  return withPlayerBackgroundImageMessage(
+    {
+      ...nextState,
+      playerBackgroundImages: {
+        ...(nextState.playerBackgroundImages || {}),
+        images: [...getPlayerBackgroundImages(nextState), image],
+      },
+    },
+    `已新增玩家背景圖片：${title}`,
+  );
+}
+function deletePlayerBackgroundImage(nextState, imageId) {
+  const images = getPlayerBackgroundImages(nextState);
+  return withPlayerBackgroundImageMessage(
+    {
+      ...nextState,
+      playerBackgroundImages: {
+        ...(nextState.playerBackgroundImages || {}),
+        images: images.filter((image) => image.id !== imageId),
+      },
+    },
+    "已刪除玩家背景圖片。",
+  );
+}
+
 if (!bootFailed) {
 try {
 app.addEventListener("click", (event) => {
@@ -339,6 +382,15 @@ app.addEventListener("click", (event) => {
   if (actionButton.dataset.action === "reset-monster-round" && confirm("確定要重設怪物回合？")) return updateState(resetMonsterRound(state));
   if (actionButton.dataset.action === "load-encounter-replace" && confirm("載入後會清空目前怪物，確定嗎？")) return updateState(loadEncounter(state, actionButton.dataset.encounterId, "replace"));
   if (actionButton.dataset.action === "load-encounter-append") return updateState(loadEncounter(state, actionButton.dataset.encounterId, "append"));
+  if (actionButton.dataset.action === "add-player-background-image") {
+    const form = actionButton.closest("[data-add-player-background-image-form]");
+    return updateState(addPlayerBackgroundImage(state, {
+      title: form?.querySelector("[data-new-player-background-title]")?.value || "",
+      url: form?.querySelector("[data-new-player-background-url]")?.value || "",
+      notes: form?.querySelector("[data-new-player-background-notes]")?.value || "",
+    }));
+  }
+  if (actionButton.dataset.action === "delete-player-background-image") return updateState(deletePlayerBackgroundImage(state, actionButton.dataset.playerBackgroundImageId));
   if (actionButton.dataset.action === "delete-intro-image") return updateState(deleteIntroImage(state, actionButton.dataset.introImageId));
   if (actionButton.dataset.action === "play-music-track") return updateState(playMusicTrack(state, actionButton.dataset.trackId));
   if (actionButton.dataset.action === "stop-music-track") return updateState(stopMusicTrack(state, actionButton.dataset.trackId));
@@ -391,6 +443,20 @@ app.addEventListener("error", (event) => {
     if (message) message.textContent = "無法載入圖片";
     return;
   }
+  const playerBackgroundImage = event.target.closest?.("[data-player-background-img]");
+  if (playerBackgroundImage) {
+    playerBackgroundImage.hidden = true;
+    const preview = playerBackgroundImage.closest("[data-player-background-preview]");
+    preview?.classList.add("is-broken");
+    const message = preview?.querySelector("[data-player-background-message]");
+    if (message) message.textContent = "圖片無法載入";
+    return;
+  }
+  const playerBackgroundPoster = event.target.closest?.("[data-player-background-poster-img]");
+  if (playerBackgroundPoster) {
+    playerBackgroundPoster.closest(".player-background-poster")?.remove();
+    return;
+  }
   const previewImage = event.target.closest?.("[data-avatar-preview-img]");
   if (previewImage) {
     previewImage.hidden = true;
@@ -422,6 +488,7 @@ app.addEventListener("submit", (event) => {
   const addShopItemForm = event.target.closest("[data-add-shop-item-form]"); if (addShopItemForm) { event.preventDefault(); return updateState(addShopItem(state, { name: addShopItemForm.querySelector("[data-new-shop-name]")?.value.trim() || "", type: addShopItemForm.querySelector("[data-new-shop-type]")?.value || "", price: addShopItemForm.querySelector("[data-new-shop-price]")?.value || 0, stock: addShopItemForm.querySelector("[data-new-shop-stock]")?.value || 0, description: addShopItemForm.querySelector("[data-new-shop-description]")?.value || "" })); }
   const addMonsterForm = event.target.closest("[data-add-monster-form]"); if (addMonsterForm) { event.preventDefault(); const values = Object.fromEntries(Array.from(addMonsterForm.querySelectorAll("[data-new-monster-field]")).map((input) => [input.dataset.newMonsterField, input.value])); return updateState(addMonster(state, values)); }
   const saveEncounterForm = event.target.closest("[data-save-encounter-form]"); if (saveEncounterForm) { event.preventDefault(); return updateState(saveCurrentEncounter(state, saveEncounterForm.querySelector("[data-encounter-name]")?.value || "")); }
+  const addPlayerBackgroundImageForm = event.target.closest("[data-add-player-background-image-form]"); if (addPlayerBackgroundImageForm) { event.preventDefault(); return updateState(addPlayerBackgroundImage(state, { title: addPlayerBackgroundImageForm.querySelector("[data-new-player-background-title]")?.value || "", url: addPlayerBackgroundImageForm.querySelector("[data-new-player-background-url]")?.value || "", notes: addPlayerBackgroundImageForm.querySelector("[data-new-player-background-notes]")?.value || "" })); }
   const addIntroImageForm = event.target.closest("[data-add-intro-image-form]"); if (addIntroImageForm) { event.preventDefault(); return updateState(addIntroImage(state, { title: addIntroImageForm.querySelector("[data-new-intro-image-title]")?.value || "", url: addIntroImageForm.querySelector("[data-new-intro-image-url]")?.value || "", notes: addIntroImageForm.querySelector("[data-new-intro-image-notes]")?.value || "" })); }
   const addMusicForm = event.target.closest("[data-add-music-form]"); if (addMusicForm) { event.preventDefault(); return updateState(addMusicTrack(state, { title: addMusicForm.querySelector("[data-new-music-title]")?.value || "", url: addMusicForm.querySelector("[data-new-music-url]")?.value || "", scene: addMusicForm.querySelector("[data-new-music-scene]")?.value || "", notes: addMusicForm.querySelector("[data-new-music-notes]")?.value || "" })); }
 });

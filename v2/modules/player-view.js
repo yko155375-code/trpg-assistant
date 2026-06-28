@@ -32,6 +32,44 @@ const pageContent = {
 };
 
 export function renderPlayerPage(pageId, state) {
+  return `${renderPlayerBackgroundLayer(state)}${renderPlayerPageContent(pageId, state)}`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function getPlayerBackgroundImages(state) {
+  return Array.isArray(state.playerBackgroundImages?.images)
+    ? state.playerBackgroundImages.images.filter((image) => typeof image.url === "string" && image.url.trim()).slice(0, 12)
+    : [];
+}
+
+function renderPlayerBackgroundLayer(state) {
+  const images = getPlayerBackgroundImages(state);
+  if (!images.length) return "";
+  return `
+    <div class="player-background-poster-layer" aria-hidden="true">
+      ${images
+        .map(
+          (image) => `
+            <figure class="player-background-poster">
+              <img data-player-background-poster-img src="${escapeHtml(image.url)}" alt="" loading="lazy" decoding="async" />
+              <figcaption>${escapeHtml(image.title || "任務公告")}</figcaption>
+            </figure>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderPlayerPageContent(pageId, state) {
   const page = pageContent[pageId] || pageContent.characters;
   const characterCount = Array.isArray(state.characters) ? state.characters.length : 0;
   const currentCharacter = getCurrentCharacter(state);
