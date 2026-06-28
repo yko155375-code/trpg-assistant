@@ -42,11 +42,13 @@ import { saveState, STORAGE_KEY } from "./modules/storage.js?v=p0-module-cache-b
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
 const VERSION_LABEL = "p0-module-cache-bust";
+const OPENING_VIDEO_URL = "./assets/intro/opening.mp4";
 const isSafeMode = new URLSearchParams(window.location.search).get("safe") === "1";
 let state = null;
 let isDmMenuOpen = false;
 let isOpeningVisible = !isSafeMode;
 let pendingDeleteCharacterId = "";
+let openingFallbackTimer = null;
 let bootFailed = false;
 let bootPhase = "start";
 let bootRawState = null;
@@ -214,11 +216,52 @@ function renderCurrentCharacterBar() {
   return `<section class="player-current-character-bar" aria-label="目前角色"><div class="player-current-character-avatar ${avatarUrl ? "has-image" : ""}" aria-label="${escapeHtml(current.name)}頭像"><span aria-hidden="true">${escapeHtml(getCharacterInitial(current.name))}</span>${avatarUrl ? `<img data-character-avatar src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(current.name)}頭像" />` : ""}</div><div class="player-current-character-main"><label class="player-current-character-select"><span>目前角色</span><select data-character-select aria-label="切換目前角色">${characters.map((character) => `<option value="${escapeHtml(character.id)}" ${character.id === current.id ? "selected" : ""}>${escapeHtml(character.name)}</option>`).join("")}</select></label><div class="player-current-character-stats" aria-label="${escapeHtml(current.name)}目前狀態"><span><b>HP</b> ${current.stats.hp}/${current.stats.maxHp}</span><span><b>壓</b> ${current.stats.stress}/${current.stats.maxStress}</span><span><b>希</b> ${current.stats.hope}/6</span><span><b>盾</b> ${current.stats.shield}/${current.stats.maxShield}</span></div></div></section>`;
 }
 function renderOpeningEntry() {
-  const images = Array.isArray(state.introImages?.images) ? state.introImages.images.filter((image) => isRenderableAvatarUrl(image.url)).slice(0, 6) : [];
-  return `<section class="opening-entry-overlay" aria-label="開場入口" role="dialog" aria-modal="true"><div class="opening-entry-panel"><div class="opening-entry-copy"><p class="eyebrow">團錄開場</p><h2>TRPG Assistant</h2><p>整理桌面、攤開地圖，準備進入今天的冒險。</p></div>${images.length ? `<div class="opening-entry-images" aria-label="開頭圖片預覽">${images.map((image) => `<div class="opening-entry-thumb"><span>${escapeHtml(image.title || "開頭圖片")}</span><img data-opening-image src="${escapeHtml(image.url)}" alt="${escapeHtml(image.title || "開頭圖片")}" loading="lazy" /></div>`).join("")}</div>` : `<div class="opening-entry-mark" aria-hidden="true">✦</div>`}<button class="opening-entry-button" type="button" data-opening-enter>進入冒險</button></div></section>`;
+  return `<section class="opening-entry-overlay"><video class="opening-entry-video" data-opening-video src="${OPENING_VIDEO_URL}" autoplay muted playsinline preload="auto"></video></section>`;
+}
+function finishOpeningEntry(reason = "") {
+  if (!isOpeningVisible) return;
+  if (openingFallbackTimer) {
+    window.clearTimeout(openingFallbackTimer);
+    openingFallbackTimer = null;
+  }
+  if (reason) console.warn(`[TRPG v2 opening] ${reason}`);
+  isOpeningVisible = false;
+  isDmMenuOpen = false;
+  pendingDeleteCharacterId = "";
+  const playerState = setMode(syncFormulaDraft(app), "player");
+  updateState({ ...playerState, ui: { ...(playerState.ui || {}), playerPage: "characters" } });
+}
+function bindOpeningVideo() {
+  const video = app.querySelector("[data-opening-video]");
+  if (!video || video.dataset.openingBound === "true") return;
+  video.dataset.openingBound = "true";
+  let failed = false;
+  const clearFallback = () => {
+    if (openingFallbackTimer) {
+      window.clearTimeout(openingFallbackTimer);
+      openingFallbackTimer = null;
+    }
+  };
+  const failOpen = (reason) => {
+    if (failed) return;
+    failed = true;
+    finishOpeningEntry(reason);
+  };
+  openingFallbackTimer = window.setTimeout(() => failOpen("opening video did not start within 3 seconds"), 3000);
+  video.addEventListener("playing", clearFallback, { once: true });
+  video.addEventListener("ended", () => finishOpeningEntry(), { once: true });
+  video.addEventListener("error", () => failOpen("opening video failed to load"), { once: true });
+  const playResult = video.play();
+  if (playResult && typeof playResult.catch === "function") {
+    playResult.catch(() => failOpen("opening video autoplay was blocked"));
+  }
 }
 function renderDmMobileNav(pages) { const active = pages.find((page) => page.id === getActivePageId(state)) || pages[0]; return `<div class="dm-mobile-nav"><button class="dm-menu-button" type="button" data-dm-menu-toggle aria-expanded="${isDmMenuOpen}"><span aria-hidden="true">☰</span><span>DM 選單</span></button><strong>${escapeHtml(active.label)}</strong></div><nav id="dm-mobile-menu" class="dm-mobile-menu ${isDmMenuOpen ? "is-open" : ""}" aria-label="DM 手機選單">${pages.map((page) => renderPageButton(page, "dm-mobile-menu-button")).join("")}</nav>`; }
-function render() { const pages = getActivePages(state.ui.mode); const isPlayer = state.ui.mode === "player"; app.innerHTML = `${isSafeMode ? `<aside class="safe-mode-banner">安全模式：目前未讀取舊本機資料</aside>` : ""}<header class="app-header"><div class="brand-block"><p class="eyebrow">TRPG Assistant</p><h1 class="app-title">v2</h1><p class="app-subtitle">HTML / CSS / 原生 JS / ES Modules / localStorage</p></div><nav class="mode-switch" aria-label="模式切換">${renderModeButton("player", "玩家")}${renderModeButton("dm", "DM")}</nav></header><main class="layout ${isPlayer ? "is-player" : "is-dm"}">${isPlayer ? `<nav class="tab-list player-bottom-tabs" aria-label="玩家分頁">${pages.map((page) => renderPageButton(page, "tab-button")).join("")}</nav>` : renderDmMobileNav(pages)}<nav class="sidebar-list" aria-label="DM 分頁">${pages.map((page) => renderPageButton(page, "sidebar-button")).join("")}</nav>${isPlayer ? renderCurrentCharacterBar() : ""}${renderPanel()}</main>${isOpeningVisible ? renderOpeningEntry() : ""}`; }
+function render() {
+  const pages = getActivePages(state.ui.mode); const isPlayer = state.ui.mode === "player";
+  app.innerHTML = `${isSafeMode ? `<aside class="safe-mode-banner">安全模式：目前未讀取舊本機資料</aside>` : ""}<header class="app-header"><div class="brand-block"><p class="eyebrow">TRPG Assistant</p><h1 class="app-title">v2</h1><p class="app-subtitle">HTML / CSS / 原生 JS / ES Modules / localStorage</p></div><nav class="mode-switch" aria-label="模式切換">${renderModeButton("player", "玩家")}${renderModeButton("dm", "DM")}</nav></header><main class="layout ${isPlayer ? "is-player" : "is-dm"}">${isPlayer ? `<nav class="tab-list player-bottom-tabs" aria-label="玩家分頁">${pages.map((page) => renderPageButton(page, "tab-button")).join("")}</nav>` : renderDmMobileNav(pages)}<nav class="sidebar-list" aria-label="DM 分頁">${pages.map((page) => renderPageButton(page, "sidebar-button")).join("")}</nav>${isPlayer ? renderCurrentCharacterBar() : ""}${renderPanel()}</main>${isOpeningVisible ? renderOpeningEntry() : ""}`;
+  if (isOpeningVisible) bindOpeningVideo();
+}
 function safeRender() {
   try { bootPhase = "render"; render(); window.__TRPG_V2_BOOT_OK__ = true; window.clearTimeout(window.__TRPG_V2_BOOT_TIMER__); logBoot("render", { rendered: true }); }
   catch (error) { try { if (!isSafeMode && !bootBackupKey) bootBackupKey = backupRawState(currentRawState()); } catch (backupError) { console.error("[TRPG v2 boot] render backup failed", backupError); } renderBootError(error, "render"); }
@@ -260,8 +303,6 @@ function deleteIntroImage(nextState, imageId) {
 if (!bootFailed) {
 try {
 app.addEventListener("click", (event) => {
-  const openingButton = event.target.closest("[data-opening-enter]");
-  if (openingButton) { event.preventDefault(); isOpeningVisible = false; isDmMenuOpen = false; pendingDeleteCharacterId = ""; updateState(setMode(syncFormulaDraft(app), "player")); return; }
   const modeButton = event.target.closest("[data-mode]");
   if (modeButton) { event.preventDefault(); isDmMenuOpen = false; pendingDeleteCharacterId = ""; updateState(setMode(syncFormulaDraft(app), modeButton.dataset.mode)); return; }
   const dmMenuButton = event.target.closest("[data-dm-menu-toggle]");
