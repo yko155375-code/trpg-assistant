@@ -19,9 +19,9 @@ import {
   updateCharacterGold,
   updateCharacterMoney,
   updateCharacterStat,
-} from "./modules/characters.js?v=p0-module-cache-bust";
-import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=p0-module-cache-bust";
-import { renderDmPage } from "./modules/dm-view.js?v=p0-module-cache-bust";
+} from "./modules/characters.js?v=player-background-wanted-posters";
+import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=player-background-wanted-posters";
+import { renderDmPage } from "./modules/dm-view.js?v=player-background-wanted-posters";
 import {
   addMonster,
   adjustMonsterValue,
@@ -31,17 +31,17 @@ import {
   resetMonsterRound,
   rollMonsterAction,
   updateMonster,
-} from "./modules/monsters.js?v=p0-module-cache-bust";
-import { renderPlayerPage } from "./modules/player-view.js?v=p0-module-cache-bust";
-import { updatePublicInfoField } from "./modules/public-info.js?v=p0-module-cache-bust";
-import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=p0-module-cache-bust";
-import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=p0-module-cache-bust";
-import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=p0-module-cache-bust";
-import { saveState, STORAGE_KEY } from "./modules/storage.js?v=p0-module-cache-bust";
+} from "./modules/monsters.js?v=player-background-wanted-posters";
+import { renderPlayerPage } from "./modules/player-view.js?v=player-background-wanted-posters";
+import { updatePublicInfoField } from "./modules/public-info.js?v=player-background-wanted-posters";
+import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=player-background-wanted-posters";
+import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=player-background-wanted-posters";
+import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=player-background-wanted-posters";
+import { saveState, STORAGE_KEY } from "./modules/storage.js?v=player-background-wanted-posters";
 
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
-const VERSION_LABEL = "p0-module-cache-bust";
+const VERSION_LABEL = "player-background-wanted-posters";
 const OPENING_VIDEO_URL = "./assets/intro/opening.mp4";
 const isSafeMode = new URLSearchParams(window.location.search).get("safe") === "1";
 let state = null;
