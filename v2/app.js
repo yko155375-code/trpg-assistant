@@ -42,6 +42,7 @@ import { saveState, STORAGE_KEY } from "./modules/storage.js?v=p0-module-cache-b
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
 const VERSION_LABEL = "p0-module-cache-bust";
+const FALLBACK_OPENING_VIDEO_URL = "./assets/intro/opening.mp4";
 const isSafeMode = new URLSearchParams(window.location.search).get("safe") === "1";
 let state = null;
 let isDmMenuOpen = false;
@@ -181,6 +182,25 @@ function renderPanel() { const pages = getActivePages(state.ui.mode); const page
 function renderPageButton(page, className) { const active = page.id === getActivePageId(state); return `<button class="${className} ${active ? "is-active" : ""}" type="button" data-page="${page.id}" aria-pressed="${active}">${page.label}</button>`; }
 function renderModeButton(mode, label) { const active = state.ui.mode === mode; return `<button class="mode-button ${active ? "is-active" : ""}" type="button" data-mode="${mode}" aria-pressed="${active}">${label}</button>`; }
 function isRenderableAvatarUrl(value) { return typeof value === "string" && /^https?:\/\//i.test(value.trim()); }
+function getDriveOpeningVideoId(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    if (!/drive\.google\.com$/i.test(url.hostname)) return "";
+    const pathMatch = url.pathname.match(/\/file\/d\/([^/]+)/i);
+    const id = pathMatch?.[1] || url.searchParams.get("id") || "";
+    return /^[A-Za-z0-9_-]+$/.test(id) ? id : "";
+  } catch {
+    return "";
+  }
+}
+function normalizeOpeningVideoUrl(value) {
+  const trimmed = String(value || "").trim().slice(0, 2048);
+  const driveId = getDriveOpeningVideoId(trimmed);
+  return driveId ? `https://drive.google.com/uc?export=download&id=${encodeURIComponent(driveId)}` : trimmed;
+}
+function getOpeningVideoSource(nextState = state) { return String(nextState.openingVideo?.url || "").trim() || FALLBACK_OPENING_VIDEO_URL; }
 function getCharacterInitial(name) { return Array.from(String(name || "?").trim() || "?")[0].toUpperCase(); }
 
 function updateAvatarPreview(input) {
@@ -214,8 +234,9 @@ function renderCurrentCharacterBar() {
   return `<section class="player-current-character-bar" aria-label="目前角色"><div class="player-current-character-avatar ${avatarUrl ? "has-image" : ""}" aria-label="${escapeHtml(current.name)}頭像"><span aria-hidden="true">${escapeHtml(getCharacterInitial(current.name))}</span>${avatarUrl ? `<img data-character-avatar src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(current.name)}頭像" />` : ""}</div><div class="player-current-character-main"><label class="player-current-character-select"><span>目前角色</span><select data-character-select aria-label="切換目前角色">${characters.map((character) => `<option value="${escapeHtml(character.id)}" ${character.id === current.id ? "selected" : ""}>${escapeHtml(character.name)}</option>`).join("")}</select></label><div class="player-current-character-stats" aria-label="${escapeHtml(current.name)}目前狀態"><span><b>HP</b> ${current.stats.hp}/${current.stats.maxHp}</span><span><b>壓</b> ${current.stats.stress}/${current.stats.maxStress}</span><span><b>希</b> ${current.stats.hope}/6</span><span><b>盾</b> ${current.stats.shield}/${current.stats.maxShield}</span></div></div></section>`;
 }
 function renderOpeningEntry() {
-  const images = Array.isArray(state.introImages?.images) ? state.introImages.images.filter((image) => isRenderableAvatarUrl(image.url)).slice(0, 6) : [];
-  return `<section class="opening-entry-overlay" aria-label="開場入口" role="dialog" aria-modal="true"><div class="opening-entry-panel"><div class="opening-entry-copy"><p class="eyebrow">團錄開場</p><h2>TRPG Assistant</h2><p>整理桌面、攤開地圖，準備進入今天的冒險。</p></div>${images.length ? `<div class="opening-entry-images" aria-label="開頭圖片預覽">${images.map((image) => `<div class="opening-entry-thumb"><span>${escapeHtml(image.title || "開頭圖片")}</span><img data-opening-image src="${escapeHtml(image.url)}" alt="${escapeHtml(image.title || "開頭圖片")}" loading="lazy" /></div>`).join("")}</div>` : `<div class="opening-entry-mark" aria-hidden="true">✦</div>`}<button class="opening-entry-button" type="button" data-opening-enter>進入冒險</button></div></section>`;
+  const videoSource = getOpeningVideoSource();
+  const videoTitle = String(state.openingVideo?.title || "開場影片").trim() || "開場影片";
+  return `<section class="opening-entry-overlay" aria-label="開場入口" role="dialog" aria-modal="true"><div class="opening-entry-panel"><div class="opening-entry-copy"><p class="eyebrow">團錄開場</p><h2>蹦滋噶滋蹦小隊</h2><p>整理桌面、攤開地圖，準備進入今天的冒險。</p></div><div class="opening-entry-video-frame"><video class="opening-entry-video" data-opening-video src="${escapeHtml(videoSource)}" aria-label="${escapeHtml(videoTitle)}" playsinline muted autoplay controls preload="metadata"></video><p class="opening-video-error" data-opening-video-error hidden>開場影片無法載入，請檢查影片網址或權限。</p></div><button class="opening-entry-button" type="button" data-opening-enter>進入冒險</button></div></section>`;
 }
 function renderDmMobileNav(pages) { const active = pages.find((page) => page.id === getActivePageId(state)) || pages[0]; return `<div class="dm-mobile-nav"><button class="dm-menu-button" type="button" data-dm-menu-toggle aria-expanded="${isDmMenuOpen}"><span aria-hidden="true">☰</span><span>DM 選單</span></button><strong>${escapeHtml(active.label)}</strong></div><nav id="dm-mobile-menu" class="dm-mobile-menu ${isDmMenuOpen ? "is-open" : ""}" aria-label="DM 手機選單">${pages.map((page) => renderPageButton(page, "dm-mobile-menu-button")).join("")}</nav>`; }
 function render() { const pages = getActivePages(state.ui.mode); const isPlayer = state.ui.mode === "player"; app.innerHTML = `${isSafeMode ? `<aside class="safe-mode-banner">安全模式：目前未讀取舊本機資料</aside>` : ""}<header class="app-header"><div class="brand-block"><p class="eyebrow">TRPG Assistant</p><h1 class="app-title">v2</h1><p class="app-subtitle">HTML / CSS / 原生 JS / ES Modules / localStorage</p></div><nav class="mode-switch" aria-label="模式切換">${renderModeButton("player", "玩家")}${renderModeButton("dm", "DM")}</nav></header><main class="layout ${isPlayer ? "is-player" : "is-dm"}">${isPlayer ? `<nav class="tab-list player-bottom-tabs" aria-label="玩家分頁">${pages.map((page) => renderPageButton(page, "tab-button")).join("")}</nav>` : renderDmMobileNav(pages)}<nav class="sidebar-list" aria-label="DM 分頁">${pages.map((page) => renderPageButton(page, "sidebar-button")).join("")}</nav>${isPlayer ? renderCurrentCharacterBar() : ""}${renderPanel()}</main>${isOpeningVisible ? renderOpeningEntry() : ""}`; }
@@ -235,6 +256,28 @@ function addMusicTrack(nextState, values) { const url = String(values.url || "")
 function playMusicTrack(nextState, trackId) { const tracks = Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : []; const track = tracks.find((item) => item.id === trackId); if (!track) return withMusicMessage(nextState, "找不到這首音樂。"); return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), tracks, currentTrackId: track.id, isPlaying: true } }, `正在播放：${track.title}`); }
 function stopMusicTrack(nextState, trackId) { const shouldStop = !trackId || nextState.audio?.currentTrackId === trackId; return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), currentTrackId: shouldStop ? null : nextState.audio?.currentTrackId || null, isPlaying: shouldStop ? false : Boolean(nextState.audio?.isPlaying) } }, "已停止播放。"); }
 function deleteMusicTrack(nextState, trackId) { const tracks = Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : []; const nextTracks = tracks.filter((track) => track.id !== trackId); const isCurrent = nextState.audio?.currentTrackId === trackId; return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), tracks: nextTracks, currentTrackId: isCurrent ? null : nextState.audio?.currentTrackId || null, isPlaying: isCurrent ? false : Boolean(nextState.audio?.isPlaying) } }, "已刪除音樂。"); }
+
+function withOpeningVideoMessage(nextState, message) { return { ...nextState, ui: { ...(nextState.ui || {}), openingVideoMessage: message } }; }
+function saveOpeningVideo(nextState, values) {
+  const originalUrl = String(values.url || "").trim();
+  if (!originalUrl) return withOpeningVideoMessage(nextState, "請先輸入開場影片網址。");
+  const title = String(values.title || "").trim();
+  return withOpeningVideoMessage({
+    ...nextState,
+    openingVideo: {
+      title,
+      url: normalizeOpeningVideoUrl(originalUrl),
+      originalUrl,
+      updatedAt: new Date().toISOString(),
+    },
+  }, "已儲存開場影片。");
+}
+function clearOpeningVideo(nextState) {
+  return withOpeningVideoMessage({
+    ...nextState,
+    openingVideo: { title: "", url: "", originalUrl: "", updatedAt: "" },
+  }, "已清除開場影片設定。");
+}
 
 function getIntroImages(nextState) { return Array.isArray(nextState.introImages?.images) ? nextState.introImages.images : []; }
 function withIntroImageMessage(nextState, message) { return { ...nextState, ui: { ...(nextState.ui || {}), introImageMessage: message } }; }
@@ -298,6 +341,8 @@ app.addEventListener("click", (event) => {
   if (actionButton.dataset.action === "reset-monster-round" && confirm("確定要重設怪物回合？")) return updateState(resetMonsterRound(state));
   if (actionButton.dataset.action === "load-encounter-replace" && confirm("載入後會清空目前怪物，確定嗎？")) return updateState(loadEncounter(state, actionButton.dataset.encounterId, "replace"));
   if (actionButton.dataset.action === "load-encounter-append") return updateState(loadEncounter(state, actionButton.dataset.encounterId, "append"));
+  if (actionButton.dataset.action === "save-opening-video") { const form = actionButton.closest("[data-opening-video-form]"); return updateState(saveOpeningVideo(state, { title: form?.querySelector("[data-opening-video-title]")?.value || "", url: form?.querySelector("[data-opening-video-url]")?.value || "" })); }
+  if (actionButton.dataset.action === "clear-opening-video") return updateState(clearOpeningVideo(state));
   if (actionButton.dataset.action === "delete-intro-image") return updateState(deleteIntroImage(state, actionButton.dataset.introImageId));
   if (actionButton.dataset.action === "play-music-track") return updateState(playMusicTrack(state, actionButton.dataset.trackId));
   if (actionButton.dataset.action === "stop-music-track") return updateState(stopMusicTrack(state, actionButton.dataset.trackId));
@@ -335,10 +380,10 @@ app.addEventListener("input", (event) => {
 });
 
 app.addEventListener("error", (event) => {
-  const openingImage = event.target.closest?.("[data-opening-image]");
-  if (openingImage) {
-    openingImage.hidden = true;
-    openingImage.closest(".opening-entry-thumb")?.classList.add("is-broken");
+  const openingVideo = event.target.closest?.("[data-opening-video], [data-opening-video-preview]");
+  if (openingVideo) {
+    const message = openingVideo.closest(".opening-entry-video-frame, .opening-video-preview")?.querySelector("[data-opening-video-error]");
+    if (message) message.hidden = false;
     return;
   }
   const introImage = event.target.closest?.("[data-intro-image-img]");
@@ -381,6 +426,7 @@ app.addEventListener("submit", (event) => {
   const addShopItemForm = event.target.closest("[data-add-shop-item-form]"); if (addShopItemForm) { event.preventDefault(); return updateState(addShopItem(state, { name: addShopItemForm.querySelector("[data-new-shop-name]")?.value.trim() || "", type: addShopItemForm.querySelector("[data-new-shop-type]")?.value || "", price: addShopItemForm.querySelector("[data-new-shop-price]")?.value || 0, stock: addShopItemForm.querySelector("[data-new-shop-stock]")?.value || 0, description: addShopItemForm.querySelector("[data-new-shop-description]")?.value || "" })); }
   const addMonsterForm = event.target.closest("[data-add-monster-form]"); if (addMonsterForm) { event.preventDefault(); const values = Object.fromEntries(Array.from(addMonsterForm.querySelectorAll("[data-new-monster-field]")).map((input) => [input.dataset.newMonsterField, input.value])); return updateState(addMonster(state, values)); }
   const saveEncounterForm = event.target.closest("[data-save-encounter-form]"); if (saveEncounterForm) { event.preventDefault(); return updateState(saveCurrentEncounter(state, saveEncounterForm.querySelector("[data-encounter-name]")?.value || "")); }
+  const openingVideoForm = event.target.closest("[data-opening-video-form]"); if (openingVideoForm) { event.preventDefault(); return updateState(saveOpeningVideo(state, { title: openingVideoForm.querySelector("[data-opening-video-title]")?.value || "", url: openingVideoForm.querySelector("[data-opening-video-url]")?.value || "" })); }
   const addIntroImageForm = event.target.closest("[data-add-intro-image-form]"); if (addIntroImageForm) { event.preventDefault(); return updateState(addIntroImage(state, { title: addIntroImageForm.querySelector("[data-new-intro-image-title]")?.value || "", url: addIntroImageForm.querySelector("[data-new-intro-image-url]")?.value || "", notes: addIntroImageForm.querySelector("[data-new-intro-image-notes]")?.value || "" })); }
   const addMusicForm = event.target.closest("[data-add-music-form]"); if (addMusicForm) { event.preventDefault(); return updateState(addMusicTrack(state, { title: addMusicForm.querySelector("[data-new-music-title]")?.value || "", url: addMusicForm.querySelector("[data-new-music-url]")?.value || "", scene: addMusicForm.querySelector("[data-new-music-scene]")?.value || "", notes: addMusicForm.querySelector("[data-new-music-notes]")?.value || "" })); }
 });

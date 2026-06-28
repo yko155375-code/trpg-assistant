@@ -161,6 +161,52 @@ function renderDmIntroImagesManager(state) {
   `;
 }
 
+function getOpeningVideo(state) {
+  const video = state.openingVideo;
+  return video && typeof video === "object" && !Array.isArray(video) ? video : {};
+}
+
+function renderDmOpeningVideoManager(state) {
+  const video = getOpeningVideo(state);
+  const title = normalizeUrl(video.title);
+  const originalUrl = normalizeUrl(video.originalUrl || video.url);
+  const url = normalizeUrl(video.url);
+
+  return `
+    <section class="opening-video-manager" aria-label="開場影片">
+      <div class="opening-video-heading">
+        <div>
+          <p class="eyebrow">開場入口</p>
+          <h3>開場影片</h3>
+        </div>
+        <p>建議使用可直接播放的 mp4 URL。Google Drive 分享連結可嘗試轉換，但不保證所有瀏覽器都能播放。</p>
+      </div>
+      <form class="opening-video-form" data-opening-video-form>
+        <label class="form-field">
+          <span>影片名稱</span>
+          <input data-opening-video-title type="text" value="${escapeHtml(title)}" placeholder="可留空" autocomplete="off" />
+        </label>
+        <label class="form-field opening-video-url-field">
+          <span>影片網址</span>
+          <input data-opening-video-url type="url" value="${escapeHtml(originalUrl)}" placeholder="https://example.com/opening.mp4" autocomplete="off" />
+        </label>
+        <div class="opening-video-actions">
+          <button class="opening-video-save-button" type="button" data-action="save-opening-video">儲存</button>
+          <button class="danger-button opening-video-clear-button" type="button" data-action="clear-opening-video">清除</button>
+        </div>
+      </form>
+      ${state.ui?.openingVideoMessage ? `<p class="opening-video-message">${escapeHtml(state.ui.openingVideoMessage)}</p>` : ""}
+      <div class="opening-video-preview" aria-label="影片預覽區">
+        ${
+          url
+            ? `<video class="opening-video-preview-player" data-opening-video-preview src="${escapeHtml(url)}" playsinline muted controls preload="metadata"></video><p class="opening-video-error" data-opening-video-error hidden>開場影片無法載入，請檢查影片網址或權限。</p>`
+            : `<p class="empty-hint">尚未設定開場影片。</p>`
+        }
+      </div>
+    </section>
+  `;
+}
+
 function renderMusicPlayer(track) {
   if (!track) {
     return `
@@ -668,6 +714,7 @@ export function renderDmPage(pageId, state) {
           <h2 id="active-page-title">音樂</h2>
           <p class="placeholder">貼上 YouTube 或直接音訊 URL，建立跑團場景音樂清單。</p>
         </div>
+        ${renderDmOpeningVideoManager(state)}
         ${renderDmIntroImagesManager(state)}
         ${renderDmAudioManager(state)}
       </section>

@@ -307,6 +307,26 @@ function normalizeIntroImages(introImages, fallbackIntroImages) {
   };
 }
 
+function normalizeOpeningVideoUrl(value) {
+  const trimmed = typeof value === "string" ? value.trim().slice(0, 2048) : "";
+  const driveId = getDriveFileId(trimmed);
+  return driveId ? `https://drive.google.com/uc?export=download&id=${encodeURIComponent(driveId)}` : trimmed;
+}
+
+function normalizeOpeningVideo(openingVideo, fallbackOpeningVideo) {
+  const source = recordOrEmpty(openingVideo);
+  const originalUrl = String(source.originalUrl || source.url || "").trim().slice(0, 2048);
+  const url = normalizeOpeningVideoUrl(source.url || originalUrl);
+  return {
+    ...fallbackOpeningVideo,
+    ...source,
+    title: String(source.title || "").trim(),
+    url,
+    originalUrl,
+    updatedAt: String(source.updatedAt || ""),
+  };
+}
+
 function normalizeCompatibleShop(shop, fallbackShop) {
   const source = recordOrEmpty(shop);
   const legacy = normalizeShop({
@@ -422,6 +442,12 @@ export function createDefaultState() {
     introImages: {
       images: [],
     },
+    openingVideo: {
+      title: "",
+      url: "",
+      originalUrl: "",
+      updatedAt: "",
+    },
     ui: {
       mode: "player",
       currentCharacterId: null,
@@ -444,6 +470,7 @@ export function normalizeState(input) {
   const sourceSession = recordOrEmpty(source.session);
   const sourceAudio = recordOrEmpty(source.audio);
   const sourceIntroImages = recordOrEmpty(source.introImages);
+  const sourceOpeningVideo = recordOrEmpty(source.openingVideo);
   const sourceUi = recordOrEmpty(source.ui);
   const sourceShop = recordOrEmpty(source.shop);
   const sourceCharacters = recordArray(source.characters);
@@ -475,6 +502,7 @@ export function normalizeState(input) {
     rolls: recordArray(source.rolls),
     audio: normalizeAudio(sourceAudio, fallback.audio),
     introImages: normalizeIntroImages(sourceIntroImages, fallback.introImages),
+    openingVideo: normalizeOpeningVideo(sourceOpeningVideo, fallback.openingVideo),
     ui: {
       ...fallback.ui,
       ...sourceUi,

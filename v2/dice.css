@@ -93,13 +93,10 @@ body:has(.layout.is-player) .mode-switch [data-mode="dm"]:hover, body:has(.layou
 .opening-entry-copy h2, .opening-entry-copy p { margin: 0; }
 .opening-entry-copy h2 { color: var(--gold, #c7a45d); font-size: clamp(30px, 7vw, 58px); letter-spacing: 0; }
 .opening-entry-copy p:not(.eyebrow) { color: var(--muted, #b9ad9a); font-size: 14px; line-height: 1.6; }
-.opening-entry-images { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; min-width: 0; }
-.opening-entry-thumb { position: relative; display: grid; aspect-ratio: 4 / 3; min-width: 0; overflow: hidden; place-items: end start; border: 1px solid rgba(199, 164, 93, 0.22); border-radius: 12px; background: rgba(255, 255, 255, 0.04); }
-.opening-entry-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.opening-entry-thumb span { position: relative; z-index: 1; max-width: 100%; margin: 6px; overflow: hidden; padding: 3px 6px; border-radius: 999px; background: rgba(5, 10, 18, 0.74); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-.opening-entry-thumb.is-broken { place-items: center; }
-.opening-entry-thumb.is-broken span { margin: 0; background: transparent; color: var(--muted, #b9ad9a); white-space: normal; }
-.opening-entry-mark { display: grid; width: min(180px, 48vw); aspect-ratio: 1 / 1; place-self: center; place-items: center; border: 1px solid rgba(199, 164, 93, 0.24); border-radius: 50%; background: rgba(255, 255, 255, 0.035); color: var(--gold, #c7a45d); font-size: 54px; }
+.opening-entry-video-frame { display: grid; gap: 8px; min-width: 0; }
+.opening-entry-video { display: block; width: 100%; max-height: min(56vh, 460px); aspect-ratio: 16 / 9; border: 1px solid rgba(199, 164, 93, 0.22); border-radius: 12px; background: #000; object-fit: contain; }
+.opening-video-error { margin: 0; padding: 8px 10px; border: 1px solid rgba(248, 113, 113, 0.36); border-radius: 9px; background: rgba(127, 29, 29, 0.22); color: #fecaca; font-size: 12px; line-height: 1.45; }
+.opening-video-error[hidden] { display: none; }
 .opening-entry-button { justify-self: center; min-height: 44px; min-width: min(220px, 100%); padding: 0 20px; border: 1px solid rgba(199, 164, 93, 0.48); border-radius: 999px; background: rgba(199, 164, 93, 0.15); color: var(--gold, #c7a45d); font-size: 15px; font-weight: 800; }
 .opening-entry-button:hover, .opening-entry-button:focus-visible { background: rgba(199, 164, 93, 0.24); color: #f3ead8; }
 .boot-guard-panel { display: grid; gap: 12px; width: min(620px, 100%); margin: 8vh auto 0; padding: 18px; border: 1px solid rgba(244, 114, 182, 0.4); border-radius: 14px; background: rgba(16, 26, 39, 0.98); color: var(--text, #f3ead8); }
@@ -172,6 +169,20 @@ body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-fi
 .intro-image-notes { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
 .intro-image-delete-button { grid-column: 1 / -1; min-height: 28px; padding: 0 8px; border-radius: 8px; font-size: 11px; }
 
+.opening-video-manager { display: grid; gap: 8px; min-width: 0; margin-bottom: 12px; padding: 10px; border: 1px solid rgba(199, 164, 93, 0.18); border-radius: 11px; background: rgba(255, 255, 255, 0.03); }
+.opening-video-heading { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: end; justify-content: space-between; min-width: 0; }
+.opening-video-heading h3, .opening-video-heading p { margin: 0; }
+.opening-video-heading p { max-width: 520px; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.opening-video-form { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(220px, 2fr) auto; gap: 6px; align-items: end; min-width: 0; }
+.opening-video-form .form-field { gap: 2px; min-width: 0; }
+.opening-video-form .form-field > span { font-size: 10px; line-height: 1.2; }
+.opening-video-form input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 32px; padding: 4px 7px; font-size: 12px; }
+.opening-video-actions { display: inline-grid; grid-template-columns: repeat(2, auto); gap: 6px; align-items: end; }
+.opening-video-actions button { min-height: 32px; padding: 0 12px; border-radius: 8px; white-space: nowrap; }
+.opening-video-message { margin: 0; color: var(--gold); font-size: 12px; }
+.opening-video-preview { display: grid; gap: 7px; min-width: 0; }
+.opening-video-preview-player { display: block; width: 100%; max-height: 320px; aspect-ratio: 16 / 9; border: 1px solid rgba(199, 164, 93, 0.2); border-radius: 9px; background: #000; object-fit: contain; }
+
 .music-manager { display: grid; gap: 10px; min-width: 0; }
 .music-add-form { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(220px, 2fr) minmax(120px, 1fr) minmax(120px, 1fr) auto; gap: 6px; align-items: end; min-width: 0; padding: 8px; border: 1px solid rgba(243, 234, 216, 0.1); border-radius: 10px; background: rgba(255, 255, 255, 0.035); }
 .music-add-form .form-field { gap: 2px; min-width: 0; }
@@ -217,8 +228,7 @@ body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-fi
   .opening-entry-overlay { padding: 10px; }
   .opening-entry-panel { gap: 11px; padding: 14px; border-radius: 14px; }
   .opening-entry-copy h2 { font-size: 32px; }
-  .opening-entry-images { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-  .opening-entry-thumb span { margin: 4px; padding: 2px 5px; font-size: 10px; }
+  .opening-entry-video { max-height: 42vh; }
   .opening-entry-button { width: 100%; min-height: 42px; }
   .boot-guard-panel { margin-top: 3vh; padding: 14px; }
   .boot-guard-actions { grid-template-columns: 1fr; }
@@ -239,6 +249,12 @@ body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-fi
   .intro-image-preview { width: 100%; }
   .intro-image-title-row { align-items: start; flex-direction: column; gap: 3px; }
   .intro-image-source-badge { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .opening-video-manager { gap: 7px; padding: 7px; }
+  .opening-video-heading { align-items: start; }
+  .opening-video-form { grid-template-columns: 1fr; gap: 5px; }
+  .opening-video-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .opening-video-actions button { min-width: 0; padding: 0 8px; }
+  .opening-video-preview-player { max-height: 220px; }
   .music-add-form { grid-template-columns: 1fr; gap: 5px; padding: 6px; }
   .music-add-button { width: 100%; }
   .music-youtube-player { min-height: 180px; }

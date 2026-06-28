@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-opening-entry-flow",
-  "commit": "27a7ba3dbda102dc03f5c2ca3f329c1268e32f29",
-  "sourceCommit": "5aa465d7e263b0226c94377469059f6224303dd4",
-  "versionCommit": "27a7ba3dbda102dc03f5c2ca3f329c1268e32f29",
-  "updatedAt": "2026-06-28T12:38:00+08:00",
-  "note": "Add player opening entry flow."
+  "label": "opening-video-source-setting",
+  "commit": "315db88b95db8bd14e9ff17522082b5193acf108",
+  "sourceCommit": "315db88b95db8bd14e9ff17522082b5193acf108",
+  "versionCommit": "315db88b95db8bd14e9ff17522082b5193acf108",
+  "updatedAt": "2026-06-28T16:18:27+08:00",
+  "note": "Use the DM opening video URL for the opening entry."
 }
