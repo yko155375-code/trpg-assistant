@@ -133,6 +133,30 @@ body:has(.layout.is-player) .mode-switch [data-mode="dm"]:hover, body:has(.layou
 
 body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-field.form-field-full:has(> select[data-character-select]) { display: none; }
 
+.intro-image-manager { display: grid; gap: 8px; min-width: 0; margin-bottom: 12px; padding: 10px; border: 1px solid rgba(199, 164, 93, 0.18); border-radius: 11px; background: rgba(255, 255, 255, 0.03); }
+.intro-image-heading { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: end; justify-content: space-between; min-width: 0; }
+.intro-image-heading h3, .intro-image-heading p { margin: 0; }
+.intro-image-heading p { max-width: 420px; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.intro-image-add-form { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(220px, 2fr) minmax(120px, 1fr) auto; gap: 6px; align-items: end; min-width: 0; }
+.intro-image-add-form .form-field { gap: 2px; min-width: 0; }
+.intro-image-add-form .form-field > span { font-size: 10px; line-height: 1.2; }
+.intro-image-add-form input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 32px; padding: 4px 7px; font-size: 12px; }
+.intro-image-add-button { min-height: 32px; padding: 0 12px; border-radius: 8px; white-space: nowrap; }
+.intro-image-message { margin: 0; color: var(--gold); font-size: 12px; }
+.intro-image-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 7px; min-width: 0; }
+.intro-image-card { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 7px; align-items: start; min-width: 0; padding: 7px; border: 1px solid rgba(243, 234, 216, 0.1); border-radius: 10px; background: rgba(16, 26, 39, 0.72); }
+.intro-image-preview { position: relative; display: grid; width: 76px; aspect-ratio: 1 / 1; overflow: hidden; place-items: center; border: 1px solid rgba(199, 164, 93, 0.22); border-radius: 9px; background: rgba(255, 255, 255, 0.045); color: var(--muted); font-size: 10px; text-align: center; }
+.intro-image-preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.intro-image-preview img:not([hidden]) + span, .intro-image-preview:has(img:not([hidden])) span { opacity: 0; }
+.intro-image-preview.is-broken span { opacity: 1; }
+.intro-image-body { display: grid; gap: 3px; min-width: 0; }
+.intro-image-title-row { display: flex; gap: 5px; align-items: center; min-width: 0; }
+.intro-image-title-row strong { min-width: 0; overflow: hidden; font-size: 13px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.intro-image-source-badge { flex: 0 0 auto; padding: 2px 6px; border: 1px solid rgba(199, 164, 93, 0.24); border-radius: 999px; color: var(--gold); font-size: 10px; white-space: nowrap; }
+.intro-image-url { min-width: 0; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.intro-image-notes { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
+.intro-image-delete-button { grid-column: 1 / -1; min-height: 28px; padding: 0 8px; border-radius: 8px; font-size: 11px; }
+
 .music-manager { display: grid; gap: 10px; min-width: 0; }
 .music-add-form { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(220px, 2fr) minmax(120px, 1fr) minmax(120px, 1fr) auto; gap: 6px; align-items: end; min-width: 0; padding: 8px; border: 1px solid rgba(243, 234, 216, 0.1); border-radius: 10px; background: rgba(255, 255, 255, 0.035); }
 .music-add-form .form-field { gap: 2px; min-width: 0; }
@@ -185,6 +209,15 @@ body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-fi
   .character-avatar-url-field { grid-column: 1 / -1; }
   .character-avatar-preview { grid-template-columns: 50px minmax(0, 1fr); gap: 6px; padding: 5px; }
   .character-avatar-preview-frame { width: 48px; height: 48px; border-radius: 8px; font-size: 18px; }
+  .intro-image-manager { gap: 7px; padding: 7px; }
+  .intro-image-heading { align-items: start; }
+  .intro-image-add-form { grid-template-columns: 1fr; gap: 5px; }
+  .intro-image-add-button { width: 100%; }
+  .intro-image-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .intro-image-card { grid-template-columns: 1fr; gap: 5px; padding: 6px; }
+  .intro-image-preview { width: 100%; }
+  .intro-image-title-row { align-items: start; flex-direction: column; gap: 3px; }
+  .intro-image-source-badge { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   .music-add-form { grid-template-columns: 1fr; gap: 5px; padding: 6px; }
   .music-add-button { width: 100%; }
   .music-youtube-player { min-height: 180px; }

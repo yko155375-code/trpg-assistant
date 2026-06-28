@@ -263,6 +263,50 @@ function normalizeAudio(audio, fallbackAudio) {
   };
 }
 
+function getDriveFileId(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    if (!/drive\.google\.com$/i.test(url.hostname)) return "";
+    const pathMatch = url.pathname.match(/\/file\/d\/([^/]+)/i);
+    const id = pathMatch?.[1] || url.searchParams.get("id") || "";
+    return /^[A-Za-z0-9_-]+$/.test(id) ? id : "";
+  } catch {
+    return "";
+  }
+}
+
+export function normalizeIntroImageUrl(value) {
+  const trimmed = typeof value === "string" ? value.trim().slice(0, 2048) : "";
+  const driveId = getDriveFileId(trimmed);
+  return driveId ? `https://drive.google.com/thumbnail?id=${encodeURIComponent(driveId)}&sz=w512` : trimmed;
+}
+
+function normalizeIntroImage(image, index) {
+  const source = recordOrEmpty(image);
+  const originalUrl = String(source.originalUrl || source.url || "").trim().slice(0, 2048);
+  const url = normalizeIntroImageUrl(source.url || originalUrl);
+  return {
+    ...source,
+    id: String(source.id || `intro-image-${index}`),
+    title: String(source.title || source.name || "").trim() || "未命名開頭圖片",
+    url,
+    originalUrl,
+    notes: String(source.notes || "").trim(),
+    createdAt: String(source.createdAt || ""),
+  };
+}
+
+function normalizeIntroImages(introImages, fallbackIntroImages) {
+  const source = recordOrEmpty(introImages);
+  return {
+    ...fallbackIntroImages,
+    ...source,
+    images: recordArray(source.images).map(normalizeIntroImage).filter((image) => image.url),
+  };
+}
+
 function normalizeCompatibleShop(shop, fallbackShop) {
   const source = recordOrEmpty(shop);
   const legacy = normalizeShop({
@@ -375,6 +419,9 @@ export function createDefaultState() {
       volume: 0.7,
       tracks: [],
     },
+    introImages: {
+      images: [],
+    },
     ui: {
       mode: "player",
       currentCharacterId: null,
@@ -396,6 +443,7 @@ export function normalizeState(input) {
   const sourceMeta = recordOrEmpty(source.meta);
   const sourceSession = recordOrEmpty(source.session);
   const sourceAudio = recordOrEmpty(source.audio);
+  const sourceIntroImages = recordOrEmpty(source.introImages);
   const sourceUi = recordOrEmpty(source.ui);
   const sourceShop = recordOrEmpty(source.shop);
   const sourceCharacters = recordArray(source.characters);
@@ -426,6 +474,7 @@ export function normalizeState(input) {
     shop: normalizeCompatibleShop(sourceShop, fallback.shop),
     rolls: recordArray(source.rolls),
     audio: normalizeAudio(sourceAudio, fallback.audio),
+    introImages: normalizeIntroImages(sourceIntroImages, fallback.introImages),
     ui: {
       ...fallback.ui,
       ...sourceUi,

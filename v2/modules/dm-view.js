@@ -89,6 +89,78 @@ function getYoutubeEmbedUrl(url) {
   }
 }
 
+function getIntroImages(state) {
+  return Array.isArray(state.introImages?.images) ? state.introImages.images : [];
+}
+
+function getIntroImageSourceLabel(image) {
+  const source = normalizeUrl(image.originalUrl || image.url).toLowerCase();
+  if (source.includes("drive.google.com")) return "Google Drive";
+  if (/\.(jpg|jpeg|png|webp|gif)(\?|#|$)/i.test(source)) return "圖片 URL";
+  return "URL";
+}
+
+function renderIntroImageCard(image) {
+  const title = escapeHtml(image.title || "未命名開頭圖片");
+  const sourceLabel = getIntroImageSourceLabel(image);
+  const displayUrl = normalizeUrl(image.originalUrl || image.url);
+  return `
+    <article class="intro-image-card">
+      <div class="intro-image-preview" data-intro-image-preview>
+        <span data-intro-image-message>圖片預覽</span>
+        <img data-intro-image-img src="${escapeHtml(image.url)}" alt="${title}" loading="lazy" />
+      </div>
+      <div class="intro-image-body">
+        <div class="intro-image-title-row">
+          <strong>${title}</strong>
+          <span class="intro-image-source-badge">${escapeHtml(sourceLabel)}</span>
+        </div>
+        <span class="intro-image-url">${escapeHtml(displayUrl)}</span>
+        ${image.notes ? `<p class="intro-image-notes">${escapeHtml(image.notes)}</p>` : ""}
+      </div>
+      <button class="danger-button intro-image-delete-button" type="button" data-action="delete-intro-image" data-intro-image-id="${escapeHtml(image.id)}">刪除</button>
+    </article>
+  `;
+}
+
+function renderDmIntroImagesManager(state) {
+  const images = getIntroImages(state);
+  return `
+    <section class="intro-image-manager" aria-label="開頭圖片">
+      <div class="intro-image-heading">
+        <div>
+          <p class="eyebrow">開場素材</p>
+          <h3>開頭圖片</h3>
+        </div>
+        <p>可貼一般圖片網址或 Google Drive 分享連結。</p>
+      </div>
+      <form class="intro-image-add-form" data-add-intro-image-form>
+        <label class="form-field">
+          <span>圖片名稱</span>
+          <input data-new-intro-image-title type="text" placeholder="飛散羊皮紙" autocomplete="off" />
+        </label>
+        <label class="form-field intro-image-url-field">
+          <span>圖片網址</span>
+          <input data-new-intro-image-url type="url" placeholder="圖片 URL 或 Google Drive 分享連結" autocomplete="off" />
+        </label>
+        <label class="form-field intro-image-notes-field">
+          <span>備註</span>
+          <input data-new-intro-image-notes type="text" placeholder="可留空" autocomplete="off" />
+        </label>
+        <button class="intro-image-add-button" type="submit">新增</button>
+      </form>
+      ${state.ui?.introImageMessage ? `<p class="intro-image-message">${escapeHtml(state.ui.introImageMessage)}</p>` : ""}
+      <div class="intro-image-grid" aria-label="開頭圖片清單">
+        ${
+          images.length
+            ? images.map(renderIntroImageCard).join("")
+            : `<p class="empty-hint">尚未加入開頭圖片。</p>`
+        }
+      </div>
+    </section>
+  `;
+}
+
 function renderMusicPlayer(track) {
   if (!track) {
     return `
@@ -596,6 +668,7 @@ export function renderDmPage(pageId, state) {
           <h2 id="active-page-title">音樂</h2>
           <p class="placeholder">貼上 YouTube 或直接音訊 URL，建立跑團場景音樂清單。</p>
         </div>
+        ${renderDmIntroImagesManager(state)}
         ${renderDmAudioManager(state)}
       </section>
     `;

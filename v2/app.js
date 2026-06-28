@@ -36,7 +36,7 @@ import { renderPlayerPage } from "./modules/player-view.js?v=p0-module-cache-bus
 import { updatePublicInfoField } from "./modules/public-info.js?v=p0-module-cache-bust";
 import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=p0-module-cache-bust";
 import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=p0-module-cache-bust";
-import { createDefaultState, normalizeEncounters, normalizeState } from "./modules/state.js?v=p0-module-cache-bust";
+import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizeState } from "./modules/state.js?v=p0-module-cache-bust";
 import { saveState, STORAGE_KEY } from "./modules/storage.js?v=p0-module-cache-bust";
 
 const app = document.querySelector("#app");
@@ -231,6 +231,27 @@ function playMusicTrack(nextState, trackId) { const tracks = Array.isArray(nextS
 function stopMusicTrack(nextState, trackId) { const shouldStop = !trackId || nextState.audio?.currentTrackId === trackId; return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), currentTrackId: shouldStop ? null : nextState.audio?.currentTrackId || null, isPlaying: shouldStop ? false : Boolean(nextState.audio?.isPlaying) } }, "已停止播放。"); }
 function deleteMusicTrack(nextState, trackId) { const tracks = Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : []; const nextTracks = tracks.filter((track) => track.id !== trackId); const isCurrent = nextState.audio?.currentTrackId === trackId; return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), tracks: nextTracks, currentTrackId: isCurrent ? null : nextState.audio?.currentTrackId || null, isPlaying: isCurrent ? false : Boolean(nextState.audio?.isPlaying) } }, "已刪除音樂。"); }
 
+function getIntroImages(nextState) { return Array.isArray(nextState.introImages?.images) ? nextState.introImages.images : []; }
+function withIntroImageMessage(nextState, message) { return { ...nextState, ui: { ...(nextState.ui || {}), introImageMessage: message } }; }
+function addIntroImage(nextState, values) {
+  const originalUrl = String(values.url || "").trim();
+  if (!originalUrl) return withIntroImageMessage(nextState, "請先輸入圖片網址。");
+  const title = String(values.title || "").trim() || "未命名開頭圖片";
+  const image = {
+    id: `intro-image-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title,
+    url: normalizeIntroImageUrl(originalUrl),
+    originalUrl,
+    notes: String(values.notes || "").trim(),
+    createdAt: new Date().toISOString(),
+  };
+  return withIntroImageMessage({ ...nextState, introImages: { ...(nextState.introImages || {}), images: [...getIntroImages(nextState), image] } }, `已新增開頭圖片：${title}`);
+}
+function deleteIntroImage(nextState, imageId) {
+  const images = getIntroImages(nextState);
+  return withIntroImageMessage({ ...nextState, introImages: { ...(nextState.introImages || {}), images: images.filter((image) => image.id !== imageId) } }, "已刪除開頭圖片。");
+}
+
 if (!bootFailed) {
 try {
 app.addEventListener("click", (event) => {
@@ -270,6 +291,7 @@ app.addEventListener("click", (event) => {
   if (actionButton.dataset.action === "reset-monster-round" && confirm("確定要重設怪物回合？")) return updateState(resetMonsterRound(state));
   if (actionButton.dataset.action === "load-encounter-replace" && confirm("載入後會清空目前怪物，確定嗎？")) return updateState(loadEncounter(state, actionButton.dataset.encounterId, "replace"));
   if (actionButton.dataset.action === "load-encounter-append") return updateState(loadEncounter(state, actionButton.dataset.encounterId, "append"));
+  if (actionButton.dataset.action === "delete-intro-image") return updateState(deleteIntroImage(state, actionButton.dataset.introImageId));
   if (actionButton.dataset.action === "play-music-track") return updateState(playMusicTrack(state, actionButton.dataset.trackId));
   if (actionButton.dataset.action === "stop-music-track") return updateState(stopMusicTrack(state, actionButton.dataset.trackId));
   if (actionButton.dataset.action === "delete-music-track" && confirm("確定刪除這首音樂？")) return updateState(deleteMusicTrack(state, actionButton.dataset.trackId));
@@ -306,6 +328,15 @@ app.addEventListener("input", (event) => {
 });
 
 app.addEventListener("error", (event) => {
+  const introImage = event.target.closest?.("[data-intro-image-img]");
+  if (introImage) {
+    introImage.hidden = true;
+    const preview = introImage.closest("[data-intro-image-preview]");
+    preview?.classList.add("is-broken");
+    const message = preview?.querySelector("[data-intro-image-message]");
+    if (message) message.textContent = "無法載入圖片";
+    return;
+  }
   const previewImage = event.target.closest?.("[data-avatar-preview-img]");
   if (previewImage) {
     previewImage.hidden = true;
@@ -337,6 +368,7 @@ app.addEventListener("submit", (event) => {
   const addShopItemForm = event.target.closest("[data-add-shop-item-form]"); if (addShopItemForm) { event.preventDefault(); return updateState(addShopItem(state, { name: addShopItemForm.querySelector("[data-new-shop-name]")?.value.trim() || "", type: addShopItemForm.querySelector("[data-new-shop-type]")?.value || "", price: addShopItemForm.querySelector("[data-new-shop-price]")?.value || 0, stock: addShopItemForm.querySelector("[data-new-shop-stock]")?.value || 0, description: addShopItemForm.querySelector("[data-new-shop-description]")?.value || "" })); }
   const addMonsterForm = event.target.closest("[data-add-monster-form]"); if (addMonsterForm) { event.preventDefault(); const values = Object.fromEntries(Array.from(addMonsterForm.querySelectorAll("[data-new-monster-field]")).map((input) => [input.dataset.newMonsterField, input.value])); return updateState(addMonster(state, values)); }
   const saveEncounterForm = event.target.closest("[data-save-encounter-form]"); if (saveEncounterForm) { event.preventDefault(); return updateState(saveCurrentEncounter(state, saveEncounterForm.querySelector("[data-encounter-name]")?.value || "")); }
+  const addIntroImageForm = event.target.closest("[data-add-intro-image-form]"); if (addIntroImageForm) { event.preventDefault(); return updateState(addIntroImage(state, { title: addIntroImageForm.querySelector("[data-new-intro-image-title]")?.value || "", url: addIntroImageForm.querySelector("[data-new-intro-image-url]")?.value || "", notes: addIntroImageForm.querySelector("[data-new-intro-image-notes]")?.value || "" })); }
   const addMusicForm = event.target.closest("[data-add-music-form]"); if (addMusicForm) { event.preventDefault(); return updateState(addMusicTrack(state, { title: addMusicForm.querySelector("[data-new-music-title]")?.value || "", url: addMusicForm.querySelector("[data-new-music-url]")?.value || "", scene: addMusicForm.querySelector("[data-new-music-scene]")?.value || "", notes: addMusicForm.querySelector("[data-new-music-notes]")?.value || "" })); }
 });
 
