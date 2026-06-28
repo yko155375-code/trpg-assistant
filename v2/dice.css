@@ -187,23 +187,23 @@ body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-fi
 .layout.is-player { position: relative; isolation: isolate; overflow-x: hidden; }
 .layout.is-player > :not(.player-background-poster-layer) { position: relative; z-index: 2; }
 .player-background-poster-layer { position: absolute; inset: 0; z-index: 0; min-height: 100%; overflow: hidden; pointer-events: none; opacity: 0.76; }
-.player-background-poster { position: absolute; box-sizing: border-box; width: clamp(170px, 18vw, 300px); margin: 0; padding: 12px 12px 28px; border: 1px solid rgba(118, 80, 36, 0.38); border-radius: 2px; background: linear-gradient(145deg, #ead8ad 0%, #d4b67b 100%); box-shadow: 0 18px 34px rgba(0, 0, 0, 0.34), inset 0 0 0 1px rgba(255, 255, 255, 0.26); color: #4a2d17; }
+.player-background-poster { position: absolute; box-sizing: border-box; width: clamp(160px, 16vw, 280px); margin: 0; padding: 12px 12px 28px; border: 1px solid rgba(118, 80, 36, 0.38); border-radius: 2px; background: linear-gradient(145deg, #ead8ad 0%, #d4b67b 100%); box-shadow: 0 18px 34px rgba(0, 0, 0, 0.34), inset 0 0 0 1px rgba(255, 255, 255, 0.26); color: #4a2d17; }
 .player-background-poster::before { content: ""; position: absolute; top: -13px; left: 50%; width: 58px; height: 24px; background: rgba(232, 213, 162, 0.76); border: 1px solid rgba(114, 84, 44, 0.24); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18); transform: translateX(-50%) rotate(-4deg); }
 .player-background-poster::after { content: ""; position: absolute; right: 12px; bottom: 10px; left: 12px; height: 1px; background: rgba(90, 55, 24, 0.18); }
 .player-background-poster img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border: 1px solid rgba(83, 49, 22, 0.22); filter: sepia(0.16) contrast(0.97) saturate(0.92); background: #6f5330; }
 .player-background-poster figcaption { min-width: 0; margin: 8px 0 0; overflow: hidden; color: #3f2411; font-size: 13px; font-weight: 800; line-height: 1.2; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
-.player-background-poster:nth-child(12n+1) { top: 5%; left: 2%; transform: rotate(-4deg); }
-.player-background-poster:nth-child(12n+2) { top: 6%; right: 2%; transform: rotate(4deg); }
-.player-background-poster:nth-child(12n+3) { bottom: 9%; left: 4%; transform: rotate(3deg); }
-.player-background-poster:nth-child(12n+4) { right: 4%; bottom: 8%; transform: rotate(-3deg); }
-.player-background-poster:nth-child(12n+5) { top: 30%; left: 1%; transform: rotate(4deg); }
-.player-background-poster:nth-child(12n+6) { top: 31%; right: 1%; transform: rotate(-4deg); }
-.player-background-poster:nth-child(12n+7) { top: 1%; left: 32%; transform: rotate(-2deg); }
-.player-background-poster:nth-child(12n+8) { right: 32%; bottom: 1%; transform: rotate(2deg); }
-.player-background-poster:nth-child(12n+9) { top: 56%; left: 2%; transform: rotate(-2deg); }
-.player-background-poster:nth-child(12n+10) { top: 56%; right: 2%; transform: rotate(3deg); }
-.player-background-poster:nth-child(12n+11) { top: 21%; left: 27%; transform: rotate(-3deg); }
-.player-background-poster:nth-child(12n+12) { top: 47%; right: 27%; transform: rotate(3deg); }
+.player-background-poster:nth-child(12n+1) { top: 4%; right: auto; bottom: auto; left: 6%; transform: rotate(-3deg); }
+.player-background-poster:nth-child(12n+2) { top: 2%; right: auto; bottom: auto; left: 38%; transform: rotate(2deg); }
+.player-background-poster:nth-child(12n+3) { top: 5%; right: 8%; bottom: auto; left: auto; transform: rotate(3deg); }
+.player-background-poster:nth-child(12n+4) { top: 48%; right: auto; bottom: auto; left: 4%; transform: rotate(2deg); }
+.player-background-poster:nth-child(12n+5) { top: 38%; right: 6%; bottom: auto; left: auto; transform: rotate(-3deg); }
+.player-background-poster:nth-child(12n+6) { top: 58%; right: auto; bottom: auto; left: 27%; transform: rotate(-2deg); }
+.player-background-poster:nth-child(12n+7) { top: 62%; right: 28%; bottom: auto; left: auto; transform: rotate(2deg); }
+.player-background-poster:nth-child(12n+8) { top: 27%; right: auto; bottom: auto; left: 18%; transform: rotate(3deg); }
+.player-background-poster:nth-child(12n+9) { top: 25%; right: 24%; bottom: auto; left: auto; transform: rotate(-2deg); }
+.player-background-poster:nth-child(12n+10) { top: 73%; right: auto; bottom: auto; left: 10%; transform: rotate(-2deg); }
+.player-background-poster:nth-child(12n+11) { top: 73%; right: 12%; bottom: auto; left: auto; transform: rotate(3deg); }
+.player-background-poster:nth-child(12n+12) { top: 50%; right: auto; bottom: auto; left: 50%; transform: rotate(-2deg); }
 
 .music-manager { display: grid; gap: 10px; min-width: 0; }
 .music-add-form { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(220px, 2fr) minmax(120px, 1fr) minmax(120px, 1fr) auto; gap: 6px; align-items: end; min-width: 0; padding: 8px; border: 1px solid rgba(243, 234, 216, 0.1); border-radius: 10px; background: rgba(255, 255, 255, 0.035); }
@@ -280,16 +280,16 @@ body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-fi
   .player-background-poster figcaption { margin-top: 5px; font-size: 10px; }
   .player-background-poster:nth-child(12n+1) { top: 2%; right: auto; bottom: auto; left: 2%; transform: rotate(-3deg); }
   .player-background-poster:nth-child(12n+2) { top: 5%; right: 2%; bottom: auto; left: auto; transform: rotate(3deg); }
-  .player-background-poster:nth-child(12n+3) { top: 24%; right: auto; bottom: auto; left: 2%; transform: rotate(2deg); }
-  .player-background-poster:nth-child(12n+4) { top: 28%; right: 2%; bottom: auto; left: auto; transform: rotate(-2deg); }
-  .player-background-poster:nth-child(12n+5) { top: 46%; right: auto; bottom: auto; left: 2%; transform: rotate(-2deg); }
-  .player-background-poster:nth-child(12n+6) { top: 50%; right: 2%; bottom: auto; left: auto; transform: rotate(2deg); }
-  .player-background-poster:nth-child(12n+7) { top: 68%; right: auto; bottom: auto; left: 2%; transform: rotate(3deg); }
-  .player-background-poster:nth-child(12n+8) { top: 72%; right: 2%; bottom: auto; left: auto; transform: rotate(-3deg); }
-  .player-background-poster:nth-child(12n+9) { top: 90%; right: auto; bottom: auto; left: 2%; transform: rotate(-2deg); }
-  .player-background-poster:nth-child(12n+10) { top: 94%; right: 2%; bottom: auto; left: auto; transform: rotate(2deg); }
-  .player-background-poster:nth-child(12n+11) { top: 14%; right: auto; bottom: auto; left: 31%; transform: rotate(2deg); }
-  .player-background-poster:nth-child(12n+12) { top: 82%; right: 31%; bottom: auto; left: auto; transform: rotate(-2deg); }
+  .player-background-poster:nth-child(12n+3) { top: 22%; right: auto; bottom: auto; left: 34%; transform: rotate(2deg); }
+  .player-background-poster:nth-child(12n+4) { top: 42%; right: auto; bottom: auto; left: 2%; transform: rotate(-2deg); }
+  .player-background-poster:nth-child(12n+5) { top: 51%; right: 2%; bottom: auto; left: auto; transform: rotate(2deg); }
+  .player-background-poster:nth-child(12n+6) { top: 65%; right: auto; bottom: auto; left: 34%; transform: rotate(-2deg); }
+  .player-background-poster:nth-child(12n+7) { top: 72%; right: auto; bottom: auto; left: 2%; transform: rotate(3deg); }
+  .player-background-poster:nth-child(12n+8) { top: 78%; right: 2%; bottom: auto; left: auto; transform: rotate(-3deg); }
+  .player-background-poster:nth-child(12n+9) { top: 88%; right: auto; bottom: auto; left: 28%; transform: rotate(2deg); }
+  .player-background-poster:nth-child(12n+10) { top: 34%; right: 1%; bottom: auto; left: auto; transform: rotate(-2deg); }
+  .player-background-poster:nth-child(12n+11) { top: 58%; right: auto; bottom: auto; left: 1%; transform: rotate(2deg); }
+  .player-background-poster:nth-child(12n+12) { top: 12%; right: auto; bottom: auto; left: 31%; transform: rotate(-2deg); }
   .music-add-form { grid-template-columns: 1fr; gap: 5px; padding: 6px; }
   .music-add-button { width: 100%; }
   .music-youtube-player { min-height: 180px; }
