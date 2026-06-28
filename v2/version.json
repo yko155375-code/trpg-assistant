@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "dm-intro-images-url-library",
-  "commit": "4052046c3e5336f4a93a8c1b4eda25d03398ea04",
-  "sourceCommit": "fc67ebd75303c9ce3d4e3203e0b93b3c9559ce2e",
-  "versionCommit": "4052046c3e5336f4a93a8c1b4eda25d03398ea04",
-  "updatedAt": "2026-06-28T12:15:00+08:00",
-  "note": "Add DM intro image URL library."
+  "label": "player-opening-entry-flow",
+  "commit": "27a7ba3dbda102dc03f5c2ca3f329c1268e32f29",
+  "sourceCommit": "5aa465d7e263b0226c94377469059f6224303dd4",
+  "versionCommit": "27a7ba3dbda102dc03f5c2ca3f329c1268e32f29",
+  "updatedAt": "2026-06-28T12:38:00+08:00",
+  "note": "Add player opening entry flow."
 }
