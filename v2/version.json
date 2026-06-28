@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-character-editor-mobile-polish",
-  "commit": "d4a07c0a98a08e6683bb600b600309f27f75298a",
-  "sourceCommit": "16cd12909b2d974a75e4688638d2bd4e531928bb",
-  "versionCommit": "d4a07c0a98a08e6683bb600b600309f27f75298a",
-  "updatedAt": "2026-06-27T08:01:15+08:00",
-  "note": "Polish mobile character editor status controls."
+  "label": "dm-intro-images-url-library",
+  "commit": "4052046c3e5336f4a93a8c1b4eda25d03398ea04",
+  "sourceCommit": "fc67ebd75303c9ce3d4e3203e0b93b3c9559ce2e",
+  "versionCommit": "4052046c3e5336f4a93a8c1b4eda25d03398ea04",
+  "updatedAt": "2026-06-28T12:15:00+08:00",
+  "note": "Add DM intro image URL library."
 }
