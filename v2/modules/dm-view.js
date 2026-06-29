@@ -233,86 +233,76 @@ function renderDmPlayerBackgroundImagesManager(state) {
   `;
 }
 
+function getMusicPlaybackType(track) {
+  return track?.playbackType === "sfx" ? "sfx" : "bgm";
+}
+
+function getMusicPlaybackLabel(type) {
+  return type === "sfx" ? "音效" : "背景音樂";
+}
+
 function renderMusicPlayer(track) {
-  if (!track) {
-    return `
-      <section class="music-player-panel is-empty">
-        <strong>尚未播放音樂</strong>
-        <span>從下方清單選一首音樂開始播放。</span>
-      </section>
-    `;
-  }
+  {
+    if (!track) {
+      return `
+        <section class="music-player-panel is-empty">
+          <strong>目前沒有背景音樂</strong>
+          <span>BGM 會由全域播放層維持，切換頁面不會中斷。</span>
+        </section>
+      `;
+    }
 
-  const type = track.sourceType || getAudioSourceType(track.url);
-  const url = normalizeUrl(track.url);
-  const title = escapeHtml(track.title || "未命名音樂");
-
-  if (type === "youtube") {
-    const embedUrl = getYoutubeEmbedUrl(url);
+    const statusType = track.sourceType || getAudioSourceType(track.url);
+    const statusTitle = escapeHtml(track.title || "未命名音樂");
     return `
-      <section class="music-player-panel">
+      <section class="music-player-panel is-bgm-active">
         <div class="music-player-heading">
-          <strong>${title}</strong>
-          <span>YouTube</span>
+          <strong>${statusTitle}</strong>
+          <span>背景音樂 · ${statusType === "youtube" ? "YouTube" : statusType === "audio" ? "Audio URL" : "URL"}</span>
         </div>
-        ${
-          embedUrl
-            ? `<iframe class="music-youtube-player" title="${title}" src="${escapeHtml(embedUrl)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`
-            : `<p class="music-warning">此 YouTube 網址無法轉成可嵌入播放器。</p>`
-        }
+        <p class="music-warning">背景音樂正在全域 BGM layer 播放；切換玩家頁、DM 頁或分頁不會銷毀播放器。</p>
       </section>
     `;
   }
-
-  if (type === "audio") {
-    return `
-      <section class="music-player-panel">
-        <div class="music-player-heading">
-          <strong>${title}</strong>
-          <span>Audio URL</span>
-        </div>
-        <audio class="music-audio-player" controls src="${escapeHtml(url)}"></audio>
-      </section>
-    `;
-  }
-
-  return `
-    <section class="music-player-panel">
-      <div class="music-player-heading">
-        <strong>${title}</strong>
-        <span>URL</span>
-      </div>
-      <p class="music-warning">此網址可能無法直接播放，但已保存於清單。</p>
-      <a class="music-external-link" href="${escapeHtml(url)}" target="_blank" rel="noreferrer">開啟原始連結</a>
-    </section>
-  `;
 }
 
 function renderMusicTrackRow(track, currentTrackId) {
-  const type = track.sourceType || getAudioSourceType(track.url);
-  const tag = track.scene || track.tags?.[0] || "未分類";
-  const isCurrent = track.id === currentTrackId;
+  {
+    const sourceType = track.sourceType || getAudioSourceType(track.url);
+    const tag = track.scene || track.tags?.[0] || "未分類";
+    const playbackType = getMusicPlaybackType(track);
+    const playbackLabel = getMusicPlaybackLabel(playbackType);
+    const isCurrent = playbackType === "bgm" && track.id === currentTrackId;
 
-  return `
-    <article class="music-track-row ${isCurrent ? "is-current" : ""}">
-      <div class="music-track-main">
-        <strong>${escapeHtml(track.title || "未命名音樂")}</strong>
-        <span>${escapeHtml(track.url)}</span>
-      </div>
-      <span class="music-source-badge">${type === "youtube" ? "YouTube" : type === "audio" ? "Audio" : "URL"}</span>
-      <span class="music-scene-chip">${escapeHtml(tag)}</span>
-      <div class="music-track-actions">
-        <button type="button" data-action="play-music-track" data-track-id="${escapeHtml(track.id)}">播放</button>
-        <button type="button" data-action="stop-music-track" data-track-id="${escapeHtml(track.id)}">停止</button>
-        <button class="danger-button" type="button" data-action="delete-music-track" data-track-id="${escapeHtml(track.id)}">刪除</button>
-      </div>
-    </article>
-  `;
+    return `
+      <article class="music-track-row ${isCurrent ? "is-current" : ""}">
+        <div class="music-track-main">
+          <strong>${escapeHtml(track.title || "未命名音樂")}</strong>
+          <span>${escapeHtml(track.url)}</span>
+        </div>
+        <span class="music-source-badge">${sourceType === "youtube" ? "YouTube" : sourceType === "audio" ? "Audio" : "URL"}</span>
+        <span class="music-playback-badge ${playbackType === "sfx" ? "is-sfx" : "is-bgm"}">${playbackLabel}</span>
+        <span class="music-scene-chip">${escapeHtml(tag)}</span>
+        <label class="music-playback-select">
+          <span>類型</span>
+          <select data-music-playback-type data-track-id="${escapeHtml(track.id)}" aria-label="播放類型">
+            <option value="bgm" ${playbackType === "bgm" ? "selected" : ""}>背景音樂</option>
+            <option value="sfx" ${playbackType === "sfx" ? "selected" : ""}>音效</option>
+          </select>
+        </label>
+        <div class="music-track-actions">
+          <button type="button" data-action="play-music-track" data-track-id="${escapeHtml(track.id)}">播放</button>
+          <button type="button" data-action="stop-music-track" data-track-id="${escapeHtml(track.id)}">停止</button>
+          <button class="danger-button" type="button" data-action="delete-music-track" data-track-id="${escapeHtml(track.id)}">刪除</button>
+        </div>
+      </article>
+    `;
+  }
 }
 
 function renderDmAudioManager(state) {
   const tracks = getAudioTracks(state);
-  const currentTrack = tracks.find((track) => track.id === state.audio?.currentTrackId && state.audio?.isPlaying);
+  const currentTrack = tracks.find((track) => getMusicPlaybackType(track) === "bgm" && track.id === state.audio?.currentTrackId && state.audio?.isPlaying);
 
   return `
     <div class="music-manager">
@@ -328,6 +318,13 @@ function renderDmAudioManager(state) {
         <label class="form-field">
           <span>場景 / 標籤</span>
           <input data-new-music-scene type="text" placeholder="酒館、戰鬥、探索" autocomplete="off" />
+        </label>
+        <label class="form-field music-type-field">
+          <span>播放類型</span>
+          <select data-new-music-playback-type>
+            <option value="bgm">背景音樂</option>
+            <option value="sfx">音效</option>
+          </select>
         </label>
         <label class="form-field music-notes-field">
           <span>備註</span>

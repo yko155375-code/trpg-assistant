@@ -218,6 +218,10 @@ function inferMusicSourceType(url) {
   return "url";
 }
 
+function normalizeMusicPlaybackType(value) {
+  return value === "sfx" ? "sfx" : "bgm";
+}
+
 function normalizeMusicTrack(track, index) {
   const source = recordOrEmpty(track);
   const url = String(source.url || "").trim();
@@ -239,6 +243,7 @@ function normalizeMusicTrack(track, index) {
     title,
     url,
     sourceType,
+    playbackType: normalizeMusicPlaybackType(source.playbackType),
     tags,
     scene,
     notes: String(source.notes || ""),
@@ -249,9 +254,8 @@ function normalizeMusicTrack(track, index) {
 function normalizeAudio(audio, fallbackAudio) {
   const source = recordOrEmpty(audio);
   const tracks = recordArray(source.tracks).map(normalizeMusicTrack).filter((track) => track.url);
-  const currentTrackId = tracks.some((track) => track.id === source.currentTrackId)
-    ? source.currentTrackId
-    : null;
+  const currentTrack = tracks.find((track) => track.id === source.currentTrackId && track.playbackType === "bgm");
+  const currentTrackId = currentTrack ? currentTrack.id : null;
 
   return {
     ...fallbackAudio,

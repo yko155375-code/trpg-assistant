@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-background-wanted-posters",
-  "commit": "315db88b95db8bd14e9ff17522082b5193acf108",
-  "sourceCommit": "315db88b95db8bd14e9ff17522082b5193acf108",
-  "versionCommit": "315db88b95db8bd14e9ff17522082b5193acf108",
-  "updatedAt": "2026-06-28T18:17:50+08:00",
-  "note": "Add DM-managed player background wanted posters."
+  "label": "dm-music-bgm-sfx-layers",
+  "commit": "b68d84ccc95997c585399183ba55b828637d5a92",
+  "sourceCommit": "b68d84ccc95997c585399183ba55b828637d5a92",
+  "versionCommit": "b68d84ccc95997c585399183ba55b828637d5a92",
+  "updatedAt": "2026-06-29T00:00:00+08:00",
+  "note": "Split DM music playback into persistent BGM and SFX layers."
 }
