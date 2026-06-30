@@ -46,6 +46,23 @@ body:has(.layout.is-player) .mode-switch [data-mode="dm"] { flex: 0 0 34px; widt
 body:has(.layout.is-player) .mode-switch [data-mode="dm"]::before { content: "ᚱ"; font-size: 15px; line-height: 1; }
 body:has(.layout.is-player) .mode-switch [data-mode="dm"]:hover, body:has(.layout.is-player) .mode-switch [data-mode="dm"]:focus-visible { border-color: rgba(199, 164, 93, 0.58); background: rgba(22, 34, 50, 0.72); opacity: 0.76; }
 
+:root {
+  --large-panel-bg-top: rgba(22, 34, 50, 0.54);
+  --large-panel-bg-bottom: rgba(12, 19, 29, 0.50);
+  --large-panel-empty-bg: rgba(0, 0, 0, 0.10);
+}
+
+.layout.is-player :is(.page-panel, .mobile-page-card),
+.layout.is-dm .dm-page-card {
+  background: linear-gradient(180deg, var(--large-panel-bg-top), var(--large-panel-bg-bottom));
+  border-color: rgba(243, 234, 216, 0.11);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+}
+
+.layout :is(.empty-panel) {
+  background: var(--large-panel-empty-bg);
+}
+
 .shop-panel-compact { gap: 8px; }
 .shop-summary-compact { gap: 2px; padding: 8px 10px; border-radius: 10px; }
 .shop-summary-compact h3, .shop-summary-compact p { margin: 0; }
