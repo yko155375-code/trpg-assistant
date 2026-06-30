@@ -19,9 +19,9 @@ import {
   updateCharacterGold,
   updateCharacterMoney,
   updateCharacterStat,
-} from "./modules/characters.js?v=player-background-wanted-posters";
-import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=player-background-wanted-posters";
-import { renderDmPage } from "./modules/dm-view.js?v=player-background-wanted-posters";
+} from "./modules/characters.js?v=state-persistence-hardening";
+import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=state-persistence-hardening";
+import { renderDmPage } from "./modules/dm-view.js?v=state-persistence-hardening";
 import {
   addMonster,
   adjustMonsterValue,
@@ -31,18 +31,22 @@ import {
   resetMonsterRound,
   rollMonsterAction,
   updateMonster,
-} from "./modules/monsters.js?v=player-background-wanted-posters";
-import { renderPlayerPage } from "./modules/player-view.js?v=player-background-wanted-posters";
-import { updatePublicInfoField } from "./modules/public-info.js?v=player-background-wanted-posters";
-import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=player-background-wanted-posters";
-import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=player-background-wanted-posters";
-import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=player-background-wanted-posters";
-import { saveState, STORAGE_KEY } from "./modules/storage.js?v=player-background-wanted-posters";
+} from "./modules/monsters.js?v=state-persistence-hardening";
+import { renderPlayerPage } from "./modules/player-view.js?v=state-persistence-hardening";
+import { updatePublicInfoField } from "./modules/public-info.js?v=state-persistence-hardening";
+import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=state-persistence-hardening";
+import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=state-persistence-hardening";
+import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=state-persistence-hardening";
+import { STORAGE_KEY } from "./modules/storage.js?v=state-persistence-hardening";
 
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
-const VERSION_LABEL = "player-background-wanted-posters";
+const VERSION_LABEL = "state-persistence-hardening";
 const OPENING_VIDEO_URL = "./assets/intro/opening.mp4";
+const BACKUP_LATEST_KEY = `${STORAGE_KEY}-backup-latest`;
+const BACKUP_TIMESTAMP_PREFIX = `${STORAGE_KEY}-backup-`;
+const MAX_TIMESTAMP_BACKUPS = 5;
+const MAX_BACKUP_BYTES = 2_500_000;
 const isSafeMode = new URLSearchParams(window.location.search).get("safe") === "1";
 let state = null;
 let isDmMenuOpen = false;
@@ -53,6 +57,7 @@ let bootFailed = false;
 let bootPhase = "start";
 let bootRawState = null;
 let bootBackupKey = "";
+let persistenceStatus = { status: "idle", label: "尚未保存", lastSavedAt: "", message: "" };
 
 function logBoot(phase, details = {}) {
   console.info("[TRPG v2 boot]", { phase, safeMode: isSafeMode, storageKey: STORAGE_KEY, ...details });
@@ -94,6 +99,155 @@ async function exportRawState(statusElement) {
   }
 }
 
+function formatSavedTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  const pad = (number) => String(number).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function setPersistenceStatus(status, details = {}) {
+  const labelMap = { idle: "尚未保存", saving: "保存中", saved: "已保存", failed: "保存失敗", safe: "安全模式" };
+  persistenceStatus = {
+    status,
+    label: labelMap[status] || String(status || "未知"),
+    lastSavedAt: details.lastSavedAt || persistenceStatus.lastSavedAt || "",
+    lastSavedText: formatSavedTime(details.lastSavedAt || persistenceStatus.lastSavedAt || ""),
+    message: details.message || "",
+  };
+}
+
+function storageGet(key) {
+  try { return window.localStorage.getItem(key); }
+  catch (error) { console.error("[TRPG v2 persistence] localStorage read failed", error); return null; }
+}
+
+function storageSet(key, value) {
+  window.localStorage.setItem(key, value);
+}
+
+function getTimestampBackupKeys() {
+  try {
+    return Object.keys(window.localStorage)
+      .filter((key) => key.startsWith(BACKUP_TIMESTAMP_PREFIX) && /^\d+$/.test(key.slice(BACKUP_TIMESTAMP_PREFIX.length)))
+      .sort((a, b) => Number(b.slice(BACKUP_TIMESTAMP_PREFIX.length)) - Number(a.slice(BACKUP_TIMESTAMP_PREFIX.length)));
+  } catch (error) {
+    console.error("[TRPG v2 persistence] backup key scan failed", error);
+    return [];
+  }
+}
+
+function pruneTimestampBackups() {
+  getTimestampBackupKeys().slice(MAX_TIMESTAMP_BACKUPS).forEach((key) => {
+    try { window.localStorage.removeItem(key); }
+    catch (error) { console.error("[TRPG v2 persistence] backup prune failed", { key, error }); }
+  });
+}
+
+function backupPreviousMainState(reason = "save") {
+  const previousRaw = storageGet(STORAGE_KEY);
+  if (!previousRaw) return "";
+  if (previousRaw.length > MAX_BACKUP_BYTES) {
+    console.warn("[TRPG v2 persistence] skip backup because state is too large", { reason, bytes: previousRaw.length });
+    return "";
+  }
+  try {
+    storageSet(BACKUP_LATEST_KEY, previousRaw);
+    const backupKey = `${BACKUP_TIMESTAMP_PREFIX}${Date.now()}`;
+    storageSet(backupKey, previousRaw);
+    pruneTimestampBackups();
+    return backupKey;
+  } catch (error) {
+    console.error("[TRPG v2 persistence] backup failed", { reason, error });
+    return "";
+  }
+}
+
+function saveStateHardened(nextState, reason = "save") {
+  const now = new Date().toISOString();
+  setPersistenceStatus("saving", { lastSavedAt: persistenceStatus.lastSavedAt, message: "保存中..." });
+  let normalized;
+  let serialized;
+  try {
+    normalized = normalizeState({
+      ...nextState,
+      meta: {
+        ...(nextState.meta || {}),
+        updatedAt: now,
+        lastSavedAt: now,
+      },
+    });
+    serialized = JSON.stringify(normalized);
+  } catch (error) {
+    console.error("[TRPG v2 persistence] stringify/normalize failed", { reason, error });
+    setPersistenceStatus("failed", { message: "資料序列化失敗，未覆蓋本機資料。" });
+    return normalizeState(nextState);
+  }
+
+  try {
+    backupPreviousMainState(reason);
+    storageSet(STORAGE_KEY, serialized);
+    bootRawState = serialized;
+    setPersistenceStatus("saved", { lastSavedAt: now, message: "資料已寫入本機瀏覽器。" });
+    return normalized;
+  } catch (error) {
+    console.error("[TRPG v2 persistence] save failed", { reason, error });
+    setPersistenceStatus("failed", { lastSavedAt: normalized.meta?.lastSavedAt || now, message: error?.message || "localStorage 寫入失敗。" });
+    return normalized;
+  }
+}
+
+function normalizeWithoutSaving(nextState) {
+  const normalized = normalizeState(nextState);
+  setPersistenceStatus("safe", { message: "安全模式不讀取也不寫入舊本機資料。" });
+  return normalized;
+}
+
+function exportStateJson() {
+  try {
+    const normalized = normalizeState(state);
+    const payload = {
+      schemaVersion: normalized.meta?.schemaVersion || 1,
+      exportedAt: new Date().toISOString(),
+      appVersion: VERSION_LABEL,
+      storageKey: STORAGE_KEY,
+      state: normalized,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `trpg-assistant-v2-export-${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    setPersistenceStatus("saved", { lastSavedAt: normalized.meta?.lastSavedAt || persistenceStatus.lastSavedAt, message: "已匯出 JSON，內容包含完整 state。" });
+    safeRender();
+  } catch (error) {
+    console.error("[TRPG v2 persistence] export failed", error);
+    setPersistenceStatus("failed", { message: "匯出失敗，請查看 console。" });
+    safeRender();
+  }
+}
+
+async function importStateFile(file) {
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const importedState = parsed && typeof parsed === "object" && parsed.state && typeof parsed.state === "object"
+      ? parsed.state
+      : parsed;
+    const normalized = normalizeState(importedState);
+    state = saveStateHardened(normalized, "import");
+    setPersistenceStatus("saved", { lastSavedAt: state.meta?.lastSavedAt || new Date().toISOString(), message: "匯入完成；匯入前已建立本機備份。" });
+    safeRender();
+  } catch (error) {
+    console.error("[TRPG v2 persistence] import failed", error);
+    setPersistenceStatus("failed", { message: "匯入失敗，原本資料未被清空或覆蓋。" });
+    safeRender();
+  }
+}
+
 function renderBootError(error, phase = bootPhase) {
   bootFailed = true;
   const errorObject = error instanceof Error ? error : new Error(String(error || "未知錯誤"));
@@ -114,7 +268,7 @@ function initializeState() {
   logBoot("start");
   if (isSafeMode) {
     bootPhase = "safeMode";
-    state = normalizeState(createDefaultState());
+    state = normalizeWithoutSaving(createDefaultState());
     logBoot("normalizeState", { parsed: false, normalized: true, safeMode: true });
     return;
   }
@@ -122,16 +276,28 @@ function initializeState() {
   bootRawState = window.localStorage.getItem(STORAGE_KEY);
   logBoot("loadState", { hasStoredState: Boolean(bootRawState) });
   let parsedState = createDefaultState();
+  let parseFailed = false;
   if (bootRawState) {
     bootPhase = "parseStorage";
-    parsedState = JSON.parse(bootRawState);
-    logBoot("parseStorage", { parsed: true });
+    try {
+      parsedState = JSON.parse(bootRawState);
+      logBoot("parseStorage", { parsed: true });
+    } catch (error) {
+      parseFailed = true;
+      console.error("[TRPG v2 persistence] parse failed; starting with default state without overwriting main storage", error);
+      try { bootBackupKey = backupRawState(bootRawState); }
+      catch (backupError) { console.error("[TRPG v2 persistence] corrupt backup failed", backupError); }
+      setPersistenceStatus("failed", { message: "主資料 JSON 損壞，已備份原始資料並以乾淨狀態啟動；尚未覆蓋主資料。" });
+      parsedState = createDefaultState();
+      logBoot("parseStorage", { parsed: false, backupKey: bootBackupKey });
+    }
   } else logBoot("parseStorage", { parsed: false, reason: "empty storage" });
   bootPhase = "normalizeState";
   state = normalizeState(parsedState);
   logBoot("normalizeState", { normalized: true });
   bootPhase = "saveState";
-  state = saveState(state);
+  if (parseFailed) return;
+  state = saveStateHardened(state, "boot");
 }
 
 try { initializeState(); }
@@ -141,8 +307,8 @@ catch (error) {
   renderBootError(error, bootPhase);
 }
 
-function updateState(nextState) { state = isSafeMode ? normalizeState(nextState) : saveState(nextState); safeRender(); }
-function saveStateOnly(nextState) { state = isSafeMode ? normalizeState(nextState) : saveState(nextState); }
+function updateState(nextState) { state = isSafeMode ? normalizeWithoutSaving(nextState) : saveStateHardened(nextState); safeRender(); }
+function saveStateOnly(nextState) { state = isSafeMode ? normalizeWithoutSaving(nextState) : saveStateHardened(nextState); }
 function escapeHtml(value) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
 
 function normalizeEncounterMonster(monster = {}) {
@@ -178,8 +344,8 @@ function enhanceDiceHtml(html, actor) {
   if (key === "player" && !output.includes("data-roll-edge-mode")) { const mode = state.ui?.rollEdgeMode || ""; const edge = `<div class="roll-edge-controls" data-roll-edge-controls><button class="roll-edge-button ${mode === "advantage" ? "is-active" : ""}" type="button" data-roll-edge-mode="advantage" aria-pressed="${mode === "advantage"}">優勢</button><button class="roll-edge-button ${mode === "disadvantage" ? "is-active" : ""}" type="button" data-roll-edge-mode="disadvantage" aria-pressed="${mode === "disadvantage"}">劣勢</button></div>`; output = output.replace("</form>", `</form>${edge}`); }
   return output;
 }
-function renderState() { return pendingDeleteCharacterId ? { ...state, ui: { ...state.ui, pendingDeleteCharacterId } } : state; }
-function renderPanel() { const pages = getActivePages(state.ui.mode); const page = pages.find((item) => item.id === getActivePageId(state)) || pages[0]; const viewState = renderState(); if (state.ui.mode === "player") { const html = renderPlayerPage(page.id, viewState); return page.id === "dice" ? enhanceDiceHtml(html, "player") : html; } const html = renderDmPage(page.id, state); return page.id === "dice" ? enhanceDiceHtml(html, "DM") : html; }
+function renderState() { return { ...state, ui: { ...(state.ui || {}), persistenceStatus, pendingDeleteCharacterId } }; }
+function renderPanel() { const pages = getActivePages(state.ui.mode); const page = pages.find((item) => item.id === getActivePageId(state)) || pages[0]; const viewState = renderState(); if (state.ui.mode === "player") { const html = renderPlayerPage(page.id, viewState); return page.id === "dice" ? enhanceDiceHtml(html, "player") : html; } const html = renderDmPage(page.id, viewState); return page.id === "dice" ? enhanceDiceHtml(html, "DM") : html; }
 function renderPageButton(page, className) { const active = page.id === getActivePageId(state); return `<button class="${className} ${active ? "is-active" : ""}" type="button" data-page="${page.id}" aria-pressed="${active}">${page.label}</button>`; }
 function renderModeButton(mode, label) { const active = state.ui.mode === mode; return `<button class="mode-button ${active ? "is-active" : ""}" type="button" data-mode="${mode}" aria-pressed="${active}">${label}</button>`; }
 function isRenderableAvatarUrl(value) { return typeof value === "string" && /^https?:\/\//i.test(value.trim()); }
@@ -415,10 +581,13 @@ app.addEventListener("click", (event) => {
   if (actionButton.dataset.action === "stop-music-track") return updateState(stopMusicTrack(state, actionButton.dataset.trackId));
   if (actionButton.dataset.action === "delete-music-track" && confirm("確定刪除這首音樂？")) return updateState(deleteMusicTrack(state, actionButton.dataset.trackId));
   if (actionButton.dataset.action === "delete-encounter" && confirm("確定要刪除這個遭遇模板？")) return updateState(deleteEncounter(state, actionButton.dataset.encounterId));
+  if (actionButton.dataset.action === "export-v2-state") { exportStateJson(); return; }
   if (actionButton.dataset.action === "reset-v2-state" && confirm("確定要重設 v2 測試資料？")) return updateState(createDefaultState());
 });
 
 app.addEventListener("change", (event) => {
+  const importStateInput = event.target.closest("[data-import-state-file]");
+  if (importStateInput) { importStateFile(importStateInput.files?.[0]); importStateInput.value = ""; return; }
   const characterSelect = event.target.closest("[data-character-select]"); if (characterSelect) { pendingDeleteCharacterId = ""; return updateState(selectCharacter(state, characterSelect.value)); }
   const shopItemField = event.target.closest("[data-shop-item-field]"); if (shopItemField) return updateState(updateShopItem(state, shopItemField.dataset.shopItemId, shopItemField.dataset.shopItemField, shopItemField.value));
   const characterId = event.target.dataset.characterId; if (!characterId) return;
