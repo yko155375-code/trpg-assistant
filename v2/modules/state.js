@@ -421,6 +421,7 @@ export function createDefaultState() {
       schemaVersion: SCHEMA_VERSION,
       createdAt: now,
       updatedAt: now,
+      lastSavedAt: "",
     },
     session: {
       scene: "",
@@ -500,6 +501,7 @@ export function normalizeState(input) {
       ...sourceMeta,
       version: APP_VERSION,
       schemaVersion: nonNegativeWholeNumber(sourceMeta.schemaVersion, SCHEMA_VERSION),
+      lastSavedAt: String(sourceMeta.lastSavedAt || ""),
     },
     session: normalizeSession({ ...fallback.session, ...sourceSession }),
     characters,

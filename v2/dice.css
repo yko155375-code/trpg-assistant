@@ -261,6 +261,18 @@ body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-fi
 .music-track-main span { color: var(--muted); font-size: 11px; }
 .music-track-actions { display: inline-flex; gap: 4px; align-items: center; }
 .music-track-actions button { min-height: 30px; padding: 0 8px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
+.dm-persistence-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; margin: 0 0 10px; padding: 9px; border: 1px solid rgba(243, 234, 216, 0.12); border-radius: 10px; background: rgba(20, 16, 12, 0.48); }
+.dm-persistence-panel.is-saved { border-color: rgba(105, 214, 150, 0.28); }
+.dm-persistence-panel.is-saving { border-color: rgba(199, 164, 93, 0.32); }
+.dm-persistence-panel.is-failed { border-color: rgba(255, 118, 118, 0.42); background: rgba(70, 24, 24, 0.28); }
+.dm-persistence-main { display: grid; gap: 2px; min-width: 0; }
+.dm-persistence-main strong { font-size: 14px; color: var(--text); }
+.dm-persistence-main span, .dm-persistence-main small, .dm-persistence-notes { color: var(--muted); font-size: 11px; line-height: 1.35; }
+.dm-persistence-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; align-items: center; }
+.dm-persistence-actions button, .dm-persistence-import { display: inline-flex; align-items: center; justify-content: center; min-height: 30px; padding: 0 9px; border: 1px solid rgba(243, 234, 216, 0.14); border-radius: 8px; background: rgba(255, 255, 255, 0.055); color: var(--text); font-size: 12px; cursor: pointer; }
+.dm-persistence-import { position: relative; overflow: hidden; }
+.dm-persistence-import input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.dm-persistence-notes { grid-column: 1 / -1; margin: 0; padding-left: 18px; }
 
 @media (min-width: 760px) { .shop-player-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } }
 @media (min-width: 1024px) { .shop-player-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
@@ -329,4 +341,7 @@ body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-fi
   .music-track-main { grid-column: 1 / -1; }
   .music-track-actions { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .music-track-actions button { min-width: 0; padding: 0 5px; }
+  .dm-persistence-panel { grid-template-columns: 1fr; gap: 7px; padding: 7px; }
+  .dm-persistence-actions { justify-content: stretch; }
+  .dm-persistence-actions button, .dm-persistence-import { flex: 1 1 120px; min-width: 0; }
 }

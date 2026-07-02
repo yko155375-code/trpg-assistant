@@ -626,6 +626,37 @@ function renderDmCharacterManager(state) {
   `;
 }
 
+function renderDmPersistencePanel(state) {
+  const status = state.ui?.persistenceStatus || {};
+  const label = status.label || "尚未保存";
+  const statusClass = status.status ? `is-${escapeHtml(status.status)}` : "is-idle";
+  const lastSaved = status.lastSavedText || "尚無紀錄";
+  const message = status.message || "每次修改會立即寫入目前瀏覽器的 localStorage。";
+
+  return `
+    <section class="dm-persistence-panel ${statusClass}" aria-label="資料保存狀態">
+      <div class="dm-persistence-main">
+        <p class="eyebrow">資料保存狀態</p>
+        <strong>${escapeHtml(label)}</strong>
+        <span>上次保存時間：${escapeHtml(lastSaved)}</span>
+        <small>${escapeHtml(message)}</small>
+      </div>
+      <div class="dm-persistence-actions">
+        <button type="button" data-action="export-v2-state">匯出 JSON</button>
+        <label class="dm-persistence-import">
+          <span>匯入 JSON</span>
+          <input data-import-state-file type="file" accept="application/json,.json" />
+        </label>
+      </div>
+      <ul class="dm-persistence-notes">
+        <li>localhost 測試資料與正式 GitHub Pages 資料不共用。</li>
+        <li>不同裝置 / 不同瀏覽器資料不共用。</li>
+        <li>正式使用前建議定期匯出備份。</li>
+      </ul>
+    </section>
+  `;
+}
+
 export function renderDmPage(pageId, state) {
   const page = dmPageContent[pageId] || dmPageContent.overview;
   const characterCount = Array.isArray(state.characters) ? state.characters.length : 0;
@@ -639,6 +670,7 @@ export function renderDmPage(pageId, state) {
           <h2 id="active-page-title">總覽</h2>
           <p class="placeholder">集中查看本場遊戲的主持狀態。</p>
         </div>
+        ${renderDmPersistencePanel(state)}
         <div class="dm-section-grid" aria-label="總覽管理區塊">
           <article class="dm-section-card">
             <span>目前場景</span>
