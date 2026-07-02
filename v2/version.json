@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-panel-compact-status-cleanup",
+  "label": "player-panel-compact-status-cleanup-advanced-open-fix",
   "commit": "11d61bc0673696f2fd0307049857a7f4e8bc9a1d",
   "sourceCommit": "11d61bc0673696f2fd0307049857a7f4e8bc9a1d",
   "versionCommit": "11d61bc0673696f2fd0307049857a7f4e8bc9a1d",
-  "updatedAt": "2026-07-03T03:41:50+08:00",
-  "note": "Compact player add-character entry and add hope and shield status meters."
+  "updatedAt": "2026-07-03T04:00:45+08:00",
+  "note": "Keep character advanced settings open while editing compact player details."
 }

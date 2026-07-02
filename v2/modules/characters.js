@@ -40,6 +40,22 @@ export const characterColorOptions = [
   { key: "pink", label: "粉", value: "#ec4899" },
 ];
 
+let advancedCharacterDetailsOpenId = "";
+
+function setAdvancedCharacterDetailsOpen(characterId, isOpen) {
+  const id = String(characterId || "");
+  if (!id) return;
+  advancedCharacterDetailsOpenId = isOpen ? id : advancedCharacterDetailsOpenId === id ? "" : advancedCharacterDetailsOpenId;
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("toggle", (event) => {
+    const details = event.target.closest?.(".character-advanced-details");
+    if (!details) return;
+    setAdvancedCharacterDetailsOpen(details.dataset.characterId, details.open);
+  }, true);
+}
+
 function makeId() {
   return `char-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -587,6 +603,7 @@ function renderCharacterAdvancedEditor(character) {
 
 function renderTeamCharacterDetailsCompact(character, title = "角色詳細編輯", pendingDeleteId = character.pendingDeleteId || "") {
   const isDeleteConfirming = pendingDeleteId === character.id;
+  const isAdvancedOpen = isDeleteConfirming || advancedCharacterDetailsOpenId === character.id;
   return `
     <section class="editor-panel team-detail-panel character-detail-compact" data-character-id="${escapeHtml(character.id)}">
       <div class="editor-heading character-detail-heading">
@@ -596,7 +613,7 @@ function renderTeamCharacterDetailsCompact(character, title = "角色詳細編�
         </div>
       </div>
       ${renderPriorityStatEditor(character)}
-      <details class="character-advanced-details" ${isDeleteConfirming ? "open" : ""}>
+      <details class="character-advanced-details" data-character-id="${escapeHtml(character.id)}" ${isAdvancedOpen ? "open" : ""}>
         <summary><span>進階設定</span><b aria-hidden="true">⋯</b></summary>
         ${renderCharacterAdvancedEditor(character)}
       </details>
