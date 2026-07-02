@@ -725,6 +725,16 @@
   list-style: none;
 }
 
+.character-advanced-details[open] > summary {
+  position: sticky;
+  top: max(8px, env(safe-area-inset-top));
+  z-index: 38;
+  border-color: rgba(199, 164, 93, 0.42);
+  background: rgba(14, 23, 35, 0.94);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+}
+
 .character-advanced-details > summary::-webkit-details-marker {
   display: none;
 }

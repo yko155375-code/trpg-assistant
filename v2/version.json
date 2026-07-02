@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-panel-compact-status-cleanup-advanced-open-fix",
+  "label": "player-panel-compact-status-cleanup-advanced-sticky",
   "commit": "11d61bc0673696f2fd0307049857a7f4e8bc9a1d",
   "sourceCommit": "11d61bc0673696f2fd0307049857a7f4e8bc9a1d",
   "versionCommit": "11d61bc0673696f2fd0307049857a7f4e8bc9a1d",
-  "updatedAt": "2026-07-03T04:00:45+08:00",
-  "note": "Keep character advanced settings open while editing compact player details."
+  "updatedAt": "2026-07-03T04:16:27+08:00",
+  "note": "Keep the open character advanced settings control visible while scrolling."
 }
