@@ -368,7 +368,9 @@ export function renderCharacterPicker(state, label = "目前角色") {
 
 export function renderAddCharacterForm() {
   return `
-    <form class="inline-form" data-add-character-form>
+    <details class="team-add-details">
+      <summary><span>喚醒</span><small>新增角色</small></summary>
+      <form class="inline-form" data-add-character-form>
       <label class="form-field">
         <span>新增角色</span>
         <input data-new-character-name type="text" placeholder="輸入角色名稱" autocomplete="off" />
@@ -387,7 +389,8 @@ export function renderAddCharacterForm() {
         ${renderAvatarPreview("", "新角色")}
       </label>
       <button class="primary-button" type="submit">喚醒</button>
-    </form>
+      </form>
+    </details>
   `;
 }
 
@@ -650,10 +653,10 @@ function renderRpgTeamCard(character, current, expandedId) {
           <span class="team-rpg-meters">
             ${renderRpgMeter("HP", character.stats.hp, character.stats.maxHp, "hp")}
             ${renderRpgMeter("壓力", character.stats.stress, character.stats.maxStress, "stress")}
+            ${renderRpgMeter("希望", character.stats.hope, 6, "hope")}
+            ${renderRpgMeter("護盾", character.stats.shield, character.stats.maxShield, "shield")}
           </span>
           <span class="team-rpg-vitals">
-            <span><b>希望</b>${character.stats.hope}/6</span>
-            <span><b>護盾</b>${character.stats.shield}/${character.stats.maxShield}</span>
             <span><b>閃避</b>${character.stats.evasion}</span>
           </span>
           <span class="team-rpg-tags">${renderRpgStatusTags(character)}</span>
