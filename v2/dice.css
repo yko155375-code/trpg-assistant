@@ -164,6 +164,7 @@ body:has(.layout.is-player) .app-header .brand-block { display: none; }
 .team-add-details > summary small { color: var(--muted); font-size: 11px; }
 .team-add-details[open] > summary { margin-bottom: 8px; border-color: rgba(199, 164, 93, 0.42); background: rgba(199, 164, 93, 0.18); }
 .team-add-details > .inline-form { padding: 8px; border: 1px solid rgba(243, 234, 216, 0.10); border-radius: 10px; background: rgba(255, 255, 255, 0.035); }
+body:has(.layout.is-player) .character-advanced-details[open] > summary { position: sticky; top: max(8px, env(safe-area-inset-top)); z-index: 38; border-color: rgba(199, 164, 93, 0.42); background: rgba(14, 23, 35, 0.94); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28); backdrop-filter: blur(10px); }
 
 body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-field.form-field-full:has(> select[data-character-select]) { display: none; }
 
