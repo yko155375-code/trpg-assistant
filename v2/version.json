@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "global-panel-transparency-tuning",
-  "commit": "b68d84ccc95997c585399183ba55b828637d5a92",
-  "sourceCommit": "b68d84ccc95997c585399183ba55b828637d5a92",
-  "versionCommit": "b68d84ccc95997c585399183ba55b828637d5a92",
-  "updatedAt": "2026-07-01T07:29:01+08:00",
-  "note": "Tune large panel transparency so player background posters remain visible."
+  "label": "global-panel-transparency-tuning-more-transparent",
+  "commit": "ebbb0d665afc65c0f1fd085e98968f45d0eb443c",
+  "sourceCommit": "ebbb0d665afc65c0f1fd085e98968f45d0eb443c",
+  "versionCommit": "ebbb0d665afc65c0f1fd085e98968f45d0eb443c",
+  "updatedAt": "2026-07-03T03:18:58+08:00",
+  "note": "Halve large panel background alpha for stronger player poster visibility."
 }

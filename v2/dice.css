@@ -47,9 +47,9 @@ body:has(.layout.is-player) .mode-switch [data-mode="dm"]::before { content: "áš
 body:has(.layout.is-player) .mode-switch [data-mode="dm"]:hover, body:has(.layout.is-player) .mode-switch [data-mode="dm"]:focus-visible { border-color: rgba(199, 164, 93, 0.58); background: rgba(22, 34, 50, 0.72); opacity: 0.76; }
 
 :root {
-  --large-panel-bg-top: rgba(22, 34, 50, 0.54);
-  --large-panel-bg-bottom: rgba(12, 19, 29, 0.50);
-  --large-panel-empty-bg: rgba(0, 0, 0, 0.10);
+  --large-panel-bg-top: rgba(22, 34, 50, 0.27);
+  --large-panel-bg-bottom: rgba(12, 19, 29, 0.25);
+  --large-panel-empty-bg: rgba(0, 0, 0, 0.05);
 }
 
 .layout.is-player :is(.page-panel, .mobile-page-card),
