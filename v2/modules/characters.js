@@ -345,12 +345,13 @@ export function toggleCharacterEffect(state, characterId, effectType, value) {
   });
 }
 
-export function addAssetEntry(state, characterId, listKey, value) {
+export function addAssetEntry(state, characterId, listKey, value, quantity = 1) {
   const text = String(value || "").trim();
   if (!text) return state;
+  const entry = normalizeAssetEntry({ name: text, quantity });
   return updateCharacter(state, characterId, (character) => ({
     ...character,
-    assets: { ...character.assets, [listKey]: [...(character.assets[listKey] || []), text] },
+    assets: { ...character.assets, [listKey]: [...(character.assets[listKey] || []), entry] },
   }));
 }
 
@@ -364,7 +365,51 @@ export function deleteAssetEntry(state, characterId, listKey, index) {
 export function updateAssetEntry(state, characterId, listKey, index, value) {
   return updateCharacter(state, characterId, (character) => ({
     ...character,
-    assets: { ...character.assets, [listKey]: (character.assets[listKey] || []).map((entry, itemIndex) => (itemIndex === index ? value : entry)) },
+    assets: {
+      ...character.assets,
+      [listKey]: (character.assets[listKey] || []).map((entry, itemIndex) =>
+        itemIndex === index ? normalizeAssetEntry({ ...assetEntryRecord(entry), name: value }) : entry,
+      ),
+    },
+  }));
+}
+
+function normalizeAssetQuantity(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 1 ? Math.trunc(number) : 1;
+}
+
+function assetEntryRecord(entry) {
+  return entry && typeof entry === "object" && !Array.isArray(entry) ? entry : { name: String(entry || "") };
+}
+
+function assetEntryName(entry) {
+  const source = assetEntryRecord(entry);
+  return String(source.name || source.nameSnapshot || source.itemName || source.entry || "").trim();
+}
+
+function normalizeAssetEntry(entry) {
+  const source = assetEntryRecord(entry);
+  return {
+    ...source,
+    name: assetEntryName(source) || "未命名資產",
+    quantity: normalizeAssetQuantity(source.quantity),
+  };
+}
+
+export function updateAssetQuantity(state, characterId, listKey, index, delta) {
+  const amount = Number(delta);
+  if (!Number.isFinite(amount) || !amount) return state;
+  return updateCharacter(state, characterId, (character) => ({
+    ...character,
+    assets: {
+      ...character.assets,
+      [listKey]: (character.assets[listKey] || []).map((entry, itemIndex) => {
+        if (itemIndex !== index) return entry;
+        const normalized = normalizeAssetEntry(entry);
+        return { ...normalized, quantity: normalizeAssetQuantity(normalized.quantity + amount) };
+      }),
+    },
   }));
 }
 
@@ -744,6 +789,9 @@ export function renderCharacterEditor(state, options = {}) {
   const isDeleteMode = state.ui?.assetDeleteModeCharacterId === character.id;
   const selectedAssetKeys = new Set(Array.isArray(state.ui?.selectedAssetEntryKeys) ? state.ui.selectedAssetEntryKeys : []);
   const selectedCount = selectedAssetKeys.size;
+  const assetAddListKey = assetLists.some((list) => list.key === state.ui?.assetAddListKey)
+    ? state.ui.assetAddListKey
+    : "items";
   return `
     ${showPicker ? renderCharacterPicker(state) : ""}
     <section class="editor-panel asset-panel" data-character-id="${escapeHtml(character.id)}">
@@ -757,8 +805,12 @@ export function renderCharacterEditor(state, options = {}) {
         <label class="form-field">
           <span>分類</span>
           <select data-asset-list-key>
-            ${assetLists.map((list) => `<option value="${escapeHtml(list.key)}">${escapeHtml(list.label)}</option>`).join("")}
+            ${assetLists.map((list) => `<option value="${escapeHtml(list.key)}" ${list.key === assetAddListKey ? "selected" : ""}>${escapeHtml(list.label)}</option>`).join("")}
           </select>
+        </label>
+        <label class="form-field asset-add-quantity-field">
+          <span>數量</span>
+          <input data-asset-quantity-input type="number" inputmode="numeric" min="1" value="1" />
         </label>
         <button type="submit">新增資產</button>
       </form>
@@ -778,7 +830,8 @@ function renderAssetList(character, list, isDeleteMode = false, selectedAssetKey
       <h4>${list.label}</h4>
       ${entries.length ? `<ul class="asset-entry-list ${isDeleteMode ? "is-delete-mode" : ""}">${entries.map((entry, index) => {
         const key = assetEntryKey(list.key, index);
-        return `<li>${isDeleteMode ? `<label class="asset-delete-check"><input data-asset-delete-checkbox data-character-id="${escapeHtml(character.id)}" data-list-key="${escapeHtml(list.key)}" data-entry-index="${index}" type="checkbox" ${selectedAssetKeys.has(key) ? "checked" : ""} /><span>選取</span></label>` : ""}<input data-character-id="${escapeHtml(character.id)}" data-asset-entry-field data-list-key="${list.key}" data-entry-index="${index}" type="text" value="${escapeHtml(entry)}" aria-label="${escapeHtml(assetListLabel(list.key))} ${index + 1}" /></li>`;
+        const normalizedEntry = normalizeAssetEntry(entry);
+        return `<li>${isDeleteMode ? `<label class="asset-delete-check"><input data-asset-delete-checkbox data-character-id="${escapeHtml(character.id)}" data-list-key="${escapeHtml(list.key)}" data-entry-index="${index}" type="checkbox" ${selectedAssetKeys.has(key) ? "checked" : ""} /><span>選取</span></label>` : ""}<input data-character-id="${escapeHtml(character.id)}" data-asset-entry-field data-list-key="${list.key}" data-entry-index="${index}" type="text" value="${escapeHtml(normalizedEntry.name)}" aria-label="${escapeHtml(assetListLabel(list.key))} ${index + 1}" /><span class="asset-quantity-stepper" aria-label="${escapeHtml(normalizedEntry.name)} 數量"><button type="button" data-action="adjust-asset-quantity" data-character-id="${escapeHtml(character.id)}" data-list-key="${escapeHtml(list.key)}" data-entry-index="${index}" data-delta="-1" aria-label="減少數量">-</button><strong>${normalizedEntry.quantity}</strong><button type="button" data-action="adjust-asset-quantity" data-character-id="${escapeHtml(character.id)}" data-list-key="${escapeHtml(list.key)}" data-entry-index="${index}" data-delta="1" aria-label="增加數量">+</button></span></li>`;
       }).join("")}</ul>` : `<p class="empty-hint">尚無${list.label}</p>`}
     </section>
   `;

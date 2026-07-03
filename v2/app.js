@@ -14,14 +14,15 @@ import {
   selectCharacter,
   toggleCharacterEffect,
   updateAssetEntry,
+  updateAssetQuantity,
   updateCharacterAttribute,
   updateCharacterField,
   updateCharacterGold,
   updateCharacterMoney,
   updateCharacterStat,
-} from "./modules/characters.js?v=player-assets-management-cleanup";
-import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=player-assets-management-cleanup";
-import { renderDmPage } from "./modules/dm-view.js?v=player-assets-management-cleanup";
+} from "./modules/characters.js?v=player-assets-management-cleanup-quantity-stable-category";
+import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=player-assets-management-cleanup-quantity-stable-category";
+import { renderDmPage } from "./modules/dm-view.js?v=player-assets-management-cleanup-quantity-stable-category";
 import {
   addMonster,
   adjustMonsterValue,
@@ -31,17 +32,17 @@ import {
   resetMonsterRound,
   rollMonsterAction,
   updateMonster,
-} from "./modules/monsters.js?v=player-assets-management-cleanup";
-import { renderPlayerPage } from "./modules/player-view.js?v=player-assets-management-cleanup";
-import { updatePublicInfoField } from "./modules/public-info.js?v=player-assets-management-cleanup";
-import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=player-assets-management-cleanup";
-import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=player-assets-management-cleanup";
-import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=player-assets-management-cleanup";
-import { STORAGE_KEY } from "./modules/storage.js?v=player-assets-management-cleanup";
+} from "./modules/monsters.js?v=player-assets-management-cleanup-quantity-stable-category";
+import { renderPlayerPage } from "./modules/player-view.js?v=player-assets-management-cleanup-quantity-stable-category";
+import { updatePublicInfoField } from "./modules/public-info.js?v=player-assets-management-cleanup-quantity-stable-category";
+import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=player-assets-management-cleanup-quantity-stable-category";
+import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=player-assets-management-cleanup-quantity-stable-category";
+import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=player-assets-management-cleanup-quantity-stable-category";
+import { STORAGE_KEY } from "./modules/storage.js?v=player-assets-management-cleanup-quantity-stable-category";
 
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
-const VERSION_LABEL = "player-assets-management-cleanup";
+const VERSION_LABEL = "player-assets-management-cleanup-quantity-stable-category";
 const OPENING_VIDEO_URL = "./assets/intro/opening.mp4";
 const BACKUP_LATEST_KEY = `${STORAGE_KEY}-backup-latest`;
 const BACKUP_TIMESTAMP_PREFIX = `${STORAGE_KEY}-backup-`;
@@ -53,6 +54,7 @@ let isDmMenuOpen = false;
 let isOpeningVisible = !isSafeMode;
 let pendingDeleteCharacterId = "";
 let assetDeleteModeCharacterId = "";
+let assetAddListKey = "items";
 const selectedAssetEntryKeys = new Set();
 let openingFallbackTimer = null;
 let bootFailed = false;
@@ -393,6 +395,7 @@ function renderState() {
       ...state.ui,
       persistenceStatus,
       assetDeleteModeCharacterId,
+      assetAddListKey,
       selectedAssetEntryKeys: Array.from(selectedAssetEntryKeys),
       ...(pendingDeleteCharacterId ? { pendingDeleteCharacterId } : {}),
     },
@@ -619,6 +622,15 @@ app.addEventListener("click", (event) => {
     clearAssetDeleteState();
     return updateState(nextState);
   }
+  if (actionButton.dataset.action === "adjust-asset-quantity") {
+    return updateState(updateAssetQuantity(
+      state,
+      actionButton.dataset.characterId,
+      actionButton.dataset.listKey,
+      Number(actionButton.dataset.entryIndex),
+      Number(actionButton.dataset.delta),
+    ));
+  }
   if (actionButton.dataset.action === "adjust-character-stat") return updateState(adjustCharacterStat(state, actionButton.dataset.characterId, actionButton.dataset.statField, Number(actionButton.dataset.delta)));
   if (actionButton.dataset.action === "adjust-character-attribute") return updateState(adjustCharacterAttribute(state, actionButton.dataset.characterId, actionButton.dataset.attributeField, Number(actionButton.dataset.delta)));
   if (actionButton.dataset.action === "adjust-character-money") return updateState(adjustCharacterMoney(state, actionButton.dataset.characterId, Number(actionButton.dataset.delta)));
@@ -658,6 +670,12 @@ app.addEventListener("click", (event) => {
 app.addEventListener("change", (event) => {
   const importStateInput = event.target.closest("[data-import-state-file]");
   if (importStateInput) { importStateFile(importStateInput.files?.[0]); importStateInput.value = ""; return; }
+  const assetListSelect = event.target.closest("[data-asset-list-key]");
+  if (assetListSelect) {
+    assetAddListKey = assetListSelect.value || "items";
+    safeRender();
+    return;
+  }
   const assetDeleteCheckbox = event.target.closest("[data-asset-delete-checkbox]");
   if (assetDeleteCheckbox) {
     const characterId = assetDeleteCheckbox.dataset.characterId || "";
@@ -752,7 +770,7 @@ app.addEventListener("submit", (event) => {
   }
   const addCharacterForm = event.target.closest("[data-add-character-form]"); if (addCharacterForm) { event.preventDefault(); return updateState(addCharacter(state, addCharacterForm.querySelector("[data-new-character-name]")?.value.trim() || "", addCharacterForm.querySelector("[data-new-character-color]")?.value, addCharacterForm.querySelector("[data-new-character-avatar]")?.value || "")); }
   const addCharacterEffectForm = event.target.closest("[data-add-character-effect-form]"); if (addCharacterEffectForm) { event.preventDefault(); return updateState(addCharacterEffect(state, addCharacterEffectForm.dataset.characterId, addCharacterEffectForm.dataset.effectType, addCharacterEffectForm.querySelector("[data-character-effect-input]")?.value || "")); }
-  const addAssetForm = event.target.closest("[data-add-asset-form]"); if (addAssetForm) { event.preventDefault(); const listKey = addAssetForm.querySelector("[data-asset-list-key]")?.value || addAssetForm.dataset.listKey || "items"; return updateState(addAssetEntry(state, addAssetForm.dataset.characterId, listKey, addAssetForm.querySelector("[data-asset-entry-input]")?.value || "")); }
+  const addAssetForm = event.target.closest("[data-add-asset-form]"); if (addAssetForm) { event.preventDefault(); const listKey = addAssetForm.querySelector("[data-asset-list-key]")?.value || addAssetForm.dataset.listKey || "items"; assetAddListKey = listKey; return updateState(addAssetEntry(state, addAssetForm.dataset.characterId, listKey, addAssetForm.querySelector("[data-asset-entry-input]")?.value || "", addAssetForm.querySelector("[data-asset-quantity-input]")?.value || 1)); }
   const addShopItemForm = event.target.closest("[data-add-shop-item-form]"); if (addShopItemForm) { event.preventDefault(); return updateState(addShopItem(state, { name: addShopItemForm.querySelector("[data-new-shop-name]")?.value.trim() || "", type: addShopItemForm.querySelector("[data-new-shop-type]")?.value || "", price: addShopItemForm.querySelector("[data-new-shop-price]")?.value || 0, stock: addShopItemForm.querySelector("[data-new-shop-stock]")?.value || 0, description: addShopItemForm.querySelector("[data-new-shop-description]")?.value || "" })); }
   const addMonsterForm = event.target.closest("[data-add-monster-form]"); if (addMonsterForm) { event.preventDefault(); const values = Object.fromEntries(Array.from(addMonsterForm.querySelectorAll("[data-new-monster-field]")).map((input) => [input.dataset.newMonsterField, input.value])); return updateState(addMonster(state, values)); }
   const saveEncounterForm = event.target.closest("[data-save-encounter-form]"); if (saveEncounterForm) { event.preventDefault(); return updateState(saveCurrentEncounter(state, saveEncounterForm.querySelector("[data-encounter-name]")?.value || "")); }

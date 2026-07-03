@@ -23,6 +23,30 @@ function textArray(value) {
   return Array.isArray(value) ? value.filter((entry) => typeof entry === "string") : [];
 }
 
+function normalizeAssetQuantity(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 1 ? Math.trunc(number) : 1;
+}
+
+function normalizeAssetListEntry(entry, index) {
+  if (typeof entry === "string") {
+    const name = entry.trim() || `未命名資產 ${index + 1}`;
+    return { name, quantity: 1 };
+  }
+  const source = recordOrEmpty(entry);
+  const name = String(source.name || source.nameSnapshot || source.itemName || source.entry || "").trim()
+    || `未命名資產 ${index + 1}`;
+  return {
+    ...source,
+    name,
+    quantity: normalizeAssetQuantity(source.quantity),
+  };
+}
+
+function assetEntryArray(value) {
+  return Array.isArray(value) ? value.map(normalizeAssetListEntry) : [];
+}
+
 function wholeNumber(value, fallback = 0) {
   const number = Number(value);
   return Number.isFinite(number) ? Math.trunc(number) : fallback;
@@ -87,9 +111,9 @@ function normalizeCharacterAssets(character, normalizedCharacter, index) {
   const inventorySource = Array.isArray(sourceAssets.inventory)
     ? sourceAssets.inventory
     : [
-        ...textArray(sourceAssets.items).map((entry) => ({ entry, listKey: "items" })),
-        ...textArray(sourceAssets.equipment).map((entry) => ({ entry, listKey: "equipment" })),
-        ...textArray(sourceAssets.consumables).map((entry) => ({ entry, listKey: "consumables" })),
+        ...assetEntryArray(sourceAssets.items).map((entry) => ({ entry, listKey: "items" })),
+        ...assetEntryArray(sourceAssets.equipment).map((entry) => ({ entry, listKey: "equipment" })),
+        ...assetEntryArray(sourceAssets.consumables).map((entry) => ({ entry, listKey: "consumables" })),
       ];
   const inventory = inventorySource.map((entry, itemIndex) => {
     const wrapped = isRecord(entry) && Object.prototype.hasOwnProperty.call(entry, "entry")
@@ -123,9 +147,9 @@ function sanitizeCharacter(character) {
     assets: {
       ...assets,
       gold: recordOrEmpty(assets.gold),
-      items: textArray(assets.items),
-      equipment: textArray(assets.equipment),
-      consumables: textArray(assets.consumables),
+      items: assetEntryArray(assets.items),
+      equipment: assetEntryArray(assets.equipment),
+      consumables: assetEntryArray(assets.consumables),
       inventory: textArray(assets.inventory),
     },
     conditions: textArray(source.conditions),
