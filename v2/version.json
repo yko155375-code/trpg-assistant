@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "state-persistence-hardening-current-main",
-  "commit": "e41f23b28f2dfdac2da2a5cce88aeccbaf602bee",
-  "sourceCommit": "e41f23b28f2dfdac2da2a5cce88aeccbaf602bee",
-  "versionCommit": "e41f23b28f2dfdac2da2a5cce88aeccbaf602bee",
-  "updatedAt": "2026-07-03T04:39:41+08:00",
-  "note": "Harden v2 state persistence, backups, save status, and JSON import/export on current main."
+  "label": "player-assets-management-cleanup",
+  "commit": "66bd99d34f68c938cb21977c7292c751ecee5f46",
+  "sourceCommit": "66bd99d34f68c938cb21977c7292c751ecee5f46",
+  "versionCommit": "66bd99d34f68c938cb21977c7292c751ecee5f46",
+  "updatedAt": "2026-07-03T05:24:00+08:00",
+  "note": "Compact player asset management with unified add flow and batch delete mode."
 }

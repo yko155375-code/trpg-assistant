@@ -368,6 +368,14 @@ export function updateAssetEntry(state, characterId, listKey, index, value) {
   }));
 }
 
+function assetEntryKey(listKey, index) {
+  return `${listKey}:${Number(index)}`;
+}
+
+function assetListLabel(listKey) {
+  return assetLists.find((list) => list.key === listKey)?.label || "資產";
+}
+
 export function renderCharacterPicker(state, label = "目前角色") {
   const characters = normalizeCharacters(state.characters);
   const current = getCurrentCharacter({ ...state, characters });
@@ -729,30 +737,49 @@ export function renderCharacterEditor(state, options = {}) {
   `;
 }
 
-export function renderAssetsEditor(state, options = {}) {
+﻿export function renderAssetsEditor(state, options = {}) {
   const { showPicker = true } = options;
   const character = getCurrentCharacter(state);
-  if (!character) return `${showPicker ? renderAddCharacterForm() : ""}<section class="empty-panel"><strong>尚未選擇角色</strong><p>新增或選擇角色後，就能編輯金錢、物品、裝備與消耗品。</p></section>`;
+  if (!character) return `${showPicker ? renderAddCharacterForm() : ""}<section class="empty-panel"><strong>尚未選擇角色</strong><p>請先喚醒角色，再管理資產。</p></section>`;
+  const isDeleteMode = state.ui?.assetDeleteModeCharacterId === character.id;
+  const selectedAssetKeys = new Set(Array.isArray(state.ui?.selectedAssetEntryKeys) ? state.ui.selectedAssetEntryKeys : []);
+  const selectedCount = selectedAssetKeys.size;
   return `
     ${showPicker ? renderCharacterPicker(state) : ""}
     <section class="editor-panel asset-panel" data-character-id="${escapeHtml(character.id)}">
-      <div class="editor-heading"><h3>${escapeHtml(character.name)}的資產</h3></div>
+      <div class="editor-heading"><h3>${escapeHtml(character.name)}資產</h3></div>
       ${renderGoldStepper(character)}
-      <div class="asset-list-grid">${assetLists.map((list) => renderAssetList(character, list)).join("")}</div>
+      <form class="asset-add-form" data-add-asset-form data-character-id="${escapeHtml(character.id)}">
+        <label class="form-field">
+          <span>名稱</span>
+          <input data-asset-entry-input type="text" placeholder="新增資產" autocomplete="off" />
+        </label>
+        <label class="form-field">
+          <span>分類</span>
+          <select data-asset-list-key>
+            ${assetLists.map((list) => `<option value="${escapeHtml(list.key)}">${escapeHtml(list.label)}</option>`).join("")}
+          </select>
+        </label>
+        <button type="submit">新增資產</button>
+      </form>
+      <div class="asset-management-actions">
+        <button type="button" data-action="toggle-asset-delete-mode" data-character-id="${escapeHtml(character.id)}" aria-pressed="${isDeleteMode}">${isDeleteMode ? "結束勾選" : "勾選刪除"}</button>
+        ${isDeleteMode ? `<button class="danger-button" type="button" data-action="delete-selected-assets" data-character-id="${escapeHtml(character.id)}" ${selectedCount ? "" : "disabled"}>刪除已勾選${selectedCount ? ` (${selectedCount})` : ""}</button><button type="button" data-action="cancel-asset-delete-mode" data-character-id="${escapeHtml(character.id)}">取消</button>` : ""}
+      </div>
+      <div class="asset-list-grid">${assetLists.map((list) => renderAssetList(character, list, isDeleteMode, selectedAssetKeys)).join("")}</div>
     </section>
   `;
 }
 
-function renderAssetList(character, list) {
+function renderAssetList(character, list, isDeleteMode = false, selectedAssetKeys = new Set()) {
   const entries = character.assets[list.key] || [];
   return `
     <section class="asset-list-card">
       <h4>${list.label}</h4>
-      <form class="inline-form compact" data-add-asset-form data-character-id="${escapeHtml(character.id)}" data-list-key="${list.key}">
-        <input data-asset-entry-input type="text" placeholder="新增${list.label}" autocomplete="off" />
-        <button type="submit">新增</button>
-      </form>
-      ${entries.length ? `<ul class="asset-entry-list">${entries.map((entry, index) => `<li><input data-character-id="${escapeHtml(character.id)}" data-asset-entry-field data-list-key="${list.key}" data-entry-index="${index}" type="text" value="${escapeHtml(entry)}" /><button type="button" data-action="delete-asset-entry" data-character-id="${escapeHtml(character.id)}" data-list-key="${list.key}" data-entry-index="${index}">刪除</button></li>`).join("")}</ul>` : `<p class="empty-hint">尚無${list.label}</p>`}
+      ${entries.length ? `<ul class="asset-entry-list ${isDeleteMode ? "is-delete-mode" : ""}">${entries.map((entry, index) => {
+        const key = assetEntryKey(list.key, index);
+        return `<li>${isDeleteMode ? `<label class="asset-delete-check"><input data-asset-delete-checkbox data-character-id="${escapeHtml(character.id)}" data-list-key="${escapeHtml(list.key)}" data-entry-index="${index}" type="checkbox" ${selectedAssetKeys.has(key) ? "checked" : ""} /><span>選取</span></label>` : ""}<input data-character-id="${escapeHtml(character.id)}" data-asset-entry-field data-list-key="${list.key}" data-entry-index="${index}" type="text" value="${escapeHtml(entry)}" aria-label="${escapeHtml(assetListLabel(list.key))} ${index + 1}" /></li>`;
+      }).join("")}</ul>` : `<p class="empty-hint">尚無${list.label}</p>`}
     </section>
   `;
 }

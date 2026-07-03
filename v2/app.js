@@ -19,9 +19,9 @@ import {
   updateCharacterGold,
   updateCharacterMoney,
   updateCharacterStat,
-} from "./modules/characters.js?v=state-persistence-hardening-current-main";
-import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=state-persistence-hardening-current-main";
-import { renderDmPage } from "./modules/dm-view.js?v=state-persistence-hardening-current-main";
+} from "./modules/characters.js?v=player-assets-management-cleanup";
+import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=player-assets-management-cleanup";
+import { renderDmPage } from "./modules/dm-view.js?v=player-assets-management-cleanup";
 import {
   addMonster,
   adjustMonsterValue,
@@ -31,17 +31,17 @@ import {
   resetMonsterRound,
   rollMonsterAction,
   updateMonster,
-} from "./modules/monsters.js?v=state-persistence-hardening-current-main";
-import { renderPlayerPage } from "./modules/player-view.js?v=state-persistence-hardening-current-main";
-import { updatePublicInfoField } from "./modules/public-info.js?v=state-persistence-hardening-current-main";
-import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=state-persistence-hardening-current-main";
-import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=state-persistence-hardening-current-main";
-import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=state-persistence-hardening-current-main";
-import { STORAGE_KEY } from "./modules/storage.js?v=state-persistence-hardening-current-main";
+} from "./modules/monsters.js?v=player-assets-management-cleanup";
+import { renderPlayerPage } from "./modules/player-view.js?v=player-assets-management-cleanup";
+import { updatePublicInfoField } from "./modules/public-info.js?v=player-assets-management-cleanup";
+import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=player-assets-management-cleanup";
+import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=player-assets-management-cleanup";
+import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=player-assets-management-cleanup";
+import { STORAGE_KEY } from "./modules/storage.js?v=player-assets-management-cleanup";
 
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
-const VERSION_LABEL = "state-persistence-hardening-current-main";
+const VERSION_LABEL = "player-assets-management-cleanup";
 const OPENING_VIDEO_URL = "./assets/intro/opening.mp4";
 const BACKUP_LATEST_KEY = `${STORAGE_KEY}-backup-latest`;
 const BACKUP_TIMESTAMP_PREFIX = `${STORAGE_KEY}-backup-`;
@@ -52,6 +52,8 @@ let state = null;
 let isDmMenuOpen = false;
 let isOpeningVisible = !isSafeMode;
 let pendingDeleteCharacterId = "";
+let assetDeleteModeCharacterId = "";
+const selectedAssetEntryKeys = new Set();
 let openingFallbackTimer = null;
 let bootFailed = false;
 let bootPhase = "start";
@@ -319,6 +321,38 @@ function updateState(nextState) { state = isSafeMode ? normalizeWithoutSaving(ne
 function saveStateOnly(nextState) { state = isSafeMode ? normalizeWithoutSaving(nextState) : saveStateHardened(nextState); }
 function escapeHtml(value) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
 
+function assetEntryKey(listKey, index) {
+  return `${listKey}:${Number(index)}`;
+}
+
+function clearAssetDeleteState() {
+  assetDeleteModeCharacterId = "";
+  selectedAssetEntryKeys.clear();
+}
+
+function selectedAssetsByList() {
+  const grouped = new Map();
+  selectedAssetEntryKeys.forEach((key) => {
+    const [listKey, indexText] = String(key).split(":");
+    const index = Number(indexText);
+    if (!listKey || !Number.isInteger(index) || index < 0) return;
+    if (!grouped.has(listKey)) grouped.set(listKey, []);
+    grouped.get(listKey).push(index);
+  });
+  grouped.forEach((indexes) => indexes.sort((a, b) => b - a));
+  return grouped;
+}
+
+function deleteSelectedAssets(nextState, characterId) {
+  let workingState = nextState;
+  selectedAssetsByList().forEach((indexes, listKey) => {
+    indexes.forEach((index) => {
+      workingState = deleteAssetEntry(workingState, characterId, listKey, index);
+    });
+  });
+  return workingState;
+}
+
 function normalizeEncounterMonster(monster = {}) {
   const maxHp = Math.max(1, Number(monster.maxHp ?? monster.hp ?? 1) || 1);
   const hp = Math.min(maxHp, Math.max(0, Number(monster.hp ?? maxHp) || 0));
@@ -352,7 +386,18 @@ function enhanceDiceHtml(html, actor) {
   if (key === "player" && !output.includes("data-roll-edge-mode")) { const mode = state.ui?.rollEdgeMode || ""; const edge = `<div class="roll-edge-controls" data-roll-edge-controls><button class="roll-edge-button ${mode === "advantage" ? "is-active" : ""}" type="button" data-roll-edge-mode="advantage" aria-pressed="${mode === "advantage"}">優勢</button><button class="roll-edge-button ${mode === "disadvantage" ? "is-active" : ""}" type="button" data-roll-edge-mode="disadvantage" aria-pressed="${mode === "disadvantage"}">劣勢</button></div>`; output = output.replace("</form>", `</form>${edge}`); }
   return output;
 }
-function renderState() { return { ...state, ui: { ...state.ui, persistenceStatus, ...(pendingDeleteCharacterId ? { pendingDeleteCharacterId } : {}) } }; }
+function renderState() {
+  return {
+    ...state,
+    ui: {
+      ...state.ui,
+      persistenceStatus,
+      assetDeleteModeCharacterId,
+      selectedAssetEntryKeys: Array.from(selectedAssetEntryKeys),
+      ...(pendingDeleteCharacterId ? { pendingDeleteCharacterId } : {}),
+    },
+  };
+}
 function renderPanel() { const pages = getActivePages(state.ui.mode); const page = pages.find((item) => item.id === getActivePageId(state)) || pages[0]; const viewState = renderState(); if (state.ui.mode === "player") { const html = renderPlayerPage(page.id, viewState); return page.id === "dice" ? enhanceDiceHtml(html, "player") : html; } const html = renderDmPage(page.id, viewState); return page.id === "dice" ? enhanceDiceHtml(html, "DM") : html; }
 function renderPageButton(page, className) { const active = page.id === getActivePageId(state); return `<button class="${className} ${active ? "is-active" : ""}" type="button" data-page="${page.id}" aria-pressed="${active}">${page.label}</button>`; }
 function renderModeButton(mode, label) { const active = state.ui.mode === mode; return `<button class="mode-button ${active ? "is-active" : ""}" type="button" data-mode="${mode}" aria-pressed="${active}">${label}</button>`; }
@@ -556,7 +601,24 @@ app.addEventListener("click", (event) => {
   if (actionButton.dataset.action === "clear-rolls") return updateState(clearRolls(syncFormulaDraft(actionButton)));
   if (actionButton.dataset.action === "toggle-team-status") return updateState({ ...state, ui: { ...state.ui, isTeamStatusOpen: !state.ui.isTeamStatusOpen } });
   if (actionButton.dataset.action === "delete-character") { const characterId = actionButton.dataset.characterId; if (pendingDeleteCharacterId === characterId) { pendingDeleteCharacterId = ""; return updateState(deleteCharacter(state, characterId)); } pendingDeleteCharacterId = characterId; safeRender(); return; }
-  if (actionButton.dataset.action === "expand-character") { pendingDeleteCharacterId = ""; return updateState(expandCharacter(state, actionButton.dataset.characterId)); }
+  if (actionButton.dataset.action === "expand-character") { pendingDeleteCharacterId = ""; clearAssetDeleteState(); return updateState(expandCharacter(state, actionButton.dataset.characterId)); }
+  if (actionButton.dataset.action === "toggle-asset-delete-mode") {
+    const characterId = actionButton.dataset.characterId || "";
+    if (assetDeleteModeCharacterId === characterId) clearAssetDeleteState();
+    else { assetDeleteModeCharacterId = characterId; selectedAssetEntryKeys.clear(); }
+    safeRender();
+    return;
+  }
+  if (actionButton.dataset.action === "cancel-asset-delete-mode") { clearAssetDeleteState(); safeRender(); return; }
+  if (actionButton.dataset.action === "delete-selected-assets") {
+    const characterId = actionButton.dataset.characterId || "";
+    const count = selectedAssetEntryKeys.size;
+    if (!characterId || !count) return;
+    if (!confirm(`確定刪除已勾選的 ${count} 個資產？此操作無法復原。`)) return;
+    const nextState = deleteSelectedAssets(state, characterId);
+    clearAssetDeleteState();
+    return updateState(nextState);
+  }
   if (actionButton.dataset.action === "adjust-character-stat") return updateState(adjustCharacterStat(state, actionButton.dataset.characterId, actionButton.dataset.statField, Number(actionButton.dataset.delta)));
   if (actionButton.dataset.action === "adjust-character-attribute") return updateState(adjustCharacterAttribute(state, actionButton.dataset.characterId, actionButton.dataset.attributeField, Number(actionButton.dataset.delta)));
   if (actionButton.dataset.action === "adjust-character-money") return updateState(adjustCharacterMoney(state, actionButton.dataset.characterId, Number(actionButton.dataset.delta)));
@@ -596,7 +658,17 @@ app.addEventListener("click", (event) => {
 app.addEventListener("change", (event) => {
   const importStateInput = event.target.closest("[data-import-state-file]");
   if (importStateInput) { importStateFile(importStateInput.files?.[0]); importStateInput.value = ""; return; }
-  const characterSelect = event.target.closest("[data-character-select]"); if (characterSelect) { pendingDeleteCharacterId = ""; return updateState(selectCharacter(state, characterSelect.value)); }
+  const assetDeleteCheckbox = event.target.closest("[data-asset-delete-checkbox]");
+  if (assetDeleteCheckbox) {
+    const characterId = assetDeleteCheckbox.dataset.characterId || "";
+    if (characterId !== assetDeleteModeCharacterId) { assetDeleteModeCharacterId = characterId; selectedAssetEntryKeys.clear(); }
+    const key = assetEntryKey(assetDeleteCheckbox.dataset.listKey, assetDeleteCheckbox.dataset.entryIndex);
+    if (assetDeleteCheckbox.checked) selectedAssetEntryKeys.add(key);
+    else selectedAssetEntryKeys.delete(key);
+    safeRender();
+    return;
+  }
+  const characterSelect = event.target.closest("[data-character-select]"); if (characterSelect) { pendingDeleteCharacterId = ""; clearAssetDeleteState(); return updateState(selectCharacter(state, characterSelect.value)); }
   const shopItemField = event.target.closest("[data-shop-item-field]"); if (shopItemField) return updateState(updateShopItem(state, shopItemField.dataset.shopItemId, shopItemField.dataset.shopItemField, shopItemField.value));
   const characterId = event.target.dataset.characterId; if (!characterId) return;
   if (event.target.dataset.characterField) return updateState(updateCharacterField(state, characterId, event.target.dataset.characterField, event.target.value));
@@ -680,7 +752,7 @@ app.addEventListener("submit", (event) => {
   }
   const addCharacterForm = event.target.closest("[data-add-character-form]"); if (addCharacterForm) { event.preventDefault(); return updateState(addCharacter(state, addCharacterForm.querySelector("[data-new-character-name]")?.value.trim() || "", addCharacterForm.querySelector("[data-new-character-color]")?.value, addCharacterForm.querySelector("[data-new-character-avatar]")?.value || "")); }
   const addCharacterEffectForm = event.target.closest("[data-add-character-effect-form]"); if (addCharacterEffectForm) { event.preventDefault(); return updateState(addCharacterEffect(state, addCharacterEffectForm.dataset.characterId, addCharacterEffectForm.dataset.effectType, addCharacterEffectForm.querySelector("[data-character-effect-input]")?.value || "")); }
-  const addAssetForm = event.target.closest("[data-add-asset-form]"); if (addAssetForm) { event.preventDefault(); return updateState(addAssetEntry(state, addAssetForm.dataset.characterId, addAssetForm.dataset.listKey, addAssetForm.querySelector("[data-asset-entry-input]")?.value || "")); }
+  const addAssetForm = event.target.closest("[data-add-asset-form]"); if (addAssetForm) { event.preventDefault(); const listKey = addAssetForm.querySelector("[data-asset-list-key]")?.value || addAssetForm.dataset.listKey || "items"; return updateState(addAssetEntry(state, addAssetForm.dataset.characterId, listKey, addAssetForm.querySelector("[data-asset-entry-input]")?.value || "")); }
   const addShopItemForm = event.target.closest("[data-add-shop-item-form]"); if (addShopItemForm) { event.preventDefault(); return updateState(addShopItem(state, { name: addShopItemForm.querySelector("[data-new-shop-name]")?.value.trim() || "", type: addShopItemForm.querySelector("[data-new-shop-type]")?.value || "", price: addShopItemForm.querySelector("[data-new-shop-price]")?.value || 0, stock: addShopItemForm.querySelector("[data-new-shop-stock]")?.value || 0, description: addShopItemForm.querySelector("[data-new-shop-description]")?.value || "" })); }
   const addMonsterForm = event.target.closest("[data-add-monster-form]"); if (addMonsterForm) { event.preventDefault(); const values = Object.fromEntries(Array.from(addMonsterForm.querySelectorAll("[data-new-monster-field]")).map((input) => [input.dataset.newMonsterField, input.value])); return updateState(addMonster(state, values)); }
   const saveEncounterForm = event.target.closest("[data-save-encounter-form]"); if (saveEncounterForm) { event.preventDefault(); return updateState(saveCurrentEncounter(state, saveEncounterForm.querySelector("[data-encounter-name]")?.value || "")); }
