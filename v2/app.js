@@ -20,9 +20,9 @@ import {
   updateCharacterGold,
   updateCharacterMoney,
   updateCharacterStat,
-} from "./modules/characters.js?v=player-assets-management-cleanup-quantity-stable-category";
-import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=player-assets-management-cleanup-quantity-stable-category";
-import { renderDmPage } from "./modules/dm-view.js?v=player-assets-management-cleanup-quantity-stable-category";
+} from "./modules/characters.js?v=shop-team-transaction-history";
+import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=shop-team-transaction-history";
+import { renderDmPage } from "./modules/dm-view.js?v=shop-team-transaction-history";
 import {
   addMonster,
   adjustMonsterValue,
@@ -32,17 +32,17 @@ import {
   resetMonsterRound,
   rollMonsterAction,
   updateMonster,
-} from "./modules/monsters.js?v=player-assets-management-cleanup-quantity-stable-category";
-import { renderPlayerPage } from "./modules/player-view.js?v=player-assets-management-cleanup-quantity-stable-category";
-import { updatePublicInfoField } from "./modules/public-info.js?v=player-assets-management-cleanup-quantity-stable-category";
-import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=player-assets-management-cleanup-quantity-stable-category";
-import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=player-assets-management-cleanup-quantity-stable-category";
-import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=player-assets-management-cleanup-quantity-stable-category";
-import { STORAGE_KEY } from "./modules/storage.js?v=player-assets-management-cleanup-quantity-stable-category";
+} from "./modules/monsters.js?v=shop-team-transaction-history";
+import { renderPlayerPage } from "./modules/player-view.js?v=shop-team-transaction-history";
+import { updatePublicInfoField } from "./modules/public-info.js?v=shop-team-transaction-history";
+import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=shop-team-transaction-history";
+import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=shop-team-transaction-history";
+import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=shop-team-transaction-history";
+import { STORAGE_KEY } from "./modules/storage.js?v=shop-team-transaction-history";
 
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
-const VERSION_LABEL = "player-assets-management-cleanup-quantity-stable-category";
+const VERSION_LABEL = "shop-team-transaction-history";
 const OPENING_VIDEO_URL = "./assets/intro/opening.mp4";
 const BACKUP_LATEST_KEY = `${STORAGE_KEY}-backup-latest`;
 const BACKUP_TIMESTAMP_PREFIX = `${STORAGE_KEY}-backup-`;

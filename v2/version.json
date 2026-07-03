@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "player-assets-management-cleanup-quantity-stable-category",
+  "label": "shop-team-transaction-history",
   "commit": "66bd99d34f68c938cb21977c7292c751ecee5f46",
   "sourceCommit": "66bd99d34f68c938cb21977c7292c751ecee5f46",
   "versionCommit": "66bd99d34f68c938cb21977c7292c751ecee5f46",
-  "updatedAt": "2026-07-03T12:32:45+08:00",
-  "note": "Keep asset category stable and add quantity controls for player assets."
+  "updatedAt": "2026-07-03T13:24:30+08:00",
+  "note": "Add shared team shop transaction history."
 }

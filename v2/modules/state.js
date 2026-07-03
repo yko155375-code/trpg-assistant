@@ -234,6 +234,34 @@ function normalizeTransaction(record, index) {
   };
 }
 
+function normalizeShopTransactionHistoryRecord(record, index) {
+  const source = recordOrEmpty(record);
+  const itemName = String(source.itemName || source.itemNameSnapshot || "未命名商品");
+  const type = source.type === "sell" ? "sell" : "buy";
+  const quantity = Math.max(1, nonNegativeWholeNumber(source.quantity, 1));
+  const unitPrice = moneyToHandfuls(source.unitPrice ?? source.price, 0);
+  const totalPrice = moneyToHandfuls(source.totalPrice, unitPrice * quantity);
+
+  return {
+    ...source,
+    id: String(source.id || `shop-transaction-history-${index}`),
+    createdAt: String(source.createdAt || source.time || ""),
+    type,
+    characterId: String(source.characterId || ""),
+    characterName: String(source.characterName || ""),
+    itemName,
+    itemCategory: source.itemCategory == null ? null : String(source.itemCategory),
+    itemType: source.itemType == null
+      ? (source.itemCategory == null ? null : String(source.itemCategory))
+      : String(source.itemType),
+    quantity,
+    unitPrice,
+    totalPrice,
+    currency: String(source.currency || "gold-handfuls"),
+    resource: String(source.resource || "money"),
+  };
+}
+
 function inferMusicSourceType(url) {
   const value = String(url || "").trim().toLowerCase();
   if (!value) return "unknown";
@@ -385,6 +413,11 @@ function normalizeCompatibleShop(shop, fallbackShop) {
     itemName: String(record.itemName || record.itemNameSnapshot || "未命名商品"),
     time: String(record.time || record.createdAt || ""),
   }));
+  const transactionHistorySource = recordArray(source.transactionHistory);
+  const legacyHistorySource = purchaseLog.length ? purchaseLog : recordArray(source.transactions);
+  const transactionHistory = (transactionHistorySource.length ? transactionHistorySource : legacyHistorySource)
+    .map(normalizeShopTransactionHistoryRecord)
+    .slice(0, 100);
   return {
     ...legacy,
     schemaVersion: nonNegativeWholeNumber(source.schemaVersion, SHOP_SCHEMA_VERSION),
@@ -392,6 +425,7 @@ function normalizeCompatibleShop(shop, fallbackShop) {
     itemDefinitions,
     listings,
     purchaseLog,
+    transactionHistory,
     transactions: (recordArray(source.transactions).length ? recordArray(source.transactions) : purchaseLog)
       .map(normalizeTransaction),
   };
@@ -465,6 +499,7 @@ export function createDefaultState() {
       itemDefinitions: [],
       listings: [],
       purchaseLog: [],
+      transactionHistory: [],
       transactions: [],
     },
     rolls: [],

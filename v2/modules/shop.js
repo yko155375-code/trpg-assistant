@@ -35,6 +35,10 @@ function makeTransactionId() {
   return `purchase-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function makeTeamHistoryId() {
+  return `shop-history-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -71,6 +75,7 @@ export function normalizeShop(shop = {}) {
     purchaseLog: Array.isArray(shop.purchaseLog) ? shop.purchaseLog : [],
     itemDefinitions: Array.isArray(shop.itemDefinitions) ? shop.itemDefinitions : [],
     listings: Array.isArray(shop.listings) ? shop.listings : [],
+    transactionHistory: Array.isArray(shop.transactionHistory) ? shop.transactionHistory : [],
     transactions: Array.isArray(shop.transactions) ? shop.transactions : [],
   };
 }
@@ -250,6 +255,21 @@ export function purchaseShopItem(state, itemId) {
     price,
     time: purchasedAt,
   };
+  const nextTeamHistory = {
+    id: makeTeamHistoryId(),
+    createdAt: purchasedAt,
+    type: "buy",
+    characterId: character.id,
+    characterName: character.name,
+    itemName,
+    itemCategory: item.category || null,
+    itemType: item.type || null,
+    quantity: 1,
+    unitPrice: price,
+    totalPrice: price,
+    currency: "gold-handfuls",
+    resource: "money",
+  };
 
   const nextMoney = money - price;
   const gold = normalizeGoldFromHandfuls(nextMoney);
@@ -286,6 +306,7 @@ export function purchaseShopItem(state, itemId) {
         listing && entry.id === listing.id ? { ...entry, stock: nextStock } : entry,
       ),
       purchaseLog: [nextLog, ...shop.purchaseLog].slice(0, 100),
+      transactionHistory: [nextTeamHistory, ...shop.transactionHistory].slice(0, 100),
       transactions: [nextLog, ...shop.transactions],
     },
   }, `已購買：${itemName}`);
@@ -309,6 +330,7 @@ export function renderPlayerShop(state) {
             </div>`
           : `<p class="empty-hint">商店目前沒有商品。</p>`
       }
+      ${renderTeamTransactionHistory(shop.transactionHistory)}
     </section>
   `;
 }
@@ -354,6 +376,7 @@ export function renderDmShopManager(state) {
           : `<p class="empty-hint">尚未建立商品。</p>`
       }
       ${renderPurchaseLog(shop.purchaseLog)}
+      ${renderTeamTransactionHistory(shop.transactionHistory)}
     </section>
   `;
 }
@@ -466,6 +489,50 @@ function renderPurchaseLog(purchaseLog) {
                 .join("")}
             </ul>`
           : `<p class="empty-hint">尚無購買紀錄。</p>`
+      }
+    </section>
+  `;
+}
+
+function formatHistoryTime(value) {
+  if (!value) return "時間未記錄";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "時間未記錄" : date.toLocaleString("zh-TW");
+}
+
+function formatHistoryPrice(record) {
+  const totalPrice = toNonNegativeInteger(record.totalPrice ?? record.price ?? record.unitPrice);
+  return totalPrice > 0 ? formatGold(totalPrice) : "價格未記錄";
+}
+
+function renderTeamTransactionHistory(transactionHistory) {
+  const records = Array.isArray(transactionHistory) ? transactionHistory.slice(0, 30) : [];
+  return `
+    <section class="editor-panel shop-log-panel shop-team-history-panel">
+      <div class="shop-team-history-heading">
+        <h4>全隊交易歷史</h4>
+        ${transactionHistory?.length > 30 ? `<small>目前顯示最近 30 筆</small>` : ""}
+      </div>
+      ${
+        records.length
+          ? `<ul class="purchase-log-list shop-team-history-list">
+              ${records
+                .map((record) => {
+                  const actionLabel = record.type === "sell" ? "販賣" : "購買";
+                  const quantity = Math.max(1, toNonNegativeInteger(record.quantity, 1));
+                  const characterName = record.characterName || "未知角色";
+                  const itemName = record.itemName || record.itemNameSnapshot || "未命名商品";
+                  const itemType = record.itemType || record.itemCategory || "";
+                  return `
+                    <li>
+                      <span>${escapeHtml(formatHistoryTime(record.createdAt))}｜${escapeHtml(characterName)} ${actionLabel} ${escapeHtml(itemName)} × ${quantity}</span>
+                      <small>${itemType ? `${escapeHtml(itemType)}｜` : ""}${escapeHtml(formatHistoryPrice(record))}</small>
+                    </li>
+                  `;
+                })
+                .join("")}
+            </ul>`
+          : `<p class="empty-hint">尚無交易紀錄</p>`
       }
     </section>
   `;

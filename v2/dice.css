@@ -104,6 +104,13 @@ body:has(.layout.is-player) .app-header .brand-block { display: none; }
 .shop-manager-editor { display: grid; grid-template-columns: minmax(140px, 1.6fr) minmax(78px, 0.7fr) minmax(78px, 0.7fr) minmax(178px, 1.3fr); gap: 5px 6px; align-items: end; padding: 5px 6px 6px; border-top: 1px solid rgba(243, 234, 216, 0.07); }
 .shop-manager-editor .form-field-full { grid-column: 1 / -1; }
 .shop-log-panel { gap: 7px; padding: 10px; border-radius: 11px; }
+.shop-team-history-panel { margin-top: 4px; min-width: 0; }
+.shop-team-history-heading { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; justify-content: space-between; min-width: 0; }
+.shop-team-history-heading h4 { margin: 0; }
+.shop-team-history-heading small { color: var(--muted); font-size: 11px; }
+.shop-team-history-list li { display: grid; gap: 2px; min-width: 0; }
+.shop-team-history-list span,
+.shop-team-history-list small { min-width: 0; overflow-wrap: anywhere; }
 
 .safe-mode-banner { margin: 0 0 10px; padding: 8px 10px; border: 1px solid rgba(250, 204, 21, 0.38); border-radius: 10px; background: rgba(250, 204, 21, 0.12); color: #fde68a; font-size: 12px; line-height: 1.4; }
 .opening-entry-overlay { position: fixed; inset: 0; z-index: 120; width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; background: #000; }
