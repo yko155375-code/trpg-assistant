@@ -20,9 +20,9 @@ import {
   updateCharacterGold,
   updateCharacterMoney,
   updateCharacterStat,
-} from "./modules/characters.js?v=shop-team-transaction-history";
-import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=shop-team-transaction-history";
-import { renderDmPage } from "./modules/dm-view.js?v=shop-team-transaction-history";
+} from "./modules/characters.js?v=dm-music-bgm-sfx-layers-current-main";
+import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=dm-music-bgm-sfx-layers-current-main";
+import { renderDmPage } from "./modules/dm-view.js?v=dm-music-bgm-sfx-layers-current-main";
 import {
   addMonster,
   adjustMonsterValue,
@@ -32,22 +32,24 @@ import {
   resetMonsterRound,
   rollMonsterAction,
   updateMonster,
-} from "./modules/monsters.js?v=shop-team-transaction-history";
-import { renderPlayerPage } from "./modules/player-view.js?v=shop-team-transaction-history";
-import { updatePublicInfoField } from "./modules/public-info.js?v=shop-team-transaction-history";
-import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=shop-team-transaction-history";
-import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=shop-team-transaction-history";
-import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=shop-team-transaction-history";
-import { STORAGE_KEY } from "./modules/storage.js?v=shop-team-transaction-history";
+} from "./modules/monsters.js?v=dm-music-bgm-sfx-layers-current-main";
+import { renderPlayerPage } from "./modules/player-view.js?v=dm-music-bgm-sfx-layers-current-main";
+import { updatePublicInfoField } from "./modules/public-info.js?v=dm-music-bgm-sfx-layers-current-main";
+import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=dm-music-bgm-sfx-layers-current-main";
+import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=dm-music-bgm-sfx-layers-current-main";
+import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=dm-music-bgm-sfx-layers-current-main";
+import { STORAGE_KEY } from "./modules/storage.js?v=dm-music-bgm-sfx-layers-current-main";
 
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
-const VERSION_LABEL = "shop-team-transaction-history";
+const VERSION_LABEL = "dm-music-bgm-sfx-layers-current-main";
 const OPENING_VIDEO_URL = "./assets/intro/opening.mp4";
 const BACKUP_LATEST_KEY = `${STORAGE_KEY}-backup-latest`;
 const BACKUP_TIMESTAMP_PREFIX = `${STORAGE_KEY}-backup-`;
 const MAX_TIMESTAMP_BACKUPS = 5;
 const MAX_BACKUP_BYTES = 2_500_000;
+const MUSIC_PLAYBACK_TYPES = new Set(["bgm", "sfx"]);
+const MAX_SFX_PLAYERS = 8;
 const isSafeMode = new URLSearchParams(window.location.search).get("safe") === "1";
 let state = null;
 let isDmMenuOpen = false;
@@ -512,13 +514,198 @@ function rollD6() { return Math.floor(Math.random() * 6) + 1; }
 function cancelPendingDeleteCharacter() { const hadPending = Boolean(pendingDeleteCharacterId); pendingDeleteCharacterId = ""; return hadPending; }
 function applyEdge(roll, mode) { if (!EDGE_MODES.has(mode)) return roll; const die = rollD6(); const baseTotal = Number(roll.total) || 0; const finalTotal = mode === "advantage" ? baseTotal + die : baseTotal - die; return { ...roll, rollEdgeMode: mode, rollEdgeDie: die, baseTotal, total: finalTotal, edgeBreakdown: { mode, die, baseTotal, finalTotal }, note: mode === "advantage" ? "優勢骰 +1d6" : "劣勢骰 -1d6" }; }
 
+const musicController = {
+  bgmElement: null,
+  bgmTrackId: null,
+  host: null,
+  sfxPlayers: new Map(),
+  sfxOrder: [],
+};
+
 function inferMusicSourceType(url) { const value = String(url || "").trim().toLowerCase(); if (!value) return "unknown"; if (value.includes("youtube.com/") || value.includes("youtu.be/")) return "youtube"; if (/\.(mp3|ogg|wav)(\?|#|$)/i.test(value)) return "audio"; return "url"; }
+function normalizeMusicPlaybackType(value) { return MUSIC_PLAYBACK_TYPES.has(value) ? value : "bgm"; }
 function splitMusicTags(value) { return String(value || "").split(/[,\s]+/).map((entry) => entry.trim()).filter(Boolean); }
 function withMusicMessage(nextState, message) { return { ...nextState, ui: { ...(nextState.ui || {}), musicMessage: message } }; }
-function addMusicTrack(nextState, values) { const url = String(values.url || "").trim(); if (!url) return withMusicMessage(nextState, "請先輸入音樂 URL。"); const title = String(values.title || "").trim() || url || "未命名音樂"; const scene = String(values.scene || "").trim(); const track = { id: `music-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, title, url, sourceType: inferMusicSourceType(url), tags: splitMusicTags(scene), scene, notes: String(values.notes || "").trim(), createdAt: new Date().toISOString() }; return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), tracks: [...(Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : []), track] } }, `已新增音樂：${title}`); }
-function playMusicTrack(nextState, trackId) { const tracks = Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : []; const track = tracks.find((item) => item.id === trackId); if (!track) return withMusicMessage(nextState, "找不到這首音樂。"); return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), tracks, currentTrackId: track.id, isPlaying: true } }, `正在播放：${track.title}`); }
-function stopMusicTrack(nextState, trackId) { const shouldStop = !trackId || nextState.audio?.currentTrackId === trackId; return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), currentTrackId: shouldStop ? null : nextState.audio?.currentTrackId || null, isPlaying: shouldStop ? false : Boolean(nextState.audio?.isPlaying) } }, "已停止播放。"); }
-function deleteMusicTrack(nextState, trackId) { const tracks = Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : []; const nextTracks = tracks.filter((track) => track.id !== trackId); const isCurrent = nextState.audio?.currentTrackId === trackId; return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), tracks: nextTracks, currentTrackId: isCurrent ? null : nextState.audio?.currentTrackId || null, isPlaying: isCurrent ? false : Boolean(nextState.audio?.isPlaying) } }, "已刪除音樂。"); }
+function getMusicHost() {
+  if (musicController.host?.isConnected) return musicController.host;
+  const host = document.createElement("div");
+  host.className = "music-audio-layer";
+  host.setAttribute("aria-hidden", "true");
+  document.body.append(host);
+  musicController.host = host;
+  return host;
+}
+function getMusicYoutubeEmbedUrl(url) {
+  const raw = String(url || "").trim();
+  if (!raw) return "";
+  try {
+    const parsed = new URL(raw);
+    let id = "";
+    if (parsed.hostname.includes("youtu.be")) id = parsed.pathname.replace("/", "");
+    else if (parsed.hostname.includes("youtube.com")) id = parsed.searchParams.get("v") || parsed.pathname.split("/").filter(Boolean).pop() || "";
+    id = String(id || "").replace(/[^A-Za-z0-9_-]/g, "");
+    return id ? `https://www.youtube.com/embed/${id}` : "";
+  } catch {
+    return "";
+  }
+}
+function removeMusicElement(element) {
+  if (!element) return;
+  try { if (typeof element.pause === "function") element.pause(); } catch {}
+  try { if ("src" in element) element.removeAttribute("src"); } catch {}
+  try { if (typeof element.load === "function") element.load(); } catch {}
+  element.remove?.();
+}
+function stopBgmLayer(trackId = "") {
+  if (trackId && musicController.bgmTrackId && musicController.bgmTrackId !== trackId) return false;
+  removeMusicElement(musicController.bgmElement);
+  musicController.bgmElement = null;
+  musicController.bgmTrackId = null;
+  return true;
+}
+function cleanupSfxPlayer(playerId) {
+  const player = musicController.sfxPlayers.get(playerId);
+  if (!player) return;
+  window.clearTimeout(player.timeoutId);
+  removeMusicElement(player.element);
+  musicController.sfxPlayers.delete(playerId);
+  musicController.sfxOrder = musicController.sfxOrder.filter((id) => id !== playerId);
+}
+function stopSfxLayer(trackId = "") {
+  Array.from(musicController.sfxPlayers.values())
+    .filter((player) => !trackId || player.trackId === trackId)
+    .forEach((player) => cleanupSfxPlayer(player.id));
+}
+function limitSfxPlayers() {
+  while (musicController.sfxOrder.length > MAX_SFX_PLAYERS) cleanupSfxPlayer(musicController.sfxOrder[0]);
+}
+function createYoutubeFrame(track, layer) {
+  const embedUrl = getMusicYoutubeEmbedUrl(track.url);
+  if (!embedUrl) return null;
+  const frame = document.createElement("iframe");
+  frame.className = `music-layer-frame is-${layer}`;
+  frame.dataset.musicLayer = layer;
+  frame.dataset.trackId = track.id;
+  frame.title = track.title || "music";
+  frame.allow = "autoplay; encrypted-media; picture-in-picture";
+  frame.src = `${embedUrl}?autoplay=1`;
+  return frame;
+}
+function playBgmLayer(track) {
+  stopBgmLayer();
+  const sourceType = track.sourceType || inferMusicSourceType(track.url);
+  const host = getMusicHost();
+  let element = null;
+  if (sourceType === "audio") {
+    element = new Audio(track.url);
+    element.loop = true;
+    element.preload = "auto";
+    element.className = "music-layer-audio is-bgm";
+    element.dataset.musicLayer = "bgm";
+    element.dataset.trackId = track.id;
+    host.append(element);
+    element.play().catch((error) => console.warn("[TRPG v2 music] BGM play failed", error));
+  } else if (sourceType === "youtube") {
+    element = createYoutubeFrame(track, "bgm");
+    if (element) host.append(element);
+  }
+  if (!element) return false;
+  musicController.bgmElement = element;
+  musicController.bgmTrackId = track.id;
+  return true;
+}
+function playSfxLayer(track) {
+  const sourceType = track.sourceType || inferMusicSourceType(track.url);
+  const host = getMusicHost();
+  const id = `sfx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  let element = null;
+  if (sourceType === "audio") {
+    element = new Audio(track.url);
+    element.preload = "auto";
+    element.className = "music-layer-audio is-sfx";
+    element.dataset.musicLayer = "sfx";
+    element.dataset.trackId = track.id;
+    element.addEventListener("ended", () => cleanupSfxPlayer(id), { once: true });
+    element.addEventListener("error", () => cleanupSfxPlayer(id), { once: true });
+    host.append(element);
+    element.play().catch((error) => { console.warn("[TRPG v2 music] SFX play failed", error); cleanupSfxPlayer(id); });
+  } else if (sourceType === "youtube") {
+    element = createYoutubeFrame(track, "sfx");
+    if (element) host.append(element);
+  }
+  if (!element) return false;
+  const player = { id, trackId: track.id, element, timeoutId: window.setTimeout(() => cleanupSfxPlayer(id), 120000) };
+  musicController.sfxPlayers.set(id, player);
+  musicController.sfxOrder.push(id);
+  limitSfxPlayers();
+  return true;
+}
+function addMusicTrack(nextState, values) {
+  const url = String(values.url || "").trim();
+  if (!url) return withMusicMessage(nextState, "請先輸入音樂 URL。");
+  const title = String(values.title || "").trim() || url || "未命名音樂";
+  const scene = String(values.scene || "").trim();
+  const track = {
+    id: `music-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title,
+    url,
+    sourceType: inferMusicSourceType(url),
+    playbackType: normalizeMusicPlaybackType(values.playbackType),
+    tags: splitMusicTags(scene),
+    scene,
+    notes: String(values.notes || "").trim(),
+    createdAt: new Date().toISOString(),
+  };
+  return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), tracks: [...(Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : []), track] } }, `已新增音樂：${title}`);
+}
+function updateMusicPlaybackType(nextState, trackId, playbackType) {
+  const nextType = normalizeMusicPlaybackType(playbackType);
+  const tracks = Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : [];
+  const target = tracks.find((track) => track.id === trackId);
+  if (!target) return withMusicMessage(nextState, "找不到這首音樂。");
+  const wasCurrentBgm = nextState.audio?.currentTrackId === trackId && nextState.audio?.isPlaying;
+  if (wasCurrentBgm && nextType === "sfx") stopBgmLayer(trackId);
+  return withMusicMessage({
+    ...nextState,
+    audio: {
+      ...(nextState.audio || {}),
+      tracks: tracks.map((track) => (track.id === trackId ? { ...track, playbackType: nextType } : track)),
+      currentTrackId: wasCurrentBgm && nextType === "sfx" ? null : nextState.audio?.currentTrackId || null,
+      isPlaying: wasCurrentBgm && nextType === "sfx" ? false : Boolean(nextState.audio?.isPlaying),
+    },
+  }, `已設為${nextType === "sfx" ? "音效" : "背景音樂"}。`);
+}
+function playMusicTrack(nextState, trackId) {
+  const tracks = Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : [];
+  const track = tracks.find((item) => item.id === trackId);
+  if (!track) return withMusicMessage(nextState, "找不到這首音樂。");
+  const playbackType = normalizeMusicPlaybackType(track.playbackType);
+  const didPlay = playbackType === "sfx" ? playSfxLayer(track) : playBgmLayer(track);
+  if (!didPlay) return withMusicMessage(nextState, "此網址可能無法直接播放，但已保存於清單。");
+  if (playbackType === "sfx") return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), tracks } }, `播放音效：${track.title}`);
+  return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), tracks, currentTrackId: track.id, isPlaying: true } }, `正在播放背景音樂：${track.title}`);
+}
+function stopMusicTrack(nextState, trackId) {
+  const tracks = Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : [];
+  const track = tracks.find((item) => item.id === trackId);
+  const playbackType = normalizeMusicPlaybackType(track?.playbackType);
+  if (playbackType === "sfx") {
+    stopSfxLayer(trackId);
+    return withMusicMessage(nextState, "已停止音效。");
+  }
+  const shouldStop = !trackId || nextState.audio?.currentTrackId === trackId;
+  if (shouldStop) stopBgmLayer(trackId);
+  return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), currentTrackId: shouldStop ? null : nextState.audio?.currentTrackId || null, isPlaying: shouldStop ? false : Boolean(nextState.audio?.isPlaying) } }, "已停止背景音樂。");
+}
+function deleteMusicTrack(nextState, trackId) {
+  const tracks = Array.isArray(nextState.audio?.tracks) ? nextState.audio.tracks : [];
+  const target = tracks.find((track) => track.id === trackId);
+  stopSfxLayer(trackId);
+  if (nextState.audio?.currentTrackId === trackId || musicController.bgmTrackId === trackId) stopBgmLayer(trackId);
+  const nextTracks = tracks.filter((track) => track.id !== trackId);
+  const isCurrent = nextState.audio?.currentTrackId === trackId;
+  return withMusicMessage({ ...nextState, audio: { ...(nextState.audio || {}), tracks: nextTracks, currentTrackId: isCurrent ? null : nextState.audio?.currentTrackId || null, isPlaying: isCurrent ? false : Boolean(nextState.audio?.isPlaying) } }, `已刪除${normalizeMusicPlaybackType(target?.playbackType) === "sfx" ? "音效" : "音樂"}。`);
+}
 
 function getIntroImages(nextState) { return Array.isArray(nextState.introImages?.images) ? nextState.introImages.images : []; }
 function withIntroImageMessage(nextState, message) { return { ...nextState, ui: { ...(nextState.ui || {}), introImageMessage: message } }; }
@@ -687,6 +874,8 @@ app.addEventListener("change", (event) => {
     return;
   }
   const characterSelect = event.target.closest("[data-character-select]"); if (characterSelect) { pendingDeleteCharacterId = ""; clearAssetDeleteState(); return updateState(selectCharacter(state, characterSelect.value)); }
+  const musicPlaybackType = event.target.closest("[data-music-playback-type]");
+  if (musicPlaybackType) return updateState(updateMusicPlaybackType(state, musicPlaybackType.dataset.trackId, musicPlaybackType.value));
   const shopItemField = event.target.closest("[data-shop-item-field]"); if (shopItemField) return updateState(updateShopItem(state, shopItemField.dataset.shopItemId, shopItemField.dataset.shopItemField, shopItemField.value));
   const characterId = event.target.dataset.characterId; if (!characterId) return;
   if (event.target.dataset.characterField) return updateState(updateCharacterField(state, characterId, event.target.dataset.characterField, event.target.value));
@@ -776,7 +965,7 @@ app.addEventListener("submit", (event) => {
   const saveEncounterForm = event.target.closest("[data-save-encounter-form]"); if (saveEncounterForm) { event.preventDefault(); return updateState(saveCurrentEncounter(state, saveEncounterForm.querySelector("[data-encounter-name]")?.value || "")); }
   const addPlayerBackgroundImageForm = event.target.closest("[data-add-player-background-image-form]"); if (addPlayerBackgroundImageForm) { event.preventDefault(); return updateState(addPlayerBackgroundImage(state, { title: addPlayerBackgroundImageForm.querySelector("[data-new-player-background-title]")?.value || "", url: addPlayerBackgroundImageForm.querySelector("[data-new-player-background-url]")?.value || "", notes: addPlayerBackgroundImageForm.querySelector("[data-new-player-background-notes]")?.value || "" })); }
   const addIntroImageForm = event.target.closest("[data-add-intro-image-form]"); if (addIntroImageForm) { event.preventDefault(); return updateState(addIntroImage(state, { title: addIntroImageForm.querySelector("[data-new-intro-image-title]")?.value || "", url: addIntroImageForm.querySelector("[data-new-intro-image-url]")?.value || "", notes: addIntroImageForm.querySelector("[data-new-intro-image-notes]")?.value || "" })); }
-  const addMusicForm = event.target.closest("[data-add-music-form]"); if (addMusicForm) { event.preventDefault(); return updateState(addMusicTrack(state, { title: addMusicForm.querySelector("[data-new-music-title]")?.value || "", url: addMusicForm.querySelector("[data-new-music-url]")?.value || "", scene: addMusicForm.querySelector("[data-new-music-scene]")?.value || "", notes: addMusicForm.querySelector("[data-new-music-notes]")?.value || "" })); }
+  const addMusicForm = event.target.closest("[data-add-music-form]"); if (addMusicForm) { event.preventDefault(); return updateState(addMusicTrack(state, { title: addMusicForm.querySelector("[data-new-music-title]")?.value || "", url: addMusicForm.querySelector("[data-new-music-url]")?.value || "", scene: addMusicForm.querySelector("[data-new-music-scene]")?.value || "", playbackType: addMusicForm.querySelector("[data-new-music-playback-type]")?.value || "bgm", notes: addMusicForm.querySelector("[data-new-music-notes]")?.value || "" })); }
 });
 
 app.addEventListener("wheel", (event) => {

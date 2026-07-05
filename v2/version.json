@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "shop-team-transaction-history",
-  "commit": "66bd99d34f68c938cb21977c7292c751ecee5f46",
-  "sourceCommit": "66bd99d34f68c938cb21977c7292c751ecee5f46",
-  "versionCommit": "66bd99d34f68c938cb21977c7292c751ecee5f46",
-  "updatedAt": "2026-07-03T13:24:30+08:00",
-  "note": "Add shared team shop transaction history."
+  "label": "dm-music-bgm-sfx-layers-current-main",
+  "commit": "e52bb5a7e8de2917431da264f383a254fc968ca0",
+  "sourceCommit": "e52bb5a7e8de2917431da264f383a254fc968ca0",
+  "versionCommit": "e52bb5a7e8de2917431da264f383a254fc968ca0",
+  "updatedAt": "2026-07-05T12:38:18+08:00",
+  "note": "Port DM music BGM and SFX audio layers onto current main."
 }
