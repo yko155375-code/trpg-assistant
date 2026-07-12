@@ -37,12 +37,13 @@ import { renderPlayerPage } from "./modules/player-view.js?v=dm-music-bgm-sfx-la
 import { updatePublicInfoField } from "./modules/public-info.js?v=dm-music-bgm-sfx-layers-current-main";
 import { getActivePageId, getActivePages, setActivePage, setMode } from "./modules/router.js?v=dm-music-bgm-sfx-layers-current-main";
 import { addShopItem, deleteShopItem, purchaseShopItem, updateShopItem } from "./modules/shop.js?v=dm-music-bgm-sfx-layers-current-main";
-import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=dm-music-bgm-sfx-layers-current-main";
+import { initializeAudioManager } from "./modules/sound.js";
+import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=v2-sound-event-manifest-foundation";
 import { STORAGE_KEY } from "./modules/storage.js?v=dm-music-bgm-sfx-layers-current-main";
 
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
-const VERSION_LABEL = "dm-music-bgm-sfx-layers-current-main";
+const VERSION_LABEL = "v2-sound-event-manifest-foundation";
 const OPENING_VIDEO_URL = "./assets/intro/opening.mp4";
 const BACKUP_LATEST_KEY = `${STORAGE_KEY}-backup-latest`;
 const BACKUP_TIMESTAMP_PREFIX = `${STORAGE_KEY}-backup-`;
@@ -64,6 +65,14 @@ let bootPhase = "start";
 let bootRawState = null;
 let bootBackupKey = "";
 let persistenceStatus = { status: "idle", label: "尚未保存", lastSavedAt: "", lastSavedText: "", message: "" };
+
+function syncSoundFoundation() {
+  try {
+    initializeAudioManager({ settings: state?.sound?.settings, safeMode: isSafeMode });
+  } catch (error) {
+    console.warn("[TRPG v2 sound] foundation sync failed", error);
+  }
+}
 
 function logBoot(phase, details = {}) {
   console.info("[TRPG v2 boot]", { phase, safeMode: isSafeMode, storageKey: STORAGE_KEY, ...details });
@@ -283,6 +292,7 @@ function initializeState() {
   if (isSafeMode) {
     bootPhase = "safeMode";
     state = normalizeWithoutSaving(createDefaultState());
+    syncSoundFoundation();
     logBoot("normalizeState", { parsed: false, normalized: true, safeMode: true });
     return;
   }
@@ -310,8 +320,12 @@ function initializeState() {
   state = normalizeState(parsedState);
   logBoot("normalizeState", { normalized: true });
   bootPhase = "saveState";
-  if (parseFailed) return;
+  if (parseFailed) {
+    syncSoundFoundation();
+    return;
+  }
   state = saveStateHardened(state, "boot");
+  syncSoundFoundation();
 }
 
 try { initializeState(); }
@@ -321,8 +335,8 @@ catch (error) {
   renderBootError(error, bootPhase);
 }
 
-function updateState(nextState) { state = isSafeMode ? normalizeWithoutSaving(nextState) : saveStateHardened(nextState); safeRender(); }
-function saveStateOnly(nextState) { state = isSafeMode ? normalizeWithoutSaving(nextState) : saveStateHardened(nextState); }
+function updateState(nextState) { state = isSafeMode ? normalizeWithoutSaving(nextState) : saveStateHardened(nextState); syncSoundFoundation(); safeRender(); }
+function saveStateOnly(nextState) { state = isSafeMode ? normalizeWithoutSaving(nextState) : saveStateHardened(nextState); syncSoundFoundation(); }
 function escapeHtml(value) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
 
 function assetEntryKey(listKey, index) {

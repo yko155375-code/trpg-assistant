@@ -2,6 +2,7 @@ import { normalizeCharacters } from "./characters.js";
 import { normalizeMonsters } from "./monsters.js";
 import { normalizeSession } from "./public-info.js";
 import { normalizeShop } from "./shop.js";
+import { normalizeSoundSettings, SOUND_SETTINGS_DEFAULTS } from "./sound.js";
 
 export const APP_VERSION = "v2-stage-5";
 export const SCHEMA_VERSION = 1;
@@ -319,6 +320,15 @@ function normalizeAudio(audio, fallbackAudio) {
   };
 }
 
+function normalizeSoundState(sound, fallbackSound) {
+  const source = recordOrEmpty(sound);
+  return {
+    ...fallbackSound,
+    ...source,
+    settings: normalizeSoundSettings(source.settings || fallbackSound.settings),
+  };
+}
+
 function getDriveFileId(value) {
   const raw = String(value || "").trim();
   if (!raw) return "";
@@ -513,6 +523,9 @@ export function createDefaultState() {
       volume: 0.7,
       tracks: [],
     },
+    sound: {
+      settings: { ...SOUND_SETTINGS_DEFAULTS },
+    },
     introImages: {
       images: [],
     },
@@ -540,6 +553,7 @@ export function normalizeState(input) {
   const sourceMeta = recordOrEmpty(source.meta);
   const sourceSession = recordOrEmpty(source.session);
   const sourceAudio = recordOrEmpty(source.audio);
+  const sourceSound = recordOrEmpty(source.sound);
   const sourceIntroImages = recordOrEmpty(source.introImages);
   const sourcePlayerBackgroundImages = recordOrEmpty(source.playerBackgroundImages);
   const sourceUi = recordOrEmpty(source.ui);
@@ -573,6 +587,7 @@ export function normalizeState(input) {
     shop: normalizeCompatibleShop(sourceShop, fallback.shop),
     rolls: recordArray(source.rolls),
     audio: normalizeAudio(sourceAudio, fallback.audio),
+    sound: normalizeSoundState(sourceSound, fallback.sound),
     introImages: normalizeIntroImages(sourceIntroImages, fallback.introImages),
     playerBackgroundImages: normalizePlayerBackgroundImages(sourcePlayerBackgroundImages, fallback.playerBackgroundImages),
     ui: {
