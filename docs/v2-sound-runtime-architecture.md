@@ -1,4 +1,4 @@
-# TRPG Assistant v2 Sound Runtime Architecture
+﻿# TRPG Assistant v2 Sound Runtime Architecture
 
 This document defines the future runtime architecture for the TRPG Assistant v2 sound system. It is a specification only. It does not add JavaScript, JSON runtime manifests, audio files, or UI event wiring.
 
@@ -10,16 +10,16 @@ The runtime should be organized around one top-level singleton:
 
 ```text
 AudioManager
-├── BGM Manager
-├── SFX Pool
-├── UI SFX Pool
-├── Ambient Manager
-├── Ducking Controller
-├── Priority Controller
-├── Audio Settings
-├── Browser Unlock Controller
-├── Asset Cache
-└── Diagnostics
+??? BGM Manager
+??? SFX Pool
+??? UI SFX Pool
+??? Ambient Manager
+??? Ducking Controller
+??? Priority Controller
+??? Audio Settings
+??? Browser Unlock Controller
+??? Asset Cache
+??? Diagnostics
 ```
 
 ### Component Responsibilities
@@ -50,12 +50,23 @@ bgm, sfx, ambient
 
 ### BGM
 
-- Allows one primary BGM at a time.
+- Allows one active primary BGM in stable playback state.
 - Continues when switching DM/player pages or DM tabs.
 - Supports play, pause, resume, stop, and track switching.
 - Track switching should support fade out / fade in.
 - Must not be destroyed by render or DOM replacement.
 - Does not belong inside a rendered DM music card.
+
+#### BGM Crossfade Voice Limit
+
+- Stable playback has exactly one active primary BGM voice.
+- During crossfade, two BGM voices may temporarily exist:
+  - outgoing voice
+  - incoming voice
+- After crossfade completes, the outgoing voice must be released.
+- The BGM voice limit is 2 at any time.
+- A third BGM voice must never accumulate.
+- If a new track-change request arrives during an active crossfade, the BGM Manager must cancel or take over the existing transition instead of stacking another transition.
 
 ### SFX
 
@@ -134,6 +145,19 @@ Rules:
 - A blocked play request should either be dropped safely or queued only when the caller explicitly allows deferred playback.
 - UI hover sounds should not be queued before unlock.
 - Critical user-triggered sounds can be retried after unlock if the original action is still relevant.
+
+### Deferred Playback Queue
+
+- The default behavior is no queue: blocked play requests are dropped safely.
+- Short operation sounds must not be queued, including UI click, hover, tab, quantity, and other rapid feedback cues.
+- A request may enter the deferred queue only when the caller explicitly sets `allowDeferredPlayback`.
+- The deferred queue limit is 3 requests.
+- Each deferred request has a default TTL of 1500ms.
+- Requests older than their TTL are discarded.
+- After unlock, only requests that still have gameplay or UI context should be played.
+- Deferred requests with the same sound id are deduplicated; keep only the newest request.
+- Safe mode must not create a deferred queue.
+- Failure of a deferred sound must never affect the original operation.
 
 Mobile notes:
 
@@ -287,15 +311,51 @@ If the user changes BGM volume during duck:
 
 ## 9. Volume Model
 
-Final voice volume:
+Final volume is calculated by layer.
+
+BGM:
 
 ```text
-finalVolume =
+finalBgmVolume =
   masterVolume
-  × layerVolume
-  × assetDefaultVolume
-  × duckFactor
+  * bgmVolume
+  * assetDefaultVolume
+  * duckFactor
 ```
+
+UI SFX:
+
+```text
+finalUiVolume =
+  masterVolume
+  * uiVolume
+  * assetDefaultVolume
+```
+
+General SFX / Stinger:
+
+```text
+finalSfxVolume =
+  masterVolume
+  * sfxVolume
+  * assetDefaultVolume
+```
+
+Ambient:
+
+```text
+finalAmbientVolume =
+  masterVolume
+  * ambientVolume
+  * assetDefaultVolume
+```
+
+Rules:
+
+- `duckFactor` applies only to BGM.
+- SFX, UI SFX, and Ambient do not apply BGM `duckFactor` by default.
+- If `muteAll` is true, every layer's final volume is 0.
+- All final volume values must be clamped to the 0-1 range.
 
 Settings:
 
@@ -492,8 +552,12 @@ The first branch should prove the architecture can exist safely before it makes 
 - BGM, SFX, and Ambient lifecycles are clear.
 - Pool, priority, cooldown, and overlap rules are clear.
 - Ducking calculation and recovery are clear.
+- BGM crossfade voice limit is clear.
+- `duckFactor` applies only to BGM.
+- Deferred queue has a limit, TTL, and deduplication rules.
 - Browser Unlock behavior is clear.
 - Mobile constraints are listed.
 - Sound failures do not affect core app features.
 - The first implementation branch boundary is narrow and practical.
 - The document can directly guide `codex/v2-sound-event-manifest-foundation`.
+
