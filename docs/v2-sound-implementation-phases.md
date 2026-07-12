@@ -1,48 +1,57 @@
 # TRPG Assistant v2 Sound Implementation Phases
 
-本文件規劃完整音效系統的分階段實作順序。此文件只做規劃，不代表已實作。
+This document schedules the sound system implementation without adding code, audio files, or runtime manifests. Every sound id named here must exist in both:
 
-## 不變前提
+- `docs/v2-sound-event-map.md`
+- `docs/v2-sound-asset-manifest.md`
 
-- 已有 BGM Layer。
-- 已有 SFX Layer。
-- 不應破壞現有 DM 音樂 URL 播放。
-- 不應破壞資料保存、JSON 匯出 / 匯入、商店交易歷史。
-- 音效應可關閉。
-- 音量應可調整。
-- 使用者未互動前不可強制播放音訊。
+## Phase 0: Schema And UX Foundation
 
-## Phase 0：資料與 UX 規格
+Goal: lock the naming, category, layer, overlap, manifest, and settings vocabulary before any runtime code or assets are added.
 
-目標：先定義資料與觸發規則，不寫實際音效觸發。
-
-產出：
+Deliverables:
 
 - Sound Event Map
-- Sound Asset Manifest
-- Sound Setting UX draft
-- 音效授權紀錄格式
+- Sound Asset Manifest Specification
+- Implementation Phases
+- Sound settings UX draft in a future branch
 
-驗收：
+Validation requirements:
 
-- 每個音效事件有 sound id。
-- 每個 sound id 有分類、音量、重疊規則。
-- 可以判斷哪些是 UI / Gameplay / Ambient。
+- Every Sound Event Map id has exactly one matching row in the Manifest Coverage Table.
+- Every category uses the legal lowercase category list.
+- Every layer is one of `bgm`, `sfx`, or `ambient`.
+- Every `overlapMode` is `none`, `limited`, or `full`.
+- Every sound id has exactly one phase value.
+- There are no duplicate sound ids.
+- There are no orphan sound ids.
+- Phase references must not mention ids missing from the event map or manifest.
 
-## Phase 1：UI / System / Dice / Shop 短音效
+Phase 0 does not implement sound playback.
 
-目標：建立最低風險的短音效層。
+## Phase 1: UI / System / Dice / Shop Basics
 
-範圍：
+Goal: implement the safest short sounds first.
 
-- `ui.click.soft`
-- `ui.tab.switch`
-- `ui.modal.open`
-- `ui.modal.close`
+Sound ids:
+
+- `system.boot.start`
+- `system.boot.ready`
 - `system.save.success`
 - `system.save.failed`
 - `system.import.success`
 - `system.export.success`
+- `system.warning`
+- `system.error`
+- `system.confirm`
+- `system.cancel`
+- `ui.click.soft`
+- `ui.hover.soft`
+- `ui.page.switch`
+- `ui.tab.switch`
+- `ui.modal.open`
+- `ui.modal.close`
+- `ui.popup.open`
 - `dice.roll.start`
 - `dice.roll.success`
 - `dice.roll.fail`
@@ -51,25 +60,19 @@
 - `shop.buy.success`
 - `shop.money.insufficient`
 
-設計要求：
+Implementation notes:
 
-- 所有 UI 音效都有 cooldown。
-- 不可讓 hover 音效過度觸發。
-- Dice 音效不得影響 formula draft。
-- Shop 音效不得影響購買扣款或交易歷史。
+- UI sounds need cooldowns to prevent fatigue.
+- Hover sounds must be optional or muted by default if they become annoying.
+- Dice sounds must not break formula draft or quick roll behavior.
+- Shop sounds must not interfere with purchase validation, money deduction, inventory writes, or transaction history.
+- `?safe=1` must remain stable.
 
-驗收：
+## Phase 2: Player Status And Inventory
 
-- 音效開關可用。
-- 主音量 / UI 音量 / SFX 音量可調。
-- 存檔失敗時不會因音效失敗而黑屏。
-- `?safe=1` 仍可用。
+Goal: add feedback for player state changes and inventory operations.
 
-## Phase 2：玩家狀態與資產音效
-
-目標：讓玩家常用狀態有清楚但不吵的回饋。
-
-範圍：
+Sound ids:
 
 - `player.character.switch`
 - `player.hp.change`
@@ -87,113 +90,84 @@
 - `inventory.quantity.up`
 - `inventory.quantity.down`
 
-設計要求：
+Implementation notes:
 
-- HP / stress / hope / shield 不改數值規則。
-- 音效只能反映成功後的 state change。
-- 批次刪除資產時只播放一次彙總音，不要每個 item 連播。
-- 切換角色時取消 pending UI 狀態不應額外爆音。
+- HP, stress, hope, and shield sounds should be triggered by actual state changes, not by render alone.
+- Inventory sounds must work with the single add form, category stay behavior, quantity + / -, and batch delete flow.
+- Character switching must not disturb current-character sticky UI.
 
-驗收：
+## Phase 3: DM Manual BGM / SFX Control
 
-- 玩家面板「喚醒」未受影響。
-- 希望 / 護盾進度條未受影響。
-- 角色進階設定 sticky 未受影響。
-- 玩家資產分類停留與 quantity + / - 未受影響。
+Goal: expose and stabilize the existing audio layer split.
 
-## Phase 3：DM Manual SFX Trigger
+Sound ids:
 
-目標：讓 DM 能從音樂 / 音效清單手動播放 SFX，且不影響 BGM。
+- `dm.bgm.play`
+- `dm.bgm.stop`
+- `dm.sfx.play`
 
-範圍：
+Implementation notes:
 
-- DM 音樂項目 playbackType 已有 `bgm` / `sfx`。
-- 強化 SFX 項目 metadata：
-  - category
-  - suggestedVolume
-  - tags
-  - scene
-  - cooldown
+- BGM and SFX must stay as independent audio layers.
+- Manual SFX playback must not stop, pause, replace, or reset the current BGM.
+- BGM must not be destroyed by DM/player page re-render.
+- Existing URL-based BGM/SFX behavior should not be expanded into a YouTube API rewrite in this phase.
 
-設計要求：
+## Phase 4: Combat / Magic / Quest / Horror Stingers
 
-- SFX 播放不停止 BGM。
-- SFX 播放不改 BGM current state。
-- SFX 播放完自動釋放。
-- 可限制同時播放數。
+Goal: add high-impact gameplay stingers.
 
-驗收：
+Sound ids:
 
-- 播放 BGM 後切換玩家頁不中斷。
-- 播放 SFX 時 BGM 不停止、不暫停、不被取代。
-- DM 分頁切換不銷毀 BGM。
-
-## Phase 4：Combat / Magic / Monster / Horror Stingers
-
-目標：加入高辨識度 gameplay stinger。
-
-範圍：
-
+- `player.buff.add`
+- `player.debuff.add`
+- `player.death`
+- `player.revive`
 - `dm.boss.intro`
 - `dm.combat.start`
 - `dm.combat.end`
+- `dm.secret.reveal`
+- `dm.puzzle.success`
 - `dm.trap.trigger`
 - `dm.horror.stinger`
-- `player.death`
-- `player.revive`
-- `player.buff.add`
-- `player.debuff.add`
 
-設計要求：
+Implementation notes:
 
-- 高優先級 stinger 可 duck BGM。
-- 同一類 stinger 需要 cooldown。
-- Boss intro 不可重疊。
-- Horror stinger 不可頻繁連發。
+- Important stingers may duck BGM.
+- Stingers need cooldowns to prevent repeated accidental triggering.
+- Boss intro should not overlap itself.
+- Horror stingers should be reducible or disableable for accessibility.
+- Monster natural 20 critical damage must not be affected.
 
-驗收：
+## Phase 5: Ambient Layer
 
-- BGM duck 後會恢復。
-- SFX pool 不會累積無效 audio。
-- 怪物自然 20 關鍵傷害不受影響。
-- 商店與資產功能不受影響。
+Goal: add ambient loops and weather events as a third layer separate from BGM and SFX.
 
-## Phase 5：Ambient Layer
+Sound ids:
 
-目標：正式建立第三層 Ambient。
+- `ambient.forest.loop`
+- `ambient.cave.loop`
+- `ambient.dungeon.loop`
+- `ambient.town.loop`
+- `ambient.tavern.loop`
+- `ambient.rain.loop`
+- `ambient.thunder.event`
+- `ambient.campfire.loop`
+- `ambient.ruins.loop`
 
-範圍：
+Implementation notes:
 
-- forest
-- cave
-- dungeon
-- town
-- tavern
-- rain
-- thunder
-- campfire
-- ruins
+- Loop ambience uses layer `ambient`.
+- The thunder event is a short weather event, so its layer is `sfx` and category is `weather`.
+- Ambient should be separately controllable from BGM.
+- Multiple ambience combinations may be useful later, but should still respect max voice limits.
+- Ambient playback must not be tied to render lifetimes.
 
-設計要求：
+## Phase 6: Sound Settings And Accessibility
 
-- Ambient 與 BGM 分開。
-- Ambient 可 loop。
-- Ambient 可淡入淡出。
-- Ambient 音量獨立。
-- DM 可停止 Ambient，不影響 BGM。
-- Ambient 可同時允許少量組合，例如 rain + campfire，但要有最大層數。
+Goal: let users control volume and reduce intrusive sounds.
 
-驗收：
-
-- BGM / SFX / Ambient 三層互不破壞。
-- 手機瀏覽器不會因多層音訊卡死。
-- 切換玩家 / DM / 分頁 Ambient 不被 render 銷毀。
-
-## Phase 6：Sound Settings And Accessibility
-
-目標：讓音效系統可被玩家控制，避免干擾。
-
-設定項：
+Planned controls:
 
 - Master Volume
 - BGM Volume
@@ -206,59 +180,56 @@
 - Disable Horror Sounds
 - Audio Test Button
 
-設計要求：
+Implementation notes:
 
-- 設定需保存到 localStorage state。
-- 匯出 / 匯入應包含音效設定。
-- safe mode 不應自動播放任何聲音。
+- Settings should persist in localStorage state when implemented.
+- Export/import should preserve sound settings once they exist.
+- Safe mode should avoid unexpected autoplay.
 
-驗收：
+## Phase 7: Asset Library And Licensing
 
-- 靜音後沒有任何 SFX。
-- BGM 可單獨關閉。
-- UI 音效可單獨關閉。
-- 恐怖音效可單獨關閉。
+Goal: organize real assets and license records after behavior is stable.
 
-## Phase 7：Asset Library And Licensing
+Deliverables:
 
-目標：建立可維護的素材庫。
+- Runtime sound manifest JSON in a future implementation branch
+- License records
+- Source notes
+- Paid/free/self-made tracking
+- Missing asset report
 
-內容：
+Validation requirements:
 
-- sound manifest JSON
-- license records
-- source notes
-- paid/free/self-made 標記
-- missing asset report
+- Every ready asset must have a license/source note.
+- File paths must only appear after assets exist.
+- Missing assets must be reportable by sound id.
 
-驗收：
+## Backlog Sound IDs
 
-- 每個音檔可追溯來源。
-- 可辨識商用限制。
-- 可替換音檔而不改事件 id。
+These ids are valid but not assigned to a concrete implementation phase yet:
 
-## 建議開發順序
+- `ui.longpress`
+- `ui.drag.start`
+- `ui.drag.drop`
+- `player.levelup`
+- `dice.roll.loop`
+- `dice.critical`
+- `shop.sell.success`
+- `shop.transaction.complete`
+- `shop.transaction.failed`
+- `dm.environment.event`
 
-1. Phase 0：文件與 manifest 草案
-2. Phase 1：UI / System / Dice / Shop
-3. Phase 2：Player / Inventory
-4. Phase 3：DM Manual SFX
-5. Phase 4：Combat / Magic / Horror
-6. Phase 5：Ambient
-7. Phase 6：Settings / Accessibility
-8. Phase 7：Licensing cleanup
+Backlog ids must still appear in both the event map and manifest coverage table. They are not duplicates of any phase assignment.
 
-## 第一個可實作分支建議
+## Recommended Future Branch Order
 
 ```text
 codex/v2-sound-event-manifest-foundation
+codex/v2-sound-ui-system-dice-shop
+codex/v2-sound-player-inventory-events
+codex/v2-sound-dm-manual-layers
+codex/v2-sound-combat-magic-stingers
+codex/v2-sound-ambient-layer
+codex/v2-sound-settings-accessibility
+codex/v2-sound-assets-licensing
 ```
-
-只做：
-
-- sound event registry
-- manifest default schema
-- settings default / normalize
-- no actual autoplay
-- no asset files yet
-
