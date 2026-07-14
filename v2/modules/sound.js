@@ -188,13 +188,6 @@ export function validateSoundAssetUrl(value) {
     if (!["http:", "https:"].includes(parsed.protocol)) {
       return { ok: false, reason: "unsupported-protocol", message: "音檔 URL 必須使用 http 或 https。" };
     }
-    if (!/\.(mp3|ogg|wav|webm)$/i.test(parsed.pathname)) {
-      return {
-        ok: false,
-        reason: "not-direct-audio-url",
-        message: "請使用可直接播放的音檔 URL（.mp3 / .ogg / .wav / .webm），不要貼 YouTube、Google Drive 或素材頁面網址。",
-      };
-    }
     return { ok: true, url };
   } catch {
     return { ok: false, reason: "invalid-url", message: "URL 格式無法解析，請確認是否為完整網址。" };

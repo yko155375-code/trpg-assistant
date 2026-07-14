@@ -11,7 +11,7 @@ import { renderDicePanel } from "./dice.js";
 import { renderMonsterManager, renderMonsterOverview } from "./monsters.js";
 import { renderPublicInfoEditor } from "./public-info.js";
 import { renderDmShopManager } from "./shop.js";
-import { makeSoundAssetLabel, SOUND_CATEGORIES, SOUND_EVENT_REGISTRY } from "./sound.js?v=sound-asset-manager-v1";
+import { makeSoundAssetLabel, SOUND_CATEGORIES, SOUND_EVENT_REGISTRY } from "./sound.js?v=sound-asset-manager-v1-preview";
 import { sortStatusLabels, statusEffectGroups } from "./status-effects.js";
 
 const dmPageContent = {
@@ -215,14 +215,15 @@ function renderSoundAssetManager(state) {
           <textarea data-sound-asset-field="notes" rows="3" placeholder="可留空">${escapeHtml(selectedBinding?.notes || "")}</textarea>
         </label>
         <div class="sound-asset-actions">
-          <button type="button" data-action="check-sound-asset-form">檢查 URL</button>
+          <button type="button" data-action="preview-sound-asset-form">預覽</button>
+          <button type="button" data-action="stop-sound-asset-preview">停止預覽</button>
           <button type="submit">儲存素材</button>
           <button class="danger-button" type="button" data-action="remove-sound-asset-form" ${selectedBinding?.url ? "" : "disabled"}>移除</button>
         </div>
       </form>
 
       ${message ? `<p class="sound-asset-message">${escapeHtml(message)}</p>` : ""}
-      ${preview.message ? `<p class="sound-asset-preview-message is-${escapeHtml(preview.status || "idle")}">${escapeHtml(preview.message)}</p>` : ""}
+      <p class="sound-asset-preview-message is-${escapeHtml(preview.status || "idle")}" data-sound-asset-preview-message ${preview.message ? "" : "hidden"}>${escapeHtml(preview.message || "")}</p>
 
       <section class="sound-asset-list" aria-label="已設定音效素材列表">
         <div class="sound-asset-list-heading">
@@ -247,7 +248,7 @@ function renderSoundAssetManager(state) {
                   <span>${escapeHtml(binding.updatedAt || "")}</span>
                   <div class="sound-asset-row-actions">
                     <button type="button" data-action="edit-sound-asset" data-sound-id="${escapeHtml(binding.soundId)}">編輯</button>
-                    <button type="button" data-action="check-sound-asset" data-sound-id="${escapeHtml(binding.soundId)}">檢查</button>
+                    <button type="button" data-action="preview-sound-asset" data-sound-id="${escapeHtml(binding.soundId)}">預覽</button>
                     <button class="danger-button" type="button" data-action="remove-sound-asset" data-sound-id="${escapeHtml(binding.soundId)}">移除</button>
                   </div>
                 </article>

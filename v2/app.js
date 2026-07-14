@@ -22,7 +22,7 @@ import {
   updateCharacterStat,
 } from "./modules/characters.js?v=dm-music-bgm-sfx-layers-current-main";
 import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=dm-music-bgm-sfx-layers-current-main";
-import { renderDmPage } from "./modules/dm-view.js?v=sound-asset-manager-v1";
+import { renderDmPage } from "./modules/dm-view.js?v=sound-asset-manager-v1-preview";
 import {
   addMonster,
   adjustMonsterValue,
@@ -45,13 +45,13 @@ import {
   SOUND_EVENT_REGISTRY,
   SOUND_EVENT_REGISTRY_BY_ID,
   validateSoundAssetUrl,
-} from "./modules/sound.js?v=sound-asset-manager-v1";
+} from "./modules/sound.js?v=sound-asset-manager-v1-preview";
 import { createDefaultState, normalizeEncounters, normalizeIntroImageUrl, normalizePlayerBackgroundImageUrl, normalizeState } from "./modules/state.js?v=sound-asset-manager-v1";
 import { STORAGE_KEY } from "./modules/storage.js?v=dm-music-bgm-sfx-layers-current-main";
 
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
-const VERSION_LABEL = "sound-asset-manager-v1";
+const VERSION_LABEL = "sound-asset-manager-v1-preview";
 const OPENING_VIDEO_URL = "./assets/intro/opening.mp4";
 const BACKUP_LATEST_KEY = `${STORAGE_KEY}-backup-latest`;
 const BACKUP_TIMESTAMP_PREFIX = `${STORAGE_KEY}-backup-`;
@@ -69,6 +69,13 @@ let assetAddListKey = "items";
 const selectedAssetEntryKeys = new Set();
 let soundAssetManagerMessage = "";
 let soundAssetPreviewInfo = { soundId: "", url: "", status: "idle", message: "" };
+const soundAssetPreviewController = {
+  audio: null,
+  token: "",
+  soundId: "",
+  primaryUrl: "",
+  fallbackUrl: "",
+};
 let openingFallbackTimer = null;
 let bootFailed = false;
 let bootPhase = "start";
@@ -837,6 +844,7 @@ function selectSoundAsset(soundId, { resetFilters = false } = {}) {
     if (select) select.value = form.dataset.currentSoundId || id;
     return;
   }
+  stopSoundAssetPreview({ render: false, message: "" });
   soundAssetManagerMessage = "";
   const patch = { soundAssetSelectedId: id };
   if (resetFilters) {
@@ -917,7 +925,7 @@ function removeSoundAsset(soundId) {
   if (!confirm(`確定移除 sound id：${id} 的音效綁定？此操作不會刪除音檔。`)) return;
   const nextAssets = { ...getSoundAssetMap() };
   delete nextAssets[id];
-  if (soundAssetPreviewInfo.soundId === id) clearSoundAssetCheckInfo({ render: false });
+  if (soundAssetPreviewInfo.soundId === id) stopSoundAssetPreview({ render: false, message: "" });
   soundAssetManagerMessage = `已移除 ${id} 的素材設定。`;
   updateState({
     ...state,
@@ -932,27 +940,169 @@ function removeSoundAsset(soundId) {
   });
 }
 
-function clearSoundAssetCheckInfo({ render = true, message = "" } = {}) {
-  soundAssetPreviewInfo = { soundId: "", url: "", status: "idle", message };
+function setSoundAssetPreviewInfo(info, { render = false } = {}) {
+  soundAssetPreviewInfo = {
+    soundId: info.soundId || "",
+    url: info.url || "",
+    status: info.status || "idle",
+    message: info.message || "",
+  };
+  const messageElement = app.querySelector("[data-sound-asset-preview-message]");
+  if (messageElement) {
+    messageElement.hidden = !soundAssetPreviewInfo.message;
+    messageElement.textContent = soundAssetPreviewInfo.message;
+    messageElement.className = `sound-asset-preview-message is-${soundAssetPreviewInfo.status}`;
+  }
   if (render) safeRender();
 }
 
-function checkSoundAssetUrl(soundId, url) {
-  const id = getSafeSoundId(soundId);
-  const checked = validateSoundAssetUrl(url);
-  if (!checked.ok) {
-    soundAssetPreviewInfo = { soundId: id, url: String(url || ""), status: "failed", message: checked.message || "此網址無法直接播放。" };
-    safeRender();
-    return;
+function releaseSoundAssetPreviewAudio() {
+  const audio = soundAssetPreviewController.audio;
+  if (audio) {
+    try { audio.pause(); } catch {}
+    try { audio.removeAttribute("src"); } catch {}
+    try { audio.load(); } catch {}
   }
+  soundAssetPreviewController.audio = null;
+}
 
-  soundAssetPreviewInfo = {
-    soundId: id,
-    url: checked.url,
-    status: "unverified",
-    message: `URL 格式可用：${id}。本輪只檢查直接音檔網址，不播放音效；請依實測結果手動設定播放狀態。`,
+function stopSoundAssetPreview({ render = false, message = "已停止預覽。" } = {}) {
+  releaseSoundAssetPreviewAudio();
+  soundAssetPreviewController.token = "";
+  soundAssetPreviewController.soundId = "";
+  soundAssetPreviewController.primaryUrl = "";
+  soundAssetPreviewController.fallbackUrl = "";
+  setSoundAssetPreviewInfo({ status: "idle", message }, { render });
+}
+
+function setSoundAssetFormPlaybackStatus(soundId, playbackStatus) {
+  const normalized = normalizeSoundAssetPlaybackStatus(playbackStatus);
+  const form = Array.from(app.querySelectorAll("[data-sound-asset-form]"))
+    .find((candidate) => candidate.dataset.currentSoundId === soundId);
+  const select = form?.querySelector('[data-sound-asset-field="playbackStatus"]');
+  if (select) select.value = normalized;
+  return normalized;
+}
+
+function persistSoundAssetPlaybackStatus(soundId, playbackStatus, { primaryUrl = "", fallbackUrl = "" } = {}) {
+  const id = getSafeSoundId(soundId);
+  const normalized = setSoundAssetFormPlaybackStatus(id, playbackStatus);
+  const assets = getSoundAssetMap();
+  const existing = assets[id];
+  if (!existing) return normalized;
+  const matchesCurrentBinding =
+    existing.url === primaryUrl &&
+    String(existing.fallbackUrl || "") === String(fallbackUrl || "");
+  if (!matchesCurrentBinding) return normalized;
+  const binding = normalizeSoundAssetBinding({
+    ...existing,
+    playbackStatus: normalized,
+    updatedAt: new Date().toISOString(),
+  }, id);
+  if (!binding) return normalized;
+  saveStateOnly({
+    ...state,
+    sound: {
+      ...(state.sound || {}),
+      assets: {
+        ...assets,
+        [id]: binding,
+      },
+    },
+  });
+  return normalized;
+}
+
+function previewSoundAssetUrl(soundId, url, fallbackUrl = "") {
+  const id = getSafeSoundId(soundId);
+  const primaryUrl = String(url || "").trim();
+  const fallback = String(fallbackUrl || "").trim();
+  const token = `sound-preview-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  stopSoundAssetPreview({ render: false, message: "" });
+  soundAssetPreviewController.token = token;
+  soundAssetPreviewController.soundId = id;
+  soundAssetPreviewController.primaryUrl = primaryUrl;
+  soundAssetPreviewController.fallbackUrl = fallback;
+
+  const isCurrent = () => soundAssetPreviewController.token === token;
+  const failPreview = (attemptUrl, message) => {
+    if (!isCurrent()) return;
+    releaseSoundAssetPreviewAudio();
+    persistSoundAssetPlaybackStatus(id, "failed", { primaryUrl, fallbackUrl: fallback });
+    setSoundAssetPreviewInfo({
+      soundId: id,
+      url: attemptUrl || primaryUrl,
+      status: "failed",
+      message: message || "此網址無法直接播放。",
+    });
   };
-  safeRender();
+
+  const startAttempt = (attemptUrl, { isFallback = false } = {}) => {
+    if (!isCurrent()) return;
+    const checked = validateSoundAssetUrl(attemptUrl);
+    if (!checked.ok) {
+      if (!isFallback && fallback) return startAttempt(fallback, { isFallback: true });
+      failPreview(attemptUrl, checked.message || "此網址無法直接播放。");
+      return;
+    }
+
+    releaseSoundAssetPreviewAudio();
+    const audio = new Audio(checked.url);
+    audio.preload = "auto";
+    soundAssetPreviewController.audio = audio;
+    setSoundAssetPreviewInfo({
+      soundId: id,
+      url: checked.url,
+      status: "loading",
+      message: `正在預覽 ${isFallback ? "Fallback URL" : "URL"}：${id}`,
+    });
+
+    let settled = false;
+    const markPlayable = () => {
+      if (settled || !isCurrent()) return;
+      settled = true;
+      persistSoundAssetPlaybackStatus(id, "playable", { primaryUrl, fallbackUrl: fallback });
+      setSoundAssetPreviewInfo({
+        soundId: id,
+        url: checked.url,
+        status: "playable",
+        message: `可播放：${id}${isFallback ? "（使用 fallbackUrl）" : ""}`,
+      });
+    };
+    const markFailed = () => {
+      if (settled || !isCurrent()) return;
+      settled = true;
+      if (!isFallback && fallback) return startAttempt(fallback, { isFallback: true });
+      failPreview(checked.url, "此網址無法直接播放。");
+    };
+    const markEnded = () => {
+      if (!isCurrent()) return;
+      releaseSoundAssetPreviewAudio();
+      setSoundAssetPreviewInfo({
+        soundId: id,
+        url: checked.url,
+        status: "playable",
+        message: `預覽結束：${id}`,
+      });
+    };
+
+    audio.addEventListener("canplay", markPlayable, { once: true });
+    audio.addEventListener("loadedmetadata", markPlayable, { once: true });
+    audio.addEventListener("error", markFailed, { once: true });
+    audio.addEventListener("ended", markEnded, { once: true });
+    try {
+      audio.load();
+      const playResult = audio.play();
+      if (playResult && typeof playResult.then === "function") {
+        playResult.then(markPlayable).catch(markFailed);
+      }
+    } catch {
+      markFailed();
+    }
+  };
+
+  startAttempt(primaryUrl);
 }
 
 function getIntroImages(nextState) { return Array.isArray(nextState.introImages?.images) ? nextState.introImages.images : []; }
@@ -1023,30 +1173,31 @@ if (!bootFailed) {
 try {
 app.addEventListener("click", (event) => {
   const modeButton = event.target.closest("[data-mode]");
-  if (modeButton) { event.preventDefault(); clearSoundAssetCheckInfo({ render: false }); isDmMenuOpen = false; pendingDeleteCharacterId = ""; updateState(setMode(syncFormulaDraft(app), modeButton.dataset.mode)); return; }
+  if (modeButton) { event.preventDefault(); stopSoundAssetPreview({ render: false, message: "" }); isDmMenuOpen = false; pendingDeleteCharacterId = ""; updateState(setMode(syncFormulaDraft(app), modeButton.dataset.mode)); return; }
   const dmMenuButton = event.target.closest("[data-dm-menu-toggle]");
   if (dmMenuButton) { event.preventDefault(); isDmMenuOpen = !isDmMenuOpen; safeRender(); return; }
   const pageButton = event.target.closest("[data-page]");
-  if (pageButton) { event.preventDefault(); if (pageButton.dataset.page !== "audio") clearSoundAssetCheckInfo({ render: false }); isDmMenuOpen = false; pendingDeleteCharacterId = ""; updateState(setActivePage(syncFormulaDraft(app), pageButton.dataset.page)); return; }
+  if (pageButton) { event.preventDefault(); if (pageButton.dataset.page !== "audio") stopSoundAssetPreview({ render: false, message: "" }); isDmMenuOpen = false; pendingDeleteCharacterId = ""; updateState(setActivePage(syncFormulaDraft(app), pageButton.dataset.page)); return; }
   const edgeButton = event.target.closest("[data-roll-edge-mode]");
   if (edgeButton) { event.preventDefault(); blurNear(edgeButton); const synced = syncFormulaDraft(edgeButton); const selected = edgeButton.dataset.rollEdgeMode; const current = synced.ui?.rollEdgeMode; updateState({ ...synced, ui: { ...(synced.ui || {}), rollEdgeMode: current === selected ? "" : selected } }); return; }
   const actionButton = event.target.closest("[data-action]");
   if (!actionButton) { if (cancelPendingDeleteCharacter()) safeRender(); return; }
   event.preventDefault();
   if (pendingDeleteCharacterId && actionButton.dataset.action !== "delete-character") pendingDeleteCharacterId = "";
-  if (actionButton.dataset.action === "check-sound-asset-form") {
+  if (actionButton.dataset.action === "preview-sound-asset-form") {
     const values = readSoundAssetForm(actionButton.closest("[data-sound-asset-form]"));
-    return checkSoundAssetUrl(values.soundId, values.url);
+    return previewSoundAssetUrl(values.soundId, values.url, values.fallbackUrl);
   }
+  if (actionButton.dataset.action === "stop-sound-asset-preview") return stopSoundAssetPreview();
   if (actionButton.dataset.action === "remove-sound-asset-form") {
     const values = readSoundAssetForm(actionButton.closest("[data-sound-asset-form]"));
     return removeSoundAsset(values.soundId);
   }
   if (actionButton.dataset.action === "edit-sound-asset") return selectSoundAsset(actionButton.dataset.soundId, { resetFilters: true });
-  if (actionButton.dataset.action === "check-sound-asset") {
+  if (actionButton.dataset.action === "preview-sound-asset") {
     const soundId = getSafeSoundId(actionButton.dataset.soundId);
     const binding = getSoundAssetMap()[soundId];
-    return checkSoundAssetUrl(soundId, binding?.url || "");
+    return previewSoundAssetUrl(soundId, binding?.url || "", binding?.fallbackUrl || "");
   }
   if (actionButton.dataset.action === "remove-sound-asset") return removeSoundAsset(actionButton.dataset.soundId);
   if (actionButton.dataset.action === "append-roll-token") { const input = actionButton.closest(".dice-panel")?.querySelector("[data-roll-formula]"); if (!input) return; input.value = appendFormulaToken(input.value, actionButton.dataset.rollToken); blurNear(actionButton); saveStateOnly(setFormulaDraft(state, actorKeyFromElement(input), input.value)); return; }

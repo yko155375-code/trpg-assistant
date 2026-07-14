@@ -1,9 +1,9 @@
 {
   "version": "v2",
-  "label": "sound-asset-manager-v1",
+  "label": "sound-asset-manager-v1-preview",
   "commit": "d183ac2dd4b0b0a5d0e6d25092be0312cbb7fdf4",
   "sourceCommit": "d183ac2dd4b0b0a5d0e6d25092be0312cbb7fdf4",
   "versionCommit": "d183ac2dd4b0b0a5d0e6d25092be0312cbb7fdf4",
   "updatedAt": "2026-07-14T00:00:00+08:00",
-  "note": "Add DM Sound Asset Manager v1 for state.sound.assets bindings without event playback wiring."
+  "note": "Add isolated Sound Asset Manager preview playback without wiring formal sound events."
 }
