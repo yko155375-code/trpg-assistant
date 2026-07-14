@@ -194,6 +194,14 @@ function renderSoundAssetManager(state) {
             <option value="not-allowed" ${selectedBinding?.commercialUse === "not-allowed" ? "selected" : ""}>不可商用</option>
           </select>
         </label>
+        <label class="form-field">
+          <span>播放狀態</span>
+          <select data-sound-asset-field="playbackStatus">
+            <option value="unverified" ${(selectedBinding?.playbackStatus || "unverified") === "unverified" ? "selected" : ""}>未驗證</option>
+            <option value="playable" ${selectedBinding?.playbackStatus === "playable" ? "selected" : ""}>可播放</option>
+            <option value="failed" ${selectedBinding?.playbackStatus === "failed" ? "selected" : ""}>播放失敗</option>
+          </select>
+        </label>
         <label class="sound-asset-check">
           <input data-sound-asset-field="attributionRequired" type="checkbox" ${selectedBinding?.attributionRequired ? "checked" : ""} />
           <span>需要署名</span>
@@ -207,8 +215,7 @@ function renderSoundAssetManager(state) {
           <textarea data-sound-asset-field="notes" rows="3" placeholder="可留空">${escapeHtml(selectedBinding?.notes || "")}</textarea>
         </label>
         <div class="sound-asset-actions">
-          <button type="button" data-action="preview-sound-asset-form">預覽</button>
-          <button type="button" data-action="stop-sound-asset-preview">停止預覽</button>
+          <button type="button" data-action="check-sound-asset-form">檢查 URL</button>
           <button type="submit">儲存素材</button>
           <button class="danger-button" type="button" data-action="remove-sound-asset-form" ${selectedBinding?.url ? "" : "disabled"}>移除</button>
         </div>
@@ -240,7 +247,7 @@ function renderSoundAssetManager(state) {
                   <span>${escapeHtml(binding.updatedAt || "")}</span>
                   <div class="sound-asset-row-actions">
                     <button type="button" data-action="edit-sound-asset" data-sound-id="${escapeHtml(binding.soundId)}">編輯</button>
-                    <button type="button" data-action="preview-sound-asset" data-sound-id="${escapeHtml(binding.soundId)}">預覽</button>
+                    <button type="button" data-action="check-sound-asset" data-sound-id="${escapeHtml(binding.soundId)}">檢查</button>
                     <button class="danger-button" type="button" data-action="remove-sound-asset" data-sound-id="${escapeHtml(binding.soundId)}">移除</button>
                   </div>
                 </article>

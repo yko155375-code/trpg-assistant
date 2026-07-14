@@ -41,6 +41,7 @@ import {
   initializeAudioManager,
   makeSoundAssetLabel,
   normalizeSoundAssetBinding,
+  normalizeSoundAssetPlaybackStatus,
   SOUND_EVENT_REGISTRY,
   SOUND_EVENT_REGISTRY_BY_ID,
   validateSoundAssetUrl,
@@ -68,12 +69,6 @@ let assetAddListKey = "items";
 const selectedAssetEntryKeys = new Set();
 let soundAssetManagerMessage = "";
 let soundAssetPreviewInfo = { soundId: "", url: "", status: "idle", message: "" };
-const soundAssetPreviewController = {
-  audio: null,
-  token: "",
-  soundId: "",
-  url: "",
-};
 let openingFallbackTimer = null;
 let bootFailed = false;
 let bootPhase = "start";
@@ -759,6 +754,7 @@ function getSoundAssetDefaultValues(soundId) {
     attributionRequired: false,
     attributionText: "",
     notes: "",
+    playbackStatus: "unverified",
   };
 }
 
@@ -772,6 +768,7 @@ function getSoundAssetComparableValues(soundId) {
       ? binding.commercialUse
       : "unknown",
     attributionRequired: Boolean(binding?.attributionRequired),
+    playbackStatus: normalizeSoundAssetPlaybackStatus(binding?.playbackStatus),
   };
 }
 
@@ -789,6 +786,7 @@ function readSoundAssetForm(form) {
     attributionRequired: Boolean(field("attributionRequired")?.checked),
     attributionText: String(field("attributionText")?.value || "").trim(),
     notes: String(field("notes")?.value || "").trim(),
+    playbackStatus: normalizeSoundAssetPlaybackStatus(field("playbackStatus")?.value || "unverified"),
   };
 }
 
@@ -806,6 +804,7 @@ function soundAssetFormHasUnsavedChanges(form) {
     attributionRequired: current.attributionRequired,
     attributionText: current.attributionText,
     notes: current.notes,
+    playbackStatus: current.playbackStatus,
   }) !== JSON.stringify({
     label: existing.label || makeSoundAssetLabel(current.soundId),
     url: existing.url || "",
@@ -816,6 +815,7 @@ function soundAssetFormHasUnsavedChanges(form) {
     attributionRequired: Boolean(existing.attributionRequired),
     attributionText: existing.attributionText || "",
     notes: existing.notes || "",
+    playbackStatus: existing.playbackStatus || "unverified",
   });
 }
 
@@ -879,16 +879,10 @@ function saveSoundAssetFromForm(form) {
     safeRender();
     return;
   }
-  const previewStatus =
-    soundAssetPreviewInfo.soundId === values.soundId &&
-    soundAssetPreviewInfo.url === values.url &&
-    ["playable", "failed"].includes(soundAssetPreviewInfo.status)
-      ? soundAssetPreviewInfo.status
-      : "unverified";
   const binding = normalizeSoundAssetBinding({
     ...values,
     label: values.label || makeSoundAssetLabel(values.soundId),
-    playbackStatus: previewStatus,
+    playbackStatus: values.playbackStatus,
     updatedAt: new Date().toISOString(),
   }, values.soundId);
   if (!binding) {
@@ -896,7 +890,7 @@ function saveSoundAssetFromForm(form) {
     safeRender();
     return;
   }
-  soundAssetManagerMessage = `已儲存 ${values.soundId}，狀態：${previewStatus === "playable" ? "可播放" : previewStatus === "failed" ? "播放失敗" : "未驗證"}。`;
+  soundAssetManagerMessage = `已儲存 ${values.soundId}，狀態：${binding.playbackStatus === "playable" ? "可播放" : binding.playbackStatus === "failed" ? "播放失敗" : "未驗證"}。`;
   updateState({
     ...state,
     sound: {
@@ -920,10 +914,10 @@ function removeSoundAsset(soundId) {
     safeRender();
     return;
   }
-  if (!confirm(`確定移除 sound id：${id} 的素材設定？此操作不會刪除其他音效。`)) return;
+  if (!confirm(`確定移除 sound id：${id} 的音效綁定？此操作不會刪除音檔。`)) return;
   const nextAssets = { ...getSoundAssetMap() };
   delete nextAssets[id];
-  if (soundAssetPreviewController.soundId === id) stopSoundAssetPreview({ render: false, message: "" });
+  if (soundAssetPreviewInfo.soundId === id) clearSoundAssetCheckInfo({ render: false });
   soundAssetManagerMessage = `已移除 ${id} 的素材設定。`;
   updateState({
     ...state,
@@ -938,100 +932,27 @@ function removeSoundAsset(soundId) {
   });
 }
 
-function stopSoundAssetPreview({ render = true, message = "已停止預覽。" } = {}) {
-  const audio = soundAssetPreviewController.audio;
-  if (audio) {
-    try { audio.pause(); } catch {}
-    try { audio.removeAttribute("src"); } catch {}
-    try { audio.load(); } catch {}
-  }
-  soundAssetPreviewController.audio = null;
-  soundAssetPreviewController.token = "";
-  soundAssetPreviewController.soundId = "";
-  soundAssetPreviewController.url = "";
-  if (message) soundAssetPreviewInfo = { soundId: "", url: "", status: "idle", message };
+function clearSoundAssetCheckInfo({ render = true, message = "" } = {}) {
+  soundAssetPreviewInfo = { soundId: "", url: "", status: "idle", message };
   if (render) safeRender();
 }
 
-function saveSoundAssetPlaybackStatus(soundId, url, playbackStatus) {
-  const id = getSafeSoundId(soundId);
-  const assets = getSoundAssetMap();
-  const existing = assets[id];
-  if (!existing || existing.url !== url) return;
-  const binding = normalizeSoundAssetBinding({
-    ...existing,
-    playbackStatus,
-    updatedAt: new Date().toISOString(),
-  }, id);
-  if (!binding) return;
-  saveStateOnly({
-    ...state,
-    sound: {
-      ...(state.sound || {}),
-      assets: {
-        ...assets,
-        [id]: binding,
-      },
-    },
-  });
-}
-
-function previewSoundAssetUrl(soundId, url) {
+function checkSoundAssetUrl(soundId, url) {
   const id = getSafeSoundId(soundId);
   const checked = validateSoundAssetUrl(url);
   if (!checked.ok) {
-    stopSoundAssetPreview({ render: false, message: "" });
     soundAssetPreviewInfo = { soundId: id, url: String(url || ""), status: "failed", message: checked.message || "此網址無法直接播放。" };
     safeRender();
     return;
   }
 
-  stopSoundAssetPreview({ render: false, message: "" });
-  const token = `sound-preview-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const audio = new Audio(checked.url);
-  audio.preload = "metadata";
-  soundAssetPreviewController.audio = audio;
-  soundAssetPreviewController.token = token;
-  soundAssetPreviewController.soundId = id;
-  soundAssetPreviewController.url = checked.url;
-  soundAssetPreviewInfo = { soundId: id, url: checked.url, status: "loading", message: `正在預覽 ${id}...` };
+  soundAssetPreviewInfo = {
+    soundId: id,
+    url: checked.url,
+    status: "unverified",
+    message: `URL 格式可用：${id}。本輪只檢查直接音檔網址，不播放音效；請依實測結果手動設定播放狀態。`,
+  };
   safeRender();
-
-  let settled = false;
-  const isCurrent = () => soundAssetPreviewController.token === token;
-  const markPlayable = () => {
-    if (settled || !isCurrent()) return;
-    settled = true;
-    soundAssetPreviewInfo = { soundId: id, url: checked.url, status: "playable", message: `可播放：${id}` };
-    saveSoundAssetPlaybackStatus(id, checked.url, "playable");
-    safeRender();
-  };
-  const markFailed = () => {
-    if (settled || !isCurrent()) return;
-    settled = true;
-    soundAssetPreviewInfo = {
-      soundId: id,
-      url: checked.url,
-      status: "failed",
-      message: "此網址無法直接播放。可能原因：不是直接音檔、CORS 阻擋、網址需要登入或格式不支援。",
-    };
-    saveSoundAssetPlaybackStatus(id, checked.url, "failed");
-    safeRender();
-  };
-
-  audio.addEventListener("canplay", markPlayable, { once: true });
-  audio.addEventListener("loadedmetadata", markPlayable, { once: true });
-  audio.addEventListener("error", markFailed, { once: true });
-  window.setTimeout(markFailed, 9000);
-  try {
-    audio.load();
-    const playResult = audio.play();
-    if (playResult && typeof playResult.then === "function") {
-      playResult.then(markPlayable).catch(markFailed);
-    }
-  } catch {
-    markFailed();
-  }
 }
 
 function getIntroImages(nextState) { return Array.isArray(nextState.introImages?.images) ? nextState.introImages.images : []; }
@@ -1102,31 +1023,30 @@ if (!bootFailed) {
 try {
 app.addEventListener("click", (event) => {
   const modeButton = event.target.closest("[data-mode]");
-  if (modeButton) { event.preventDefault(); stopSoundAssetPreview({ render: false, message: "" }); isDmMenuOpen = false; pendingDeleteCharacterId = ""; updateState(setMode(syncFormulaDraft(app), modeButton.dataset.mode)); return; }
+  if (modeButton) { event.preventDefault(); clearSoundAssetCheckInfo({ render: false }); isDmMenuOpen = false; pendingDeleteCharacterId = ""; updateState(setMode(syncFormulaDraft(app), modeButton.dataset.mode)); return; }
   const dmMenuButton = event.target.closest("[data-dm-menu-toggle]");
   if (dmMenuButton) { event.preventDefault(); isDmMenuOpen = !isDmMenuOpen; safeRender(); return; }
   const pageButton = event.target.closest("[data-page]");
-  if (pageButton) { event.preventDefault(); if (pageButton.dataset.page !== "audio") stopSoundAssetPreview({ render: false, message: "" }); isDmMenuOpen = false; pendingDeleteCharacterId = ""; updateState(setActivePage(syncFormulaDraft(app), pageButton.dataset.page)); return; }
+  if (pageButton) { event.preventDefault(); if (pageButton.dataset.page !== "audio") clearSoundAssetCheckInfo({ render: false }); isDmMenuOpen = false; pendingDeleteCharacterId = ""; updateState(setActivePage(syncFormulaDraft(app), pageButton.dataset.page)); return; }
   const edgeButton = event.target.closest("[data-roll-edge-mode]");
   if (edgeButton) { event.preventDefault(); blurNear(edgeButton); const synced = syncFormulaDraft(edgeButton); const selected = edgeButton.dataset.rollEdgeMode; const current = synced.ui?.rollEdgeMode; updateState({ ...synced, ui: { ...(synced.ui || {}), rollEdgeMode: current === selected ? "" : selected } }); return; }
   const actionButton = event.target.closest("[data-action]");
   if (!actionButton) { if (cancelPendingDeleteCharacter()) safeRender(); return; }
   event.preventDefault();
   if (pendingDeleteCharacterId && actionButton.dataset.action !== "delete-character") pendingDeleteCharacterId = "";
-  if (actionButton.dataset.action === "preview-sound-asset-form") {
+  if (actionButton.dataset.action === "check-sound-asset-form") {
     const values = readSoundAssetForm(actionButton.closest("[data-sound-asset-form]"));
-    return previewSoundAssetUrl(values.soundId, values.url);
+    return checkSoundAssetUrl(values.soundId, values.url);
   }
-  if (actionButton.dataset.action === "stop-sound-asset-preview") return stopSoundAssetPreview();
   if (actionButton.dataset.action === "remove-sound-asset-form") {
     const values = readSoundAssetForm(actionButton.closest("[data-sound-asset-form]"));
     return removeSoundAsset(values.soundId);
   }
   if (actionButton.dataset.action === "edit-sound-asset") return selectSoundAsset(actionButton.dataset.soundId, { resetFilters: true });
-  if (actionButton.dataset.action === "preview-sound-asset") {
+  if (actionButton.dataset.action === "check-sound-asset") {
     const soundId = getSafeSoundId(actionButton.dataset.soundId);
     const binding = getSoundAssetMap()[soundId];
-    return previewSoundAssetUrl(soundId, binding?.url || "");
+    return checkSoundAssetUrl(soundId, binding?.url || "");
   }
   if (actionButton.dataset.action === "remove-sound-asset") return removeSoundAsset(actionButton.dataset.soundId);
   if (actionButton.dataset.action === "append-roll-token") { const input = actionButton.closest(".dice-panel")?.querySelector("[data-roll-formula]"); if (!input) return; input.value = appendFormulaToken(input.value, actionButton.dataset.rollToken); blurNear(actionButton); saveStateOnly(setFormulaDraft(state, actorKeyFromElement(input), input.value)); return; }
