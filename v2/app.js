@@ -22,7 +22,7 @@ import {
   updateCharacterStat,
 } from "./modules/characters.js?v=dm-music-bgm-sfx-layers-current-main";
 import { addRoll, appendFormulaToken, clearRolls, rollDuality, rollFormula } from "./modules/dice.js?v=dm-music-bgm-sfx-layers-current-main";
-import { renderDmPage } from "./modules/dm-view.js?v=dm-music-bgm-sfx-layers-current-main";
+import { renderAudioDjOverlay, renderDmPage } from "./modules/dm-view.js?v=audio-dj-overlay-v1";
 import {
   addMonster,
   adjustMonsterValue,
@@ -43,7 +43,7 @@ import { STORAGE_KEY } from "./modules/storage.js?v=dm-music-bgm-sfx-layers-curr
 
 const app = document.querySelector("#app");
 const EDGE_MODES = new Set(["advantage", "disadvantage"]);
-const VERSION_LABEL = "v2-sound-event-manifest-foundation";
+const VERSION_LABEL = "audio-dj-overlay-v1";
 const OPENING_VIDEO_URL = "./assets/intro/opening.mp4";
 const BACKUP_LATEST_KEY = `${STORAGE_KEY}-backup-latest`;
 const BACKUP_TIMESTAMP_PREFIX = `${STORAGE_KEY}-backup-`;
@@ -54,6 +54,8 @@ const MAX_SFX_PLAYERS = 8;
 const isSafeMode = new URLSearchParams(window.location.search).get("safe") === "1";
 let state = null;
 let isDmMenuOpen = false;
+let isAudioDjOpen = false;
+let audioDjTab = "bgm";
 let isOpeningVisible = !isSafeMode;
 let pendingDeleteCharacterId = "";
 let assetDeleteModeCharacterId = "";
@@ -516,7 +518,9 @@ function bindOpeningVideo() {
 function renderDmMobileNav(pages) { const active = pages.find((page) => page.id === getActivePageId(state)) || pages[0]; return `<div class="dm-mobile-nav"><button class="dm-menu-button" type="button" data-dm-menu-toggle aria-expanded="${isDmMenuOpen}"><span aria-hidden="true">☰</span><span>DM 選單</span></button><strong>${escapeHtml(active.label)}</strong></div><nav id="dm-mobile-menu" class="dm-mobile-menu ${isDmMenuOpen ? "is-open" : ""}" aria-label="DM 手機選單">${pages.map((page) => renderPageButton(page, "dm-mobile-menu-button")).join("")}</nav>`; }
 function render() {
   const pages = getActivePages(state.ui.mode); const isPlayer = state.ui.mode === "player";
+  const audioDjOverlay = isPlayer ? "" : renderAudioDjOverlay(renderState(), { isOpen: isAudioDjOpen, activeTab: audioDjTab });
   app.innerHTML = `${isSafeMode ? `<aside class="safe-mode-banner">安全模式：目前未讀取舊本機資料</aside>` : ""}<header class="app-header"><div class="brand-block"><p class="eyebrow">TRPG Assistant</p><h1 class="app-title">v2</h1><p class="app-subtitle">HTML / CSS / 原生 JS / ES Modules / localStorage</p></div><nav class="mode-switch" aria-label="模式切換">${renderModeButton("player", "玩家")}${renderModeButton("dm", "DM")}</nav></header><main class="layout ${isPlayer ? "is-player" : "is-dm"}">${isPlayer ? `<nav class="tab-list player-bottom-tabs" aria-label="玩家分頁">${pages.map((page) => renderPageButton(page, "tab-button")).join("")}</nav>` : renderDmMobileNav(pages)}<nav class="sidebar-list" aria-label="DM 分頁">${pages.map((page) => renderPageButton(page, "sidebar-button")).join("")}</nav>${isPlayer ? renderCurrentCharacterBar() : ""}${renderPanel()}</main>${isOpeningVisible ? renderOpeningEntry() : ""}`;
+  if (audioDjOverlay) app.insertAdjacentHTML("beforeend", audioDjOverlay);
   if (isOpeningVisible) bindOpeningVideo();
 }
 function safeRender() {
@@ -799,6 +803,9 @@ app.addEventListener("click", (event) => {
   const actionButton = event.target.closest("[data-action]");
   if (!actionButton) { if (cancelPendingDeleteCharacter()) safeRender(); return; }
   event.preventDefault();
+  if (actionButton.dataset.action === "toggle-audio-dj") { isAudioDjOpen = !isAudioDjOpen; safeRender(); return; }
+  if (actionButton.dataset.action === "close-audio-dj") { isAudioDjOpen = false; safeRender(); return; }
+  if (actionButton.dataset.action === "set-audio-dj-tab") { audioDjTab = actionButton.dataset.audioDjTab === "sfx" ? "sfx" : "bgm"; isAudioDjOpen = true; safeRender(); return; }
   if (pendingDeleteCharacterId && actionButton.dataset.action !== "delete-character") pendingDeleteCharacterId = "";
   if (actionButton.dataset.action === "append-roll-token") { const input = actionButton.closest(".dice-panel")?.querySelector("[data-roll-formula]"); if (!input) return; input.value = appendFormulaToken(input.value, actionButton.dataset.rollToken); blurNear(actionButton); saveStateOnly(setFormulaDraft(state, actorKeyFromElement(input), input.value)); return; }
   if (actionButton.dataset.action === "roll-duality") return updateState(addRoll(syncFormulaDraft(actionButton), rollDuality({}), actionButton.dataset.rollActor || "玩家"));

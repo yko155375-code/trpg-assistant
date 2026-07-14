@@ -341,6 +341,95 @@ function renderDmAudioManager(state) {
   `;
 }
 
+function getDjTrackTitle(track) {
+  return String(track?.title || track?.name || track?.label || "未命名音樂").trim() || "未命名音樂";
+}
+
+function getDjTrackGroup(track) {
+  const tag = Array.isArray(track?.tags) ? track.tags.find(Boolean) : "";
+  return String(track?.category || track?.scene || track?.group || tag || "未分類").trim() || "未分類";
+}
+
+function groupDjTracks(tracks) {
+  return tracks.reduce((groups, track) => {
+    const group = getDjTrackGroup(track);
+    if (!groups.has(group)) groups.set(group, []);
+    groups.get(group).push(track);
+    return groups;
+  }, new Map());
+}
+
+function renderAudioDjTrack(track, type, currentTrackId) {
+  const title = getDjTrackTitle(track);
+  const group = getDjTrackGroup(track);
+  const isCurrent = type === "bgm" && track.id === currentTrackId;
+  return `
+    <article class="audio-dj-track ${isCurrent ? "is-current" : ""}">
+      <div class="audio-dj-track-main">
+        <strong>${escapeHtml(title)}</strong>
+        <span>${escapeHtml(group)}</span>
+      </div>
+      <div class="audio-dj-track-actions">
+        <button type="button" data-action="play-music-track" data-track-id="${escapeHtml(track.id)}">${type === "sfx" ? "播放音效" : "播放"}</button>
+        ${isCurrent ? `<button type="button" data-action="stop-music-track" data-track-id="${escapeHtml(track.id)}">停止</button>` : ""}
+      </div>
+    </article>
+  `;
+}
+
+function renderAudioDjTrackGroups(tracks, type, currentTrackId) {
+  if (!tracks.length) {
+    return `<p class="audio-dj-empty">${type === "sfx" ? "尚無音效" : "尚無背景音樂"}</p>`;
+  }
+  return Array.from(groupDjTracks(tracks).entries()).map(([group, groupTracks]) => `
+    <section class="audio-dj-group">
+      <h4>${escapeHtml(group)}</h4>
+      <div class="audio-dj-track-list">
+        ${groupTracks.map((track) => renderAudioDjTrack(track, type, currentTrackId)).join("")}
+      </div>
+    </section>
+  `).join("");
+}
+
+export function renderAudioDjOverlay(state, djState = {}) {
+  const isOpen = Boolean(djState.isOpen);
+  const activeTab = djState.activeTab === "sfx" ? "sfx" : "bgm";
+  const tracks = getAudioTracks(state);
+  const bgmTracks = tracks.filter((track) => getMusicPlaybackType(track) === "bgm");
+  const sfxTracks = tracks.filter((track) => getMusicPlaybackType(track) === "sfx");
+  const currentBgm = bgmTracks.find((track) => track.id === state.audio?.currentTrackId) || null;
+  const isPlaying = Boolean(currentBgm && state.audio?.isPlaying);
+  const currentTitle = currentBgm ? getDjTrackTitle(currentBgm) : "";
+  const activeTracks = activeTab === "sfx" ? sfxTracks : bgmTracks;
+
+  return `
+    <aside class="audio-dj-overlay ${isOpen ? "is-open" : ""}" data-audio-dj-overlay aria-label="音訊 DJ 台">
+      <button class="audio-dj-toggle" type="button" data-action="toggle-audio-dj" data-audio-dj-toggle aria-expanded="${isOpen}">DJ</button>
+      ${
+        isOpen
+          ? `<section class="audio-dj-panel" role="dialog" aria-label="音訊 DJ 台">
+              <header class="audio-dj-heading">
+                <div>
+                  <span>Audio DJ</span>
+                  <strong>音訊 DJ 台</strong>
+                </div>
+                <button type="button" data-action="close-audio-dj" aria-label="關閉音訊 DJ 台">×</button>
+              </header>
+              <p class="audio-dj-status">${currentBgm ? `${isPlaying ? "目前播放" : "目前曲目"}：${escapeHtml(currentTitle)}` : "目前沒有背景音樂"}</p>
+              <div class="audio-dj-tabs" role="tablist" aria-label="音訊分類">
+                <button type="button" class="${activeTab === "bgm" ? "is-active" : ""}" data-action="set-audio-dj-tab" data-audio-dj-tab="bgm" aria-pressed="${activeTab === "bgm"}">背景音樂</button>
+                <button type="button" class="${activeTab === "sfx" ? "is-active" : ""}" data-action="set-audio-dj-tab" data-audio-dj-tab="sfx" aria-pressed="${activeTab === "sfx"}">音效</button>
+              </div>
+              <div class="audio-dj-list">
+                ${renderAudioDjTrackGroups(activeTracks, activeTab, state.audio?.currentTrackId)}
+              </div>
+            </section>`
+          : ""
+      }
+    </aside>
+  `;
+}
+
 function renderDmEffectSummary(entries, effectType, maxVisible = 2) {
   const normalized = sortStatusLabels(effectType, entries);
   if (!normalized.length) return "無";

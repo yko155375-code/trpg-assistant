@@ -287,6 +287,33 @@ body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-fi
 .music-playback-select select { min-width: 0; min-height: 30px; padding: 3px 6px; font-size: 12px; }
 .music-track-actions { display: inline-flex; gap: 4px; align-items: center; }
 .music-track-actions button { min-height: 30px; padding: 0 8px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
+.audio-dj-overlay { position: fixed; right: 16px; bottom: max(88px, calc(env(safe-area-inset-bottom) + 72px)); z-index: 74; display: grid; justify-items: end; gap: 8px; width: min(360px, calc(100vw - 24px)); pointer-events: none; }
+.audio-dj-toggle, .audio-dj-panel { pointer-events: auto; }
+.audio-dj-toggle { width: 48px; min-width: 48px; min-height: 48px; padding: 0; border: 1px solid rgba(199, 164, 93, 0.42); border-radius: 16px; background: rgba(14, 23, 35, 0.9); color: var(--gold); font-size: 13px; font-weight: 900; letter-spacing: 0; box-shadow: 0 18px 34px rgba(0, 0, 0, 0.36); }
+.audio-dj-overlay.is-open .audio-dj-toggle { border-color: rgba(250, 204, 21, 0.68); background: rgba(62, 42, 13, 0.92); color: #fde68a; }
+.audio-dj-panel { display: grid; gap: 8px; width: 100%; max-height: min(70vh, 560px); min-width: 0; overflow: hidden; padding: 10px; border: 1px solid rgba(199, 164, 93, 0.28); border-radius: 14px; background: rgba(10, 18, 29, 0.94); box-shadow: 0 24px 58px rgba(0, 0, 0, 0.46); backdrop-filter: blur(14px); }
+.audio-dj-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.audio-dj-heading div { display: grid; gap: 1px; min-width: 0; }
+.audio-dj-heading span { color: var(--muted); font-size: 10px; text-transform: uppercase; }
+.audio-dj-heading strong { min-width: 0; overflow: hidden; color: var(--text); font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+.audio-dj-heading button { min-width: 34px; min-height: 34px; padding: 0; border-radius: 10px; font-size: 18px; line-height: 1; }
+.audio-dj-status { margin: 0; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.audio-dj-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; min-width: 0; }
+.audio-dj-tabs button { min-width: 0; min-height: 32px; padding: 0 8px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
+.audio-dj-tabs button.is-active { border-color: rgba(250, 204, 21, 0.58); background: rgba(250, 204, 21, 0.16); color: #fde68a; }
+.audio-dj-list { display: grid; gap: 8px; min-width: 0; overflow: auto; padding-right: 2px; scrollbar-width: thin; }
+.audio-dj-group { display: grid; gap: 5px; min-width: 0; }
+.audio-dj-group h4 { margin: 0; color: var(--gold); font-size: 12px; font-weight: 800; }
+.audio-dj-track-list { display: grid; gap: 5px; min-width: 0; }
+.audio-dj-track { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; min-width: 0; padding: 7px; border: 1px solid rgba(243, 234, 216, 0.1); border-radius: 10px; background: rgba(255, 255, 255, 0.045); }
+.audio-dj-track.is-current { border-color: rgba(250, 204, 21, 0.42); background: rgba(250, 204, 21, 0.1); }
+.audio-dj-track-main { display: grid; gap: 2px; min-width: 0; }
+.audio-dj-track-main strong, .audio-dj-track-main span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.audio-dj-track-main strong { font-size: 13px; }
+.audio-dj-track-main span { color: var(--muted); font-size: 11px; }
+.audio-dj-track-actions { display: inline-flex; gap: 4px; align-items: center; }
+.audio-dj-track-actions button { min-height: 30px; padding: 0 8px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
+.audio-dj-empty { margin: 0; padding: 10px; border: 1px dashed rgba(199, 164, 93, 0.22); border-radius: 10px; color: var(--muted); font-size: 12px; text-align: center; }
 .dm-persistence-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; margin: 0 0 10px; padding: 9px; border: 1px solid rgba(243, 234, 216, 0.12); border-radius: 10px; background: rgba(20, 16, 12, 0.48); }
 .dm-persistence-panel.is-saved { border-color: rgba(105, 214, 150, 0.28); }
 .dm-persistence-panel.is-saving { border-color: rgba(199, 164, 93, 0.32); }
@@ -368,6 +395,12 @@ body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-fi
   .music-playback-select { grid-column: 1 / -1; }
   .music-track-actions { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .music-track-actions button { min-width: 0; padding: 0 5px; }
+  .audio-dj-overlay { right: 10px; bottom: max(84px, calc(env(safe-area-inset-bottom) + 76px)); width: min(340px, calc(100vw - 20px)); }
+  .audio-dj-toggle { width: 44px; min-width: 44px; min-height: 44px; border-radius: 14px; }
+  .audio-dj-panel { max-height: min(68vh, 520px); padding: 8px; border-radius: 12px; }
+  .audio-dj-track { grid-template-columns: minmax(0, 1fr); gap: 5px; padding: 6px; }
+  .audio-dj-track-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .audio-dj-track-actions button { min-width: 0; padding: 0 6px; }
   .asset-add-form { grid-template-columns: 1fr; gap: 6px; padding: 7px; }
   .asset-add-form button { width: 100%; }
   .asset-management-actions { justify-content: stretch; }
