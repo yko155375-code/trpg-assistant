@@ -25,6 +25,8 @@ export const SOUND_CATEGORIES = Object.freeze([
 export const SOUND_LAYERS = Object.freeze(["bgm", "sfx", "ambient"]);
 export const SOUND_OVERLAP_MODES = Object.freeze(["none", "limited", "full"]);
 export const SOUND_ASSET_STATUSES = Object.freeze(["missing", "planned", "ready"]);
+export const SOUND_ASSET_PLAYBACK_STATUSES = Object.freeze(["unverified", "playable", "failed"]);
+export const SOUND_ASSET_COMMERCIAL_USE = Object.freeze(["unknown", "allowed", "not-allowed"]);
 
 const SOUND_EVENT_DEFINITIONS = [
   ["system.boot.start", "system", "sfx", "none", 1, "phase1"],
@@ -153,6 +155,77 @@ export const SOUND_SETTINGS_DEFAULTS = Object.freeze({
   disableHoverSounds: false,
   disableHorrorSounds: false,
 });
+
+function isRecord(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function cleanText(value, maxLength = 2048) {
+  return String(value || "").trim().slice(0, maxLength);
+}
+
+export function makeSoundAssetLabel(soundId) {
+  return String(soundId || "")
+    .split(".")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+export function normalizeSoundAssetCommercialUse(value) {
+  return SOUND_ASSET_COMMERCIAL_USE.includes(value) ? value : "unknown";
+}
+
+export function normalizeSoundAssetPlaybackStatus(value) {
+  return SOUND_ASSET_PLAYBACK_STATUSES.includes(value) ? value : "unverified";
+}
+
+export function validateSoundAssetUrl(value) {
+  const url = cleanText(value);
+  if (!url) return { ok: false, reason: "empty-url", message: "請輸入可直接播放的音檔 URL。" };
+  try {
+    const parsed = new URL(url);
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      return { ok: false, reason: "unsupported-protocol", message: "音檔 URL 必須使用 http 或 https。" };
+    }
+    return { ok: true, url };
+  } catch {
+    return { ok: false, reason: "invalid-url", message: "URL 格式無法解析，請確認是否為完整網址。" };
+  }
+}
+
+export function normalizeSoundAssetBinding(binding, fallbackSoundId = "") {
+  if (!isRecord(binding)) return null;
+  const soundId = cleanText(binding.soundId || fallbackSoundId, 160);
+  if (!SOUND_EVENT_REGISTRY_BY_ID[soundId]) return null;
+  const label = cleanText(binding.label, 160) || makeSoundAssetLabel(soundId);
+  const commercialUse = normalizeSoundAssetCommercialUse(binding.commercialUse);
+  const playbackStatus = normalizeSoundAssetPlaybackStatus(binding.playbackStatus);
+
+  return {
+    soundId,
+    label,
+    url: cleanText(binding.url),
+    fallbackUrl: cleanText(binding.fallbackUrl),
+    sourcePageUrl: cleanText(binding.sourcePageUrl),
+    license: cleanText(binding.license, 500),
+    commercialUse,
+    attributionRequired: Boolean(binding.attributionRequired),
+    attributionText: cleanText(binding.attributionText, 1000),
+    notes: cleanText(binding.notes, 2000),
+    playbackStatus,
+    updatedAt: cleanText(binding.updatedAt, 80),
+  };
+}
+
+export function normalizeSoundAssets(assets = {}) {
+  if (!isRecord(assets)) return {};
+  return Object.entries(assets).reduce((normalized, [key, value]) => {
+    const binding = normalizeSoundAssetBinding(value, key);
+    if (binding && binding.soundId === key) normalized[key] = binding;
+    return normalized;
+  }, {});
+}
 
 function clampUnit(value, fallback) {
   const number = Number(value);

@@ -2,7 +2,7 @@ import { normalizeCharacters } from "./characters.js";
 import { normalizeMonsters } from "./monsters.js";
 import { normalizeSession } from "./public-info.js";
 import { normalizeShop } from "./shop.js";
-import { normalizeSoundSettings, SOUND_SETTINGS_DEFAULTS } from "./sound.js";
+import { normalizeSoundAssets, normalizeSoundSettings, SOUND_SETTINGS_DEFAULTS } from "./sound.js?v=sound-asset-manager-v1";
 
 export const APP_VERSION = "v2-stage-5";
 export const SCHEMA_VERSION = 1;
@@ -326,6 +326,7 @@ function normalizeSoundState(sound, fallbackSound) {
     ...fallbackSound,
     ...source,
     settings: normalizeSoundSettings(source.settings || fallbackSound.settings),
+    assets: normalizeSoundAssets(source.assets),
   };
 }
 
@@ -525,6 +526,7 @@ export function createDefaultState() {
     },
     sound: {
       settings: { ...SOUND_SETTINGS_DEFAULTS },
+      assets: {},
     },
     introImages: {
       images: [],

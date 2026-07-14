@@ -11,6 +11,7 @@ import { renderDicePanel } from "./dice.js";
 import { renderMonsterManager, renderMonsterOverview } from "./monsters.js";
 import { renderPublicInfoEditor } from "./public-info.js";
 import { renderDmShopManager } from "./shop.js";
+import { makeSoundAssetLabel, SOUND_CATEGORIES, SOUND_EVENT_REGISTRY } from "./sound.js?v=sound-asset-manager-v1";
 import { sortStatusLabels, statusEffectGroups } from "./status-effects.js";
 
 const dmPageContent = {
@@ -62,6 +63,194 @@ function escapeHtml(value) {
 
 function normalizeUrl(value) {
   return String(value || "").trim();
+}
+
+function getSoundAssets(state) {
+  const assets = state.sound?.assets;
+  return assets && typeof assets === "object" && !Array.isArray(assets) ? assets : {};
+}
+
+function getSoundAssetCommercialUseLabel(value) {
+  if (value === "allowed") return "可商用";
+  if (value === "not-allowed") return "不可商用";
+  return "未確認";
+}
+
+function getSoundAssetPlaybackStatusLabel(value) {
+  if (value === "playable") return "可播放";
+  if (value === "failed") return "播放失敗";
+  return "未驗證";
+}
+
+function getSelectedSoundAssetId(state, visibleEvents = SOUND_EVENT_REGISTRY) {
+  const requested = String(state.ui?.soundAssetSelectedId || "");
+  if (SOUND_EVENT_REGISTRY.some((event) => event.id === requested)) return requested;
+  return visibleEvents[0]?.id || SOUND_EVENT_REGISTRY[0]?.id || "";
+}
+
+function getSoundAssetFilters(state) {
+  return {
+    category: String(state.ui?.soundAssetCategoryFilter || "all"),
+    search: String(state.ui?.soundAssetSearch || "").trim(),
+  };
+}
+
+function getVisibleSoundEvents(state) {
+  const { category, search } = getSoundAssetFilters(state);
+  const query = search.toLowerCase();
+  return SOUND_EVENT_REGISTRY.filter((event) => {
+    if (category !== "all" && event.category !== category) return false;
+    if (!query) return true;
+    return event.id.toLowerCase().includes(query) || makeSoundAssetLabel(event.id).toLowerCase().includes(query);
+  });
+}
+
+function renderSoundAssetStatus(binding) {
+  if (!binding?.url) return `<span class="sound-asset-status is-missing">尚未設定</span>`;
+  return `<span class="sound-asset-status is-${escapeHtml(binding.playbackStatus || "unverified")}">${getSoundAssetPlaybackStatusLabel(binding.playbackStatus)}</span>`;
+}
+
+function renderSoundAssetManager(state) {
+  const assets = getSoundAssets(state);
+  const visibleEvents = getVisibleSoundEvents(state);
+  const selectedId = getSelectedSoundAssetId(state, visibleEvents);
+  const selectedEvent = SOUND_EVENT_REGISTRY.find((event) => event.id === selectedId) || SOUND_EVENT_REGISTRY[0];
+  const selectedBinding = assets[selectedId] || null;
+  const selectedLabel = selectedBinding?.label || makeSoundAssetLabel(selectedId);
+  const { category, search } = getSoundAssetFilters(state);
+  const assetEntries = Object.values(assets)
+    .filter((binding) => SOUND_EVENT_REGISTRY.some((event) => event.id === binding.soundId))
+    .sort((a, b) => a.soundId.localeCompare(b.soundId));
+  const message = state.ui?.soundAssetManagerMessage || "";
+  const preview = state.ui?.soundAssetPreviewInfo || {};
+
+  return `
+    <section class="sound-asset-manager" aria-label="音效素材管理">
+      <div class="sound-asset-heading">
+        <div>
+          <p class="eyebrow">Sound Asset Manager v1</p>
+          <h3>音效素材管理</h3>
+        </div>
+        <p>從既有 ${SOUND_EVENT_REGISTRY.length} 個 sound id 選擇項目，貼上可直接播放的公開音檔 URL，並保存授權紀錄。</p>
+      </div>
+
+      <div class="sound-asset-toolbar">
+        <label class="form-field">
+          <span>類別篩選</span>
+          <select data-sound-asset-category-filter>
+            <option value="all" ${category === "all" ? "selected" : ""}>全部</option>
+            ${SOUND_CATEGORIES.map((item) => `<option value="${escapeHtml(item)}" ${category === item ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}
+          </select>
+        </label>
+        <label class="form-field sound-asset-search-field">
+          <span>搜尋</span>
+          <input data-sound-asset-search type="search" value="${escapeHtml(search)}" placeholder="搜尋 sound id 或 label" autocomplete="off" />
+        </label>
+        <label class="form-field sound-asset-select-field">
+          <span>Sound ID</span>
+          <select data-sound-asset-selected-id>
+            ${(visibleEvents.length ? visibleEvents : SOUND_EVENT_REGISTRY).map((event) => {
+              const binding = assets[event.id];
+              return `<option value="${escapeHtml(event.id)}" ${event.id === selectedId ? "selected" : ""}>${escapeHtml(event.id)} · ${escapeHtml(event.category)} · ${escapeHtml(event.layer)} · ${binding?.url ? "已設定" : "尚未設定"}</option>`;
+            }).join("")}
+          </select>
+        </label>
+      </div>
+
+      <div class="sound-asset-current-card">
+        <div>
+          <strong>${escapeHtml(selectedId)}</strong>
+          <span>${escapeHtml(selectedEvent?.category || "")} / ${escapeHtml(selectedEvent?.layer || "")} / ${escapeHtml(selectedEvent?.phase || "")}</span>
+        </div>
+        ${renderSoundAssetStatus(selectedBinding)}
+      </div>
+
+      <form class="sound-asset-form" data-sound-asset-form data-current-sound-id="${escapeHtml(selectedId)}">
+        <label class="form-field">
+          <span>Label</span>
+          <input data-sound-asset-field="label" type="text" value="${escapeHtml(selectedLabel)}" autocomplete="off" />
+        </label>
+        <label class="form-field sound-asset-url-field">
+          <span>URL</span>
+          <input data-sound-asset-field="url" type="url" value="${escapeHtml(selectedBinding?.url || "")}" placeholder="https://example.com/sound.mp3" autocomplete="off" />
+        </label>
+        <label class="form-field sound-asset-url-field">
+          <span>Fallback URL</span>
+          <input data-sound-asset-field="fallbackUrl" type="url" value="${escapeHtml(selectedBinding?.fallbackUrl || "")}" placeholder="可留空" autocomplete="off" />
+        </label>
+        <label class="form-field sound-asset-url-field">
+          <span>來源頁面 URL</span>
+          <input data-sound-asset-field="sourcePageUrl" type="url" value="${escapeHtml(selectedBinding?.sourcePageUrl || "")}" placeholder="只作授權紀錄，不作播放來源" autocomplete="off" />
+        </label>
+        <label class="form-field">
+          <span>授權資訊</span>
+          <input data-sound-asset-field="license" type="text" value="${escapeHtml(selectedBinding?.license || "")}" placeholder="CC0 / Custom License" autocomplete="off" />
+        </label>
+        <label class="form-field">
+          <span>是否可商用</span>
+          <select data-sound-asset-field="commercialUse">
+            <option value="unknown" ${(selectedBinding?.commercialUse || "unknown") === "unknown" ? "selected" : ""}>未確認</option>
+            <option value="allowed" ${selectedBinding?.commercialUse === "allowed" ? "selected" : ""}>可商用</option>
+            <option value="not-allowed" ${selectedBinding?.commercialUse === "not-allowed" ? "selected" : ""}>不可商用</option>
+          </select>
+        </label>
+        <label class="sound-asset-check">
+          <input data-sound-asset-field="attributionRequired" type="checkbox" ${selectedBinding?.attributionRequired ? "checked" : ""} />
+          <span>需要署名</span>
+        </label>
+        <label class="form-field">
+          <span>署名文字</span>
+          <input data-sound-asset-field="attributionText" type="text" value="${escapeHtml(selectedBinding?.attributionText || "")}" placeholder="可留空" autocomplete="off" />
+        </label>
+        <label class="form-field sound-asset-notes-field">
+          <span>備註</span>
+          <textarea data-sound-asset-field="notes" rows="3" placeholder="可留空">${escapeHtml(selectedBinding?.notes || "")}</textarea>
+        </label>
+        <div class="sound-asset-actions">
+          <button type="button" data-action="preview-sound-asset-form">預覽</button>
+          <button type="button" data-action="stop-sound-asset-preview">停止預覽</button>
+          <button type="submit">儲存素材</button>
+          <button class="danger-button" type="button" data-action="remove-sound-asset-form" ${selectedBinding?.url ? "" : "disabled"}>移除</button>
+        </div>
+      </form>
+
+      ${message ? `<p class="sound-asset-message">${escapeHtml(message)}</p>` : ""}
+      ${preview.message ? `<p class="sound-asset-preview-message is-${escapeHtml(preview.status || "idle")}">${escapeHtml(preview.message)}</p>` : ""}
+
+      <section class="sound-asset-list" aria-label="已設定音效素材列表">
+        <div class="sound-asset-list-heading">
+          <h4>已設定素材</h4>
+          <span>${assetEntries.length} / ${SOUND_EVENT_REGISTRY.length}</span>
+        </div>
+        ${
+          assetEntries.length
+            ? assetEntries.map((binding) => {
+              const event = SOUND_EVENT_REGISTRY.find((item) => item.id === binding.soundId);
+              return `
+                <article class="sound-asset-row">
+                  <div class="sound-asset-row-main">
+                    <strong>${escapeHtml(binding.soundId)}</strong>
+                    <span>${escapeHtml(binding.label || makeSoundAssetLabel(binding.soundId))}</span>
+                  </div>
+                  <span>${escapeHtml(event?.category || "")}</span>
+                  <span>${escapeHtml(event?.layer || "")}</span>
+                  <span>${getSoundAssetPlaybackStatusLabel(binding.playbackStatus)}</span>
+                  <span>${getSoundAssetCommercialUseLabel(binding.commercialUse)}</span>
+                  <span>${binding.attributionRequired ? "需署名" : "免署名"}</span>
+                  <span>${escapeHtml(binding.updatedAt || "")}</span>
+                  <div class="sound-asset-row-actions">
+                    <button type="button" data-action="edit-sound-asset" data-sound-id="${escapeHtml(binding.soundId)}">編輯</button>
+                    <button type="button" data-action="preview-sound-asset" data-sound-id="${escapeHtml(binding.soundId)}">預覽</button>
+                    <button class="danger-button" type="button" data-action="remove-sound-asset" data-sound-id="${escapeHtml(binding.soundId)}">移除</button>
+                  </div>
+                </article>
+              `;
+            }).join("")
+            : `<p class="empty-hint">尚未設定任何 sound id 的音檔 URL。</p>`
+        }
+      </section>
+    </section>
+  `;
 }
 
 function getAudioTracks(state) {
@@ -767,6 +956,7 @@ export function renderDmPage(pageId, state) {
         </div>
         ${renderDmPlayerBackgroundImagesManager(state)}
         ${renderDmAudioManager(state)}
+        ${renderSoundAssetManager(state)}
       </section>
     `;
   }

@@ -287,6 +287,40 @@ body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-fi
 .music-playback-select select { min-width: 0; min-height: 30px; padding: 3px 6px; font-size: 12px; }
 .music-track-actions { display: inline-flex; gap: 4px; align-items: center; }
 .music-track-actions button { min-height: 30px; padding: 0 8px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
+
+.sound-asset-manager { display: grid; gap: 10px; min-width: 0; margin-top: 12px; padding: 10px; border: 1px solid rgba(199, 164, 93, 0.2); border-radius: 11px; background: rgba(255, 255, 255, 0.032); }
+.sound-asset-heading, .sound-asset-list-heading { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: end; justify-content: space-between; min-width: 0; }
+.sound-asset-heading h3, .sound-asset-heading p, .sound-asset-list-heading h4 { margin: 0; }
+.sound-asset-heading p { max-width: 520px; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.sound-asset-toolbar { display: grid; grid-template-columns: minmax(120px, 0.8fr) minmax(160px, 1fr) minmax(220px, 2fr); gap: 6px; align-items: end; min-width: 0; }
+.sound-asset-manager .form-field { gap: 2px; min-width: 0; }
+.sound-asset-manager .form-field > span { font-size: 10px; line-height: 1.2; }
+.sound-asset-manager :is(input, select, textarea) { box-sizing: border-box; width: 100%; min-width: 0; min-height: 32px; padding: 4px 7px; font-size: 12px; }
+.sound-asset-manager textarea { line-height: 1.4; resize: vertical; }
+.sound-asset-current-card { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; min-width: 0; padding: 8px; border: 1px solid rgba(243, 234, 216, 0.1); border-radius: 10px; background: rgba(16, 26, 39, 0.72); }
+.sound-asset-current-card div { display: grid; gap: 2px; min-width: 0; }
+.sound-asset-current-card strong, .sound-asset-row-main strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sound-asset-current-card span, .sound-asset-row span { color: var(--muted); font-size: 11px; }
+.sound-asset-status { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 8px; border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 999px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.sound-asset-status.is-playable { border-color: rgba(105, 214, 150, 0.38); color: #86efac; }
+.sound-asset-status.is-failed { border-color: rgba(248, 113, 113, 0.42); color: #fca5a5; }
+.sound-asset-status.is-missing { border-color: rgba(199, 164, 93, 0.24); color: var(--gold); }
+.sound-asset-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; min-width: 0; padding: 8px; border: 1px solid rgba(243, 234, 216, 0.1); border-radius: 10px; background: rgba(255, 255, 255, 0.035); }
+.sound-asset-url-field, .sound-asset-notes-field, .sound-asset-actions { grid-column: 1 / -1; }
+.sound-asset-check { display: inline-flex; gap: 6px; align-items: center; min-height: 32px; padding: 5px 7px; border: 1px solid rgba(243, 234, 216, 0.1); border-radius: 8px; color: var(--muted); font-size: 12px; }
+.sound-asset-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--gold); }
+.sound-asset-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; }
+.sound-asset-actions button, .sound-asset-row-actions button { min-height: 30px; padding: 0 9px; border-radius: 8px; font-size: 12px; white-space: nowrap; }
+.sound-asset-actions button:disabled { cursor: not-allowed; opacity: 0.45; }
+.sound-asset-message, .sound-asset-preview-message { margin: 0; padding: 7px 8px; border: 1px solid rgba(199, 164, 93, 0.18); border-radius: 9px; background: rgba(199, 164, 93, 0.08); color: var(--gold); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.sound-asset-preview-message.is-failed { border-color: rgba(248, 113, 113, 0.36); background: rgba(127, 29, 29, 0.18); color: #fca5a5; }
+.sound-asset-preview-message.is-playable { border-color: rgba(105, 214, 150, 0.3); background: rgba(22, 101, 52, 0.16); color: #86efac; }
+.sound-asset-list { display: grid; gap: 6px; min-width: 0; }
+.sound-asset-list-heading span { color: var(--muted); font-size: 12px; }
+.sound-asset-row { display: grid; grid-template-columns: minmax(150px, 1.2fr) minmax(70px, auto) minmax(48px, auto) minmax(72px, auto) minmax(70px, auto) minmax(62px, auto) minmax(116px, 1fr) auto; gap: 6px; align-items: center; min-width: 0; padding: 7px; border: 1px solid rgba(243, 234, 216, 0.1); border-radius: 10px; background: rgba(16, 26, 39, 0.64); }
+.sound-asset-row-main { display: grid; gap: 2px; min-width: 0; }
+.sound-asset-row-main span, .sound-asset-row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sound-asset-row-actions { display: inline-flex; gap: 4px; justify-content: flex-end; min-width: 0; }
 .dm-persistence-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; margin: 0 0 10px; padding: 9px; border: 1px solid rgba(243, 234, 216, 0.12); border-radius: 10px; background: rgba(20, 16, 12, 0.48); }
 .dm-persistence-panel.is-saved { border-color: rgba(105, 214, 150, 0.28); }
 .dm-persistence-panel.is-saving { border-color: rgba(199, 164, 93, 0.32); }
@@ -368,6 +402,15 @@ body:has(.tab-button.is-active[data-page="assets"]) .mobile-page-card > .form-fi
   .music-playback-select { grid-column: 1 / -1; }
   .music-track-actions { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .music-track-actions button { min-width: 0; padding: 0 5px; }
+  .sound-asset-manager { gap: 8px; padding: 7px; }
+  .sound-asset-toolbar, .sound-asset-form { grid-template-columns: 1fr; gap: 5px; }
+  .sound-asset-search-field, .sound-asset-select-field, .sound-asset-url-field, .sound-asset-notes-field, .sound-asset-actions { grid-column: 1 / -1; }
+  .sound-asset-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sound-asset-actions button { min-width: 0; padding: 0 5px; }
+  .sound-asset-row { grid-template-columns: 1fr; gap: 4px; padding: 6px; }
+  .sound-asset-row > span { white-space: normal; }
+  .sound-asset-row-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sound-asset-row-actions button { min-width: 0; padding: 0 5px; }
   .asset-add-form { grid-template-columns: 1fr; gap: 6px; padding: 7px; }
   .asset-add-form button { width: 100%; }
   .asset-management-actions { justify-content: stretch; }
